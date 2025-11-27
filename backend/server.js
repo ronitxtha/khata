@@ -2,19 +2,25 @@ import express from "express";
 import 'dotenv/config';
 import connectDB from "./database/db.js";
 import userRoute from "./routes/userRoute.js";
+import cors from "cors";
+import { verification } from "./controllers/userController.js";
 
 const app = express();
+const PORT = process.env.PORT || 8000;
 
- const PORT = process.env.PORT ||3000 ;
-
- 
-//middleware
+// Middleware
 app.use(express.json());
+app.use(cors({
+    origin: "http://localhost:5173",
+    credentials: true
+}));
 
- app.use('/user', userRoute);
+// Attach all /user routes here
+app.use('/user', userRoute);
+app.get("/user/verify/:token", verification);
 
-  //http://localhost8000/user/register
- app.listen(PORT,()=>{
-    connectDB()
-    console.log(`Server is listerning at port ${PORT}`);;
- })
+// Connect DB and start server
+connectDB();
+app.listen(PORT, () => {
+    console.log(`Server is listening at port ${PORT}`);
+});

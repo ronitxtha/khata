@@ -1,5 +1,5 @@
 import nodemailer from "nodemailer"
-import'dotenv/config'
+import 'dotenv/config'
 import fs from "fs"
 import path from "path"
 import { fileURLToPath } from "url"
@@ -8,35 +8,39 @@ import handlebars from "handlebars"
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
-export const verifyMail = async(token, email)=>{
+export const verifyMail = async (token, email) => {
 
-const emailTemplateSource = fs.readFileSync(
-    path.join(__dirname, 'template.hbs'),
-    "utf-8"
-)
+    const emailTemplateSource = fs.readFileSync(
+        path.join(__dirname, 'template.hbs'),
+        "utf-8"
+    )
 
-const template = handlebars.compile(emailTemplateSource)
-const htmlToSend = template({token: encodeURIComponent(token)})
+    const template = handlebars.compile(emailTemplateSource)
+    
+    // Construct full frontend URL here
+    const frontendLink = `http://localhost:5173/verify/${encodeURIComponent(token)}`
+    const htmlToSend = template({ link: frontendLink })
 
     const transporter = nodemailer.createTransport({
         service: 'gmail',
         auth: {
-            user:process.env.MAIL_USER,
-            pass:process.env.MAIL_PASS
+            user: process.env.MAIL_USER,
+            pass: process.env.MAIL_PASS
         }
     })
+
     const mailConfigurations = {
         from: process.env.MAIL_USER,
         to: email,
-        subject:"Email verification",
+        subject: "Email verification",
         html: htmlToSend,
     }
 
-    transporter.sendMail(mailConfigurations, function(error, info){
+    transporter.sendMail(mailConfigurations, function (error, info) {
         if (error) {
             throw new Error(error)
         }
-        console.log("Email sent sucessfully");
+        console.log("Email sent successfully");
         console.log(info);
-        })
-    }
+    })
+}

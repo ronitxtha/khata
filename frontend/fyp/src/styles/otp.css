@@ -1,0 +1,20 @@
+.otp-page-wrapper {
+  all: unset;           /* reset inherited styles */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  width: 100%;
+  background-color: #007bff;
+  font-family: Arial, sans-serif;
+}
+
+.otp-container {
+  max-width: 400px;
+  padding: 30px;
+  background-color: #007bff;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  color: #fff;
+  text-align: center;
+}
