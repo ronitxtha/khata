@@ -15,6 +15,7 @@ export const isAuthenticated = async (req, res, next) => {
         const token = authHeader.split(" ")[1];
         const decoded = jwt.verify(token, process.env.SECRET_KEY);
 
+        // fetch full user including shopId
         const user = await User.findById(decoded.id).select("-password");
 
         if (!user) {
@@ -24,8 +25,11 @@ export const isAuthenticated = async (req, res, next) => {
             });
         }
 
+        // attach all necessary info
         req.userId = user._id;
         req.user = user;
+        req.shopId = user.shopId || null; // <-- added shopId here safely
+
         next();
         
     } catch (error) {

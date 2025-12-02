@@ -4,6 +4,7 @@ import { User } from "../models/userModel.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { sendOtpMail } from "../emailverify/sendOtpMail.js";
+import { Shop } from "../models/shopModel.js"; 
 
 export const registerUser = async (req, res) => {
     try {
@@ -39,6 +40,17 @@ export const registerUser = async (req, res) => {
             password: hashedPassword,
             role
         });
+        if (role === "owner") {
+    const newShop = await Shop.create({
+        name: `${username}'s Shop`,
+        ownerId: newUser._id
+    });
+
+    // attach shopId to owner
+    newUser.shopId = newShop._id;
+    await newUser.save();
+}
+
 
         // Generate JWT token
         const token = jwt.sign({ id: newUser._id }, process.env.SECRET_KEY, { expiresIn: "10m" });
@@ -59,6 +71,8 @@ export const registerUser = async (req, res) => {
         });
     }
 };
+
+
 
 // Verification route
 export const verification = async (req, res) => {
@@ -105,12 +119,14 @@ export const loginUser = async (req, res) => {
                 message: "Incorrect Password"
             })
         }
-        if (!user.isVerified) {
-            return res.status(403).json({
-                sucess: false,
-                message: "Please verify your email to login"
-            })
-        }
+       // Only enforce verification for non-staff users
+if (user.role !== "staff" && !user.isVerified) {
+    return res.status(403).json({
+        success: false,
+        message: "Please verify your email to login"
+    });
+}
+
         const existingSession = await Session.findOne({ userId: user._id });
         if (existingSession) {
             await Session.deleteOne({ userId: user._id })
@@ -175,7 +191,7 @@ export const forgotPassword = async (req, res) => {
         user.otp = otp;
         user.otpExpiry = otpExpiry;
         await user.save();
-        await sendOtpMail(email, otp); ///
+        await sendOtpMail(email, otp); /// 
         return res.status(200).json({
             success: true,
             message: "OTP sent to email"

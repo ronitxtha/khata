@@ -1,56 +1,97 @@
+/* Container */
 .register-container {
-  max-width: 400px;
+  max-width: 420px;
   margin: 80px auto;
-  padding: 40px;
-  background: #28a745;
-  border-radius: 12px;
-  color: #fff;
+  padding: 40px 30px;
+  background: #007bff;
+  border-radius: 16px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+  color: #ffffff;
   text-align: center;
-  font-family: Arial, sans-serif;
+  font-family: 'Poppins', Arial, sans-serif;
 }
 
+/* Heading */
 .register-container h2 {
-  margin-bottom: 20px;
+  margin-bottom: 25px;
+  font-size: 28px;
+  font-weight: 600;
+  color: #ffffff;
 }
 
+/* Labels */
+.register-container form label {
+  display: block;
+  text-align: left;
+  margin-bottom: 6px;
+  font-weight: 500;
+  color: #ffffff;
+  font-size: 14px;
+}
+
+/* Inputs and Select */
 .register-container form input,
 .register-container form select {
   width: 100%;
-  padding: 12px;
-  margin: 10px 0;
-  border-radius: 8px;
-  border: none;
+  padding: 12px 14px;
+  margin-bottom: 16px;
+  border-radius: 12px;
+  border: 1px solid #ccc;
   font-size: 16px;
-}
-
-.register-container button {
-  width: 100%;
-  padding: 12px;
-  background: #fff;
-  color: #28a745;
-  font-weight: bold;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
   transition: 0.3s;
 }
 
-.register-container button:hover {
-  background: #155724;
-  color: #fff;
+.register-container form input:focus,
+.register-container form select:focus {
+  outline: none;
+  border-color: #f4f4f4;
+  box-shadow: 0 0 6px rgba(40, 167, 69, 0.3);
 }
 
+/* Button */
+.register-container button {
+  width: 100%;
+  padding: 14px;
+  background: #28a745;
+  color: #fff;
+  font-weight: 600;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.register-container button:hover {
+  background: #218838;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(33, 136, 56, 0.3);
+}
+
+/* Error & Success Messages */
 .register-container .error {
-  color: #ffcccc;
+  color: #e74c3c;
   margin-bottom: 10px;
+  font-weight: 500;
+  font-size: 14px;
 }
 
 .register-container .success {
-  color: #ccffcc;
+  color: #ffffff;
   margin-bottom: 10px;
+  font-weight: 500;
+  font-size: 14px;
+}
+
+/* Login Link */
+.register-container p {
+  margin-top: 18px;
+  font-size: 14px;
+  color: #f7f7f7;
 }
 
 .register-container p span {
   cursor: pointer;
   text-decoration: underline;
+  color: #ffffff;
+  font-weight: 500;
 }

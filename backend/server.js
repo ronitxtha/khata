@@ -2,6 +2,7 @@ import express from "express";
 import 'dotenv/config';
 import connectDB from "./database/db.js";
 import userRoute from "./routes/userRoute.js";
+import ownerRoutes from "./routes/ownerRoute.js"; // ✅ import owner routes
 import cors from "cors";
 import { verification } from "./controllers/userController.js";
 
@@ -15,9 +16,12 @@ app.use(cors({
     credentials: true
 }));
 
-// Attach all /user routes here
+// Attach all /user routes
 app.use('/user', userRoute);
 app.get("/user/verify/:token", verification);
+
+// Attach all /api/owner routes
+app.use("/api/owner", ownerRoutes); // ✅ mount owner routes here
 
 // Connect DB and start server
 connectDB();

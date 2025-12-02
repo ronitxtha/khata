@@ -5,16 +5,20 @@ import "../styles/register.css";
 
 export default function Register() {
   const navigate = useNavigate();
+  const [role, setRole] = useState("customer"); // default customer
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [role, setRole] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
   const validateForm = () => {
+    if (!["customer", "owner"].includes(role)) {
+      setError("Please select a valid role");
+      return false;
+    }
     if (username.trim().length < 3) {
-      setError("Username must be at least 3 characters");
+      setError("Full Name must be at least 3 characters");
       return false;
     }
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -24,10 +28,6 @@ export default function Register() {
     }
     if (password.length < 4) {
       setError("Password must be at least 4 characters");
-      return false;
-    }
-    if (!["customer", "owner"].includes(role)) {
-      setError("Please select a valid role");
       return false;
     }
     setError("");
@@ -55,9 +55,23 @@ export default function Register() {
         setSuccess("");
       }
     } catch (err) {
-      setError(err.response?.data?.message || "Registration failed");
-      setSuccess("");
-    }
+  const backend = err.response?.data;
+
+  // handle user exists message
+  if (backend?.message) {
+    setError(backend.message);
+  }
+  // handle yup validation errors
+  else if (backend?.errors) {
+    setError(backend.errors[0]);
+  }
+  else {
+    setError("Registration failed");
+  }
+
+  setSuccess("");
+}
+
   };
 
   return (
@@ -66,29 +80,38 @@ export default function Register() {
       {error && <p className="error">{error}</p>}
       {success && <p className="success">{success}</p>}
       <form onSubmit={handleRegister}>
+       
+
+        <label>Full Name</label>
         <input
           type="text"
-          placeholder="Username"
+          placeholder="Full Name"
           value={username}
           onChange={(e) => setUsername(e.target.value)}
         />
+
+        <label>Enter your email</label>
         <input
           type="email"
           placeholder="Email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
         />
+
+        <label>Password</label>
         <input
           type="password"
           placeholder="Password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
+         <label>Select Role</label>
+         
         <select value={role} onChange={(e) => setRole(e.target.value)}>
-          <option value="">Select role</option>
           <option value="customer">Customer</option>
           <option value="owner">Owner</option>
         </select>
+
         <button type="submit">Sign Up</button>
       </form>
       <p>

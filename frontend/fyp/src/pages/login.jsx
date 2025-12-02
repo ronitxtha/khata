@@ -25,29 +25,36 @@ export default function Login() {
   };
 
   const handleLogin = async (e) => {
-    e.preventDefault();
-    if (!validateForm()) return;
+  e.preventDefault();
+  if (!validateForm()) return;
 
-    try {
-      const res = await axios.post("http://localhost:8000/user/login", {
-        email,
-        password,
-      });
-      if (res.data.success) {
-        setSuccess(res.data.message);
-        setError("");
-        // optionally save tokens and navigate
-        localStorage.setItem("accessToken", res.data.accessToken);
-        navigate("/home");
-      } else {
-        setError(res.data.message);
-        setSuccess("");
-      }
-    } catch (err) {
-      setError(err.response?.data?.message || "Login failed");
+  try {
+    const res = await axios.post("http://localhost:8000/user/login", {
+      email,
+      password,
+    });
+
+    if (res.data.success) {
+      setSuccess(res.data.message);
+      setError("");
+
+      const user = res.data.user; // <-- get user object from backend
+      localStorage.setItem("accessToken", res.data.accessToken);
+
+      // Role-based navigation
+      if (user.role === "owner") navigate("/owner-dashboard");
+      else if (user.role === "staff") navigate("/staff-dashboard");
+      else navigate("/customer-dashboard");
+    } else {
+      setError(res.data.message);
       setSuccess("");
     }
-  };
+  } catch (err) {
+    setError(err.response?.data?.message || "Login failed");
+    setSuccess("");
+  }
+};
+
 
   return (
     <div className="login-container">
