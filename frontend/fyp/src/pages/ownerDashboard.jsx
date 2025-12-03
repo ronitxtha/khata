@@ -8,36 +8,37 @@ const OwnerDashboard = () => {
   const [products, setProducts] = useState([]);
   const [staffName, setStaffName] = useState("");
   const [staffEmail, setStaffEmail] = useState("");
+
   const [productName, setProductName] = useState("");
   const [productPrice, setProductPrice] = useState("");
+  const [productDescription, setProductDescription] = useState("");
+  const [productImage, setProductImage] = useState(null);
+
+  const [qrVisible, setQrVisible] = useState({}); // track which product QR is visible
   const [message, setMessage] = useState("");
 
-  const API_BASE = "http://localhost:8000"; // Backend base URL
+  const API_BASE = "http://localhost:8000";
 
-  // Load owner info, staff, and products
+  // ---------------- Load Owner, Staff & Products ----------------
   useEffect(() => {
     const fetchOwnerData = async () => {
       try {
         const token = localStorage.getItem("accessToken");
 
-        // Owner info
         const resOwner = await axios.get(`${API_BASE}/api/owner/me`, {
-          headers: { Authorization: `Bearer ${token}` }
+          headers: { Authorization: `Bearer ${token}` },
         });
         setOwner(resOwner.data.owner);
 
-        // Staff list
         const resStaff = await axios.get(`${API_BASE}/api/owner/staff`, {
-          headers: { Authorization: `Bearer ${token}` }
+          headers: { Authorization: `Bearer ${token}` },
         });
         setStaffList(resStaff.data.staff || []);
 
-        // Products list
         const resProducts = await axios.get(`${API_BASE}/api/owner/products`, {
-          headers: { Authorization: `Bearer ${token}` }
+          headers: { Authorization: `Bearer ${token}` },
         });
         setProducts(resProducts.data.products || []);
-
       } catch (err) {
         console.error(err);
         setMessage(err.response?.data?.message || "Error loading data");
@@ -47,7 +48,7 @@ const OwnerDashboard = () => {
     fetchOwnerData();
   }, []);
 
-  // Add staff
+  // ---------------- Add Staff ----------------
   const handleAddStaff = async (e) => {
     e.preventDefault();
     try {
@@ -70,27 +71,72 @@ const OwnerDashboard = () => {
     }
   };
 
-  // Add product
+  // ---------------- Add Product ----------------
   const handleAddProduct = async (e) => {
     e.preventDefault();
     try {
       const token = localStorage.getItem("accessToken");
 
+      const formData = new FormData();
+      formData.append("name", productName);
+      formData.append("price", productPrice);
+      formData.append("description", productDescription);
+      formData.append("image", productImage);
+
       const res = await axios.post(
         `${API_BASE}/api/owner/add-product`,
-        { name: productName, price: productPrice },
+        formData,
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      setMessage(`Product added: ${productName}`);
+      setMessage("Product added successfully!");
       setProducts([...products, res.data.product]);
+
       setProductName("");
       setProductPrice("");
+      setProductDescription("");
+      setProductImage(null);
     } catch (err) {
       console.error(err);
       setMessage(err.response?.data?.message || "Error adding product");
     }
   };
+
+  // ---------------- Toggle QR visibility ----------------
+const toggleQR = (productId) => {
+  setQrVisible((prev) => ({
+    ...prev,
+    [productId]: !prev[productId],
+  }));
+};
+
+// ---------------- Download QR ----------------
+const downloadQR = async (productId) => {
+  try {
+    const token = localStorage.getItem("accessToken");
+    const res = await axios.get(
+      `http://localhost:8000/api/owner/download-qr/${productId}`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+        responseType: "blob" // important to handle binary data
+      }
+    );
+
+    // create a blob URL and download
+    const url = window.URL.createObjectURL(new Blob([res.data]));
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", `product-${productId}-qr.png`);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+  } catch (err) {
+    console.error("Download failed", err);
+    alert("Download failed");
+  }
+};
+
+
 
   return (
     <div className="dashboard-container">
@@ -125,7 +171,9 @@ const OwnerDashboard = () => {
         <h2>Staff List</h2>
         <ul>
           {staffList.map((staff) => (
-            <li key={staff._id}>{staff.username} ({staff.email})</li>
+            <li key={staff._id}>
+              {staff.username} ({staff.email})
+            </li>
           ))}
         </ul>
       </section>
@@ -133,7 +181,7 @@ const OwnerDashboard = () => {
       {/* Add Product */}
       <section className="add-product-section">
         <h2>Add Product</h2>
-        <form onSubmit={handleAddProduct}>
+        <form onSubmit={handleAddProduct} encType="multipart/form-data">
           <input
             type="text"
             placeholder="Product Name"
@@ -148,19 +196,52 @@ const OwnerDashboard = () => {
             onChange={(e) => setProductPrice(e.target.value)}
             required
           />
+          <textarea
+            placeholder="Description"
+            value={productDescription}
+            onChange={(e) => setProductDescription(e.target.value)}
+            required
+          />
+          <input
+            type="file"
+            accept="image/*"
+            onChange={(e) => setProductImage(e.target.files[0])}
+            required
+          />
           <button type="submit">Add Product</button>
         </form>
       </section>
 
       {/* Product List */}
-      <section className="product-list">
-        <h2>Products</h2>
-        <ul>
-          {products.map((p) => (
-            <li key={p._id}>{p.name} - ${p.price}</li>
-          ))}
-        </ul>
-      </section>
+<section className="product-list">
+  <h2>Products</h2>
+  <ul>
+    {products.map((p) => (
+      <li key={p._id} style={{ marginBottom: "15px" }}>
+        {p.name} - ${p.price}
+
+        {/* Toggle QR */}
+        <button onClick={() => toggleQR(p._id)} style={{ marginLeft: "10px" }}>
+          {qrVisible[p._id] ? "Hide QR" : "Show QR"}
+        </button>
+
+        {/* QR display */}
+        {qrVisible[p._id] && p.qrCode && (
+          <div className="qr-code-section" style={{ marginTop: "10px" }}>
+            <img
+              src={`http://localhost:8000/${p.qrCode}`}
+              alt="QR Code"
+              width="150"
+              style={{ display: "block", marginBottom: "5px" }}
+            />
+            <button onClick={() => downloadQR(p._id)}>Download QR</button>
+          </div>
+        )}
+      </li>
+    ))}
+  </ul>
+</section>
+
 
       {message && <p className="message">{message}</p>}
     </div>
