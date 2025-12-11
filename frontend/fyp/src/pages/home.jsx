@@ -128,6 +128,10 @@ export default function Home() {
             className={`feature-card ${hovered === i ? "hovered" : ""}`}
             onMouseEnter={() => setHovered(i)}
             onMouseLeave={() => setHovered("")}
+            onClick={() => {
+              if (f.title === "User Authentication") navigate("/user-authentication");
+              if (f.title === "Product Management") navigate("/product-management");
+            }}
           >
             <div className="feature-icon">{f.icon}</div>
             <div className="feature-title">{f.title}</div>

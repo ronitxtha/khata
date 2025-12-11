@@ -9,6 +9,8 @@ import ChangePassword from "./pages/changePassword.jsx";
 import OwnerDashboard from "./pages/ownerDashboard.jsx";
 import StaffDashboard from "./pages/staffDashboard.jsx";
 import CustomerDashboard from "./pages/customerDashboard.jsx";
+import UserAuthentication from "./pages/UserAuthentication.jsx";
+import ProductManagement from "./pages/ProductManagement.jsx";
 
 export default function App() {
   return (
@@ -24,6 +26,10 @@ export default function App() {
         <Route path="/owner-dashboard" element={<OwnerDashboard />} />
         <Route path="/staff-dashboard" element={<StaffDashboard />} />
         <Route path="/customer-dashboard" element={<CustomerDashboard />} />
+        <Route path="/user-authentication" element={<UserAuthentication />} />
+        <Route path="/product-management" element={<ProductManagement />} />
+
+
       </Routes>
    
   );

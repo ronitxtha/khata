@@ -1,6 +1,86 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
+import { Html5Qrcode } from "html5-qrcode";
 import "../styles/ownerDashboard.css";
+
+// ---------------- QR Scanner Component ----------------
+const QRScanner = ({ onScanSuccess, onClose }) => {
+  const scannerRef = useRef(null);
+  const isRunningRef = useRef(false);
+
+  useEffect(() => {
+    const html5QrCode = new Html5Qrcode("qr-reader");
+    scannerRef.current = html5QrCode;
+
+    html5QrCode
+      .start(
+        { facingMode: "environment" },
+        { fps: 10, qrbox: 150 }, // smaller box
+        (decodedText) => {
+          onScanSuccess(decodedText);
+          // stop scanner after successful scan
+          html5QrCode
+            .stop()
+            .then(() => html5QrCode.clear())
+            .catch(() => {});
+        }
+      )
+      .then(() => {
+        isRunningRef.current = true;
+      })
+      .catch((err) => console.error("Scanner start error:", err));
+
+    return () => {
+      if (isRunningRef.current && scannerRef.current) {
+        scannerRef.current
+          .stop()
+          .then(() => scannerRef.current.clear())
+          .catch(() => {});
+      }
+    };
+  }, []);
+
+  const handleCancel = () => {
+    if (isRunningRef.current && scannerRef.current) {
+      scannerRef.current
+        .stop()
+        .then(() => scannerRef.current.clear())
+        .catch(() => {});
+    }
+    onClose();
+  };
+
+  return (
+    <div style={{ marginTop: "10px" }}> {/* appears below the button */}
+      <div
+        id="qr-reader"
+        style={{
+          width: "250px", // smaller width
+          height: "200px", // smaller height
+          border: "1px solid #ccc",
+          borderRadius: "5px",
+          margin: "auto",
+        }}
+      ></div>
+      <button
+        onClick={handleCancel}
+        style={{
+          display: "block",
+          margin: "5px auto",
+          padding: "5px 10px",
+          background: "#f44336",
+          color: "white",
+          border: "none",
+          borderRadius: "3px",
+          cursor: "pointer",
+        }}
+      >
+        Cancel
+      </button>
+    </div>
+  );
+};
+
 
 const OwnerDashboard = () => {
   const [owner, setOwner] = useState({});
@@ -14,12 +94,13 @@ const OwnerDashboard = () => {
   const [productDescription, setProductDescription] = useState("");
   const [productImage, setProductImage] = useState(null);
 
-  const [qrVisible, setQrVisible] = useState({}); // track which product QR is visible
+  const [qrVisible, setQrVisible] = useState({});
   const [message, setMessage] = useState("");
+  const [scannerOpen, setScannerOpen] = useState(false);
 
   const API_BASE = "http://localhost:8000";
 
-  // ---------------- Load Owner, Staff & Products ----------------
+  // ---------------- Load Owner / Staff / Products ----------------
   useEffect(() => {
     const fetchOwnerData = async () => {
       try {
@@ -63,6 +144,7 @@ const OwnerDashboard = () => {
 
       setMessage(`Staff added: ${staffName}, password: ${password}`);
       setStaffList([...staffList, res.data.staff]);
+
       setStaffName("");
       setStaffEmail("");
     } catch (err) {
@@ -103,46 +185,80 @@ const OwnerDashboard = () => {
   };
 
   // ---------------- Toggle QR visibility ----------------
-const toggleQR = (productId) => {
-  setQrVisible((prev) => ({
-    ...prev,
-    [productId]: !prev[productId],
-  }));
-};
+  const toggleQR = (productId) => {
+    setQrVisible((prev) => ({
+      ...prev,
+      [productId]: !prev[productId],
+    }));
+  };
 
-// ---------------- Download QR ----------------
-const downloadQR = async (productId) => {
-  try {
-    const token = localStorage.getItem("accessToken");
-    const res = await axios.get(
-      `http://localhost:8000/api/owner/download-qr/${productId}`,
-      {
-        headers: { Authorization: `Bearer ${token}` },
-        responseType: "blob" // important to handle binary data
-      }
-    );
+  // ---------------- Download QR ----------------
+  const downloadQR = async (productId) => {
+    try {
+      const token = localStorage.getItem("accessToken");
 
-    // create a blob URL and download
-    const url = window.URL.createObjectURL(new Blob([res.data]));
-    const link = document.createElement("a");
-    link.href = url;
-    link.setAttribute("download", `product-${productId}-qr.png`);
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-  } catch (err) {
-    console.error("Download failed", err);
-    alert("Download failed");
-  }
-};
+      const res = await axios.get(
+        `${API_BASE}/api/owner/download-qr/${productId}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+          responseType: "blob",
+        }
+      );
 
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", `product-${productId}-qr.png`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    } catch (err) {
+      console.error("Download failed", err);
+      alert("Download failed");
+    }
+  };
 
+  // ---------------- Handle QR scan success ----------------
+  const handleScanSuccess = async (decodedText) => {
+    try {
+      const productId = decodedText; // QR contains the productId
+
+      const token = localStorage.getItem("accessToken");
+
+      const res = await axios.get(
+        `${API_BASE}/api/owner/product/${productId}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      const scannedProduct = res.data.product;
+
+      setProducts((prev) => [...prev, scannedProduct]);
+      setMessage(`Scanned & added: ${scannedProduct.name}`);
+
+      setScannerOpen(false);
+    } catch (err) {
+      console.error(err);
+      setMessage("Invalid or unknown QR code");
+    }
+  };
 
   return (
     <div className="dashboard-container">
       <header>
         <h1>Welcome, {owner?.username || "Owner"}</h1>
       </header>
+
+      <button className="scan-btn" onClick={() => setScannerOpen(true)}>
+  Scan Product QR
+</button>
+
+{scannerOpen && (
+  <QRScanner
+    onScanSuccess={handleScanSuccess}
+    onClose={() => setScannerOpen(false)}
+  />
+)}
+
 
       {/* Add Staff */}
       <section className="add-staff-section">
@@ -213,37 +329,45 @@ const downloadQR = async (productId) => {
       </section>
 
       {/* Product List */}
-<section className="product-list">
-  <h2>Products</h2>
-  <ul>
-    {products.map((p) => (
-      <li key={p._id} style={{ marginBottom: "15px" }}>
-        {p.name} - ${p.price}
+      <section className="product-list">
+        <h2>Products</h2>
+        <ul>
+          {products.map((p) => (
+            <li key={p._id} style={{ marginBottom: "15px" }}>
+              {p.name} - NPR {p.price}
 
-        {/* Toggle QR */}
-        <button onClick={() => toggleQR(p._id)} style={{ marginLeft: "10px" }}>
-          {qrVisible[p._id] ? "Hide QR" : "Show QR"}
-        </button>
+              <button
+                onClick={() => toggleQR(p._id)}
+                style={{ marginLeft: "10px" }}
+              >
+                {qrVisible[p._id] ? "Hide QR" : "Show QR"}
+              </button>
 
-        {/* QR display */}
-        {qrVisible[p._id] && p.qrCode && (
-          <div className="qr-code-section" style={{ marginTop: "10px" }}>
-            <img
-              src={`http://localhost:8000/${p.qrCode}`}
-              alt="QR Code"
-              width="150"
-              style={{ display: "block", marginBottom: "5px" }}
-            />
-            <button onClick={() => downloadQR(p._id)}>Download QR</button>
-          </div>
-        )}
-      </li>
-    ))}
-  </ul>
-</section>
-
+              {qrVisible[p._id] && p.qrCode && (
+                <div className="qr-code-section" style={{ marginTop: "10px" }}>
+                  <img
+                    src={`http://localhost:8000/${p.qrCode}`}
+                    alt="QR Code"
+                    width="150"
+                    style={{ display: "block", marginBottom: "5px" }}
+                  />
+                  <button onClick={() => downloadQR(p._id)}>Download QR</button>
+                </div>
+              )}
+            </li>
+          ))}
+        </ul>
+      </section>
 
       {message && <p className="message">{message}</p>}
+
+      {/* QR Scanner Overlay */}
+      {scannerOpen && (
+        <QRScanner
+          onScanSuccess={handleScanSuccess}
+          onClose={() => setScannerOpen(false)}
+        />
+      )}
     </div>
   );
 };
