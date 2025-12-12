@@ -1,44 +1,60 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useEffect, useRef } from "react";
 import { Html5Qrcode } from "html5-qrcode";
 
 const QRScanner = ({ onScanSuccess, onClose }) => {
   const scannerRef = useRef(null);
 
+  // Stop scanner safely
+  const stopScanner = async () => {
+    if (!scannerRef.current) return;
+
+    try {
+      if (scannerRef.current.isScanning) {
+        await scannerRef.current.stop(); // stop camera
+      }
+      await scannerRef.current.clear(); // clear DOM
+
+      // Explicitly stop video tracks to turn off light
+      const videoElem = document.querySelector("#qr-reader video");
+      if (videoElem?.srcObject) {
+        videoElem.srcObject.getTracks().forEach((track) => track.stop());
+        videoElem.srcObject = null;
+      }
+    } catch (err) {
+      console.warn("Error stopping scanner:", err);
+    }
+  };
+
   useEffect(() => {
-    const html5QrCode = new Html5Qrcode("qr-reader");
-    scannerRef.current = html5QrCode;
+    if (!scannerRef.current) {
+      scannerRef.current = new Html5Qrcode("qr-reader");
+    }
 
-    html5QrCode
-      .start(
-        { facingMode: "environment" },
-        { fps: 10, qrbox: 150 },
-        (decodedText) => {
-          onScanSuccess(decodedText);
-          stopScanner();
+    const startScanner = async () => {
+      if (!scannerRef.current.isScanning) {
+        try {
+          await scannerRef.current.start(
+            { facingMode: "environment" },
+            { fps: 10, qrbox: 150 },
+            (decodedText) => {
+              onScanSuccess(decodedText);
+              stopScanner();
+            }
+          );
+        } catch (err) {
+          console.error("Error starting scanner:", err);
         }
-      )
-      .catch((err) => console.error("Scanner start error:", err));
-
-    const stopScanner = () => {
-      if (scannerRef.current) {
-        scannerRef.current
-          .stop()
-          .then(() => scannerRef.current.clear())
-          .catch(() => {});
       }
     };
 
-    return () => stopScanner(); // clean up on unmount
-  }, []);
+    startScanner();
 
-  const handleCancel = () => {
-    if (scannerRef.current) {
-      scannerRef.current
-        .stop()
-        .then(() => scannerRef.current.clear())
-        .catch(() => {});
-    }
-    onClose(); // close the scanner in parent
+    return () => stopScanner();
+  }, [onScanSuccess]);
+
+  const handleCancel = async () => {
+    await stopScanner();
+    onClose?.();
   };
 
   return (
