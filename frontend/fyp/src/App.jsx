@@ -12,6 +12,7 @@ import CustomerDashboard from "./pages/customerDashboard.jsx";
 import UserAuthentication from "./pages/UserAuthentication.jsx";
 import ProductManagement from "./pages/ProductManagement.jsx";
 
+
 export default function App() {
   return (
    

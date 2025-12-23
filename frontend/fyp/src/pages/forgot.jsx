@@ -33,11 +33,12 @@ export default function ForgotPassword() {
   };
 
   return (
-    <div className="forgot-page">
-      <div className="forgot-container">
+    <div className="forgot-wrapper">
+      <div className="forgot-card">
         <h2>Forgot Password</h2>
-        {message && <p className="message">{message}</p>}
-        {error && <p className="error">{error}</p>}
+        {message && <div className="success-box">{message}</div>}
+        {error && <div className="error-box">{error}</div>}
+
         <form onSubmit={handleForgot}>
           <input
             type="email"

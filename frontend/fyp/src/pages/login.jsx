@@ -5,6 +5,7 @@ import "../styles/login.css";
 
 export default function Login() {
   const navigate = useNavigate();
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -13,7 +14,7 @@ export default function Login() {
   const validateForm = () => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      setError("Invalid email format");
+      setError("Enter a valid email");
       return false;
     }
     if (password.length < 4) {
@@ -25,65 +26,77 @@ export default function Login() {
   };
 
   const handleLogin = async (e) => {
-  e.preventDefault();
-  if (!validateForm()) return;
+    e.preventDefault();
+    if (!validateForm()) return;
 
-  try {
-    const res = await axios.post("http://localhost:8000/user/login", {
-      email,
-      password,
-    });
+    try {
+      const res = await axios.post(
+        "http://localhost:8000/user/login",
+        { email, password }
+      );
 
-    if (res.data.success) {
-      setSuccess(res.data.message);
-      setError("");
+      if (res.data.success) {
+        const user = res.data.user;
+        localStorage.setItem("accessToken", res.data.accessToken);
 
-      const user = res.data.user; // <-- get user object from backend
-      localStorage.setItem("accessToken", res.data.accessToken);
-
-      // Role-based navigation
-      if (user.role === "owner") navigate("/owner-dashboard");
-      else if (user.role === "staff") navigate("/staff-dashboard");
-      else navigate("/customer-dashboard");
-    } else {
-      setError(res.data.message);
-      setSuccess("");
+        if (user.role === "owner") navigate("/owner-dashboard");
+        else if (user.role === "staff") navigate("/staff-dashboard");
+        else navigate("/customer-dashboard");
+      } else {
+        setError(res.data.message);
+      }
+    } catch {
+      setError("Login failed");
     }
-  } catch (err) {
-    setError(err.response?.data?.message || "Login failed");
-    setSuccess("");
-  }
-};
-
+  };
 
   return (
-    <div className="login-container">
-      <h2>Login</h2>
-      {error && <p className="error">{error}</p>}
-      {success && <p className="success">{success}</p>}
-      <form onSubmit={handleLogin}>
-        <input
-          type="email"
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
+    <div className="login-wrapper">
+      {/* LEFT IMAGE SECTION */}
+      <div className="login-image">
+        <h1>Smart Khata</h1>
+        <p>Manage your accounts smarter & faster</p>
+        <img
+          src="https://images.unsplash.com/photo-1554224155-6726b3ff858f"
+          alt="Business"
         />
-        <input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
-        <button type="submit">Login</button>
-      </form>
-      <p>
-        Forgot password?{" "}
-        <span onClick={() => navigate("/forgot-password")}>Click here</span>
-      </p>
-      <p>
-        Don’t have an account?{" "}
-        <span onClick={() => navigate("/register")}>Sign Up</span>
-      </p>
+      </div>
+
+      {/* RIGHT FORM SECTION */}
+      <div className="login-form">
+        <h2>Welcome Back</h2>
+        <p className="form-subtitle">Login to your account</p>
+
+        {error && <div className="error-box">{error}</div>}
+        {success && <div className="success-box">{success}</div>}
+
+        <form onSubmit={handleLogin}>
+          <input
+            type="email"
+            placeholder="Email address"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
+
+          <input
+            type="password"
+            placeholder="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+
+          <button type="submit">Login</button>
+        </form>
+
+        <div className="form-links">
+          <span onClick={() => navigate("/forgot-password")}>
+            Forgot password?
+          </span>
+          <span onClick={() => navigate("/register")}>
+            Create account
+          </span>
+        </div>
+      </div>
     </div>
   );
 }

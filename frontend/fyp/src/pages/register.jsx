@@ -5,7 +5,8 @@ import "../styles/register.css";
 
 export default function Register() {
   const navigate = useNavigate();
-  const [role, setRole] = useState("customer"); // default customer
+
+  const [role, setRole] = useState("customer");
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -45,6 +46,7 @@ export default function Register() {
         password,
         role,
       });
+
       if (res.data.success) {
         setSuccess(
           "Registered successfully! Please check your email to verify your account."
@@ -55,69 +57,76 @@ export default function Register() {
         setSuccess("");
       }
     } catch (err) {
-  const backend = err.response?.data;
+      const backend = err.response?.data;
 
-  // handle user exists message
-  if (backend?.message) {
-    setError(backend.message);
-  }
-  // handle yup validation errors
-  else if (backend?.errors) {
-    setError(backend.errors[0]);
-  }
-  else {
-    setError("Registration failed");
-  }
-
-  setSuccess("");
-}
-
+      if (backend?.message) {
+        setError(backend.message);
+      } else if (backend?.errors) {
+        setError(backend.errors[0]);
+      } else {
+        setError("Registration failed");
+      }
+      setSuccess("");
+    }
   };
 
   return (
-    <div className="register-container">
-      <h2>Register</h2>
-      {error && <p className="error">{error}</p>}
-      {success && <p className="success">{success}</p>}
-      <form onSubmit={handleRegister}>
-       
+    <div className="register-wrapper">
+      {/* LEFT IMAGE SECTION */}
+      <div className="register-image">
+        <h1>Smart Khata</h1>
+        <p>Create your account and manage business with confidence</p>
 
-        <label>Full Name</label>
-        <input
-          type="text"
-          placeholder="Full Name"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
+        <img
+          src="https://images.unsplash.com/photo-1523958203904-cdcb402031fd"
+          alt="Business registration"
         />
+      </div>
 
-        <label>Enter your email</label>
-        <input
-          type="email"
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
+      {/* RIGHT FORM SECTION */}
+      <div className="register-form">
+        <h2>Create Account</h2>
+        <p className="form-subtitle">Start using Smart Khata</p>
 
-        <label>Password</label>
-        <input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
-         <label>Select Role</label>
-         
-        <select value={role} onChange={(e) => setRole(e.target.value)}>
-          <option value="customer">Customer</option>
-          <option value="owner">Owner</option>
-        </select>
+        {error && <div className="error-box">{error}</div>}
+        {success && <div className="success-box">{success}</div>}
 
-        <button type="submit">Sign Up</button>
-      </form>
-      <p>
-        Already have an account?{" "}
-        <span onClick={() => navigate("/login")}>Login</span>
-      </p>
+        <form onSubmit={handleRegister}>
+          <input
+            type="text"
+            placeholder="Full Name"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+          />
+
+          <input
+            type="email"
+            placeholder="Email address"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
+
+          <input
+            type="password"
+            placeholder="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+
+          <select value={role} onChange={(e) => setRole(e.target.value)}>
+            <option value="customer">Customer</option>
+            <option value="owner">Owner</option>
+          </select>
+
+          <button type="submit">Create Account</button>
+        </form>
+
+        <div className="form-links">
+          <span onClick={() => navigate("/login")}>
+            Already have an account? Login
+          </span>
+        </div>
+      </div>
     </div>
   );
 }

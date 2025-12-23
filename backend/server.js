@@ -5,6 +5,8 @@ import userRoute from "./routes/userRoute.js";
 import ownerRoutes from "./routes/ownerRoute.js"; 
 import cors from "cors";
 import { verification } from "./controllers/userController.js";
+import staffRoutes from "./routes/staffRoute.js";
+import productRoutes from "./routes/productRoute.js";
 import path from "path"; // ✅ add this
 
 const app = express();
@@ -23,6 +25,9 @@ app.use("/uploads", express.static(path.join(path.resolve(), "uploads")));
 // Attach all /user routes
 app.use('/user', userRoute);
 app.get("/user/verify/:token", verification);
+
+app.use("/api/staff", staffRoutes);
+app.use("/api", productRoutes); // customers
 
 // Attach all /api/owner routes
 app.use("/api/owner", ownerRoutes);
