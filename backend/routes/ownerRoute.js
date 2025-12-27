@@ -2,6 +2,9 @@ import express from "express";
 import { User } from "../models/userModel.js";
 import { Product } from "../models/productModel.js";
 import { isAuthenticated } from "../middleware/isAuthenticated.js";
+import { deleteProduct } from "../controllers/userController.js";
+
+
 import bcrypt from "bcryptjs";
 import multer from "multer";
 import QRCode from "qrcode";
@@ -26,6 +29,9 @@ router.get("/me", isAuthenticated, async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 });
+
+router.delete("/delete-product/:id", isAuthenticated, deleteProduct);
+
 
 // ----------------------- Staff List -----------------------
 router.get("/staff", isAuthenticated, async (req, res) => {

@@ -128,6 +128,21 @@ const OwnerDashboard = () => {
     }
   };
 
+  // Delete product
+  const handleDeleteProduct = async (productId) => {
+    try {
+      const token = localStorage.getItem("accessToken");
+      await axios.delete(`${API_BASE}/api/owner/delete-product/${productId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setProducts(products.filter((p) => p._id !== productId));
+      setMessage("Product deleted successfully");
+    } catch (err) {
+      console.error(err);
+      setMessage(err.response?.data?.message || "Delete failed");
+    }
+  };
+
   // Handle QR scan success
   const handleScanSuccess = async (decodedText) => {
     try {
@@ -139,7 +154,6 @@ const OwnerDashboard = () => {
       });
 
       const scannedProduct = res.data.product;
-
       setProducts((prev) => [...prev, scannedProduct]);
       setMessage(`Scanned & added: ${scannedProduct.name}`);
 
@@ -163,12 +177,11 @@ const OwnerDashboard = () => {
 
       {/* QR Scanner */}
       {scannerOpen && (
-  <QRScanner
-    onScanSuccess={handleScanSuccess}
-    onClose={() => setScannerOpen(false)}
-  />
-)}
-
+        <QRScanner
+          onScanSuccess={handleScanSuccess}
+          onClose={() => setScannerOpen(false)}
+        />
+      )}
 
       {/* Add Staff */}
       <section className="add-staff-section">
@@ -247,6 +260,12 @@ const OwnerDashboard = () => {
               {p.name} - NPR {p.price}
               <button onClick={() => toggleQR(p._id)} style={{ marginLeft: "10px" }}>
                 {qrVisible[p._id] ? "Hide QR" : "Show QR"}
+              </button>
+              <button
+                onClick={() => handleDeleteProduct(p._id)}
+                style={{ marginLeft: "10px", backgroundColor: "red", color: "white" }}
+              >
+                Delete
               </button>
               {qrVisible[p._id] && p.qrCode && (
                 <div className="qr-code-section" style={{ marginTop: "10px" }}>
