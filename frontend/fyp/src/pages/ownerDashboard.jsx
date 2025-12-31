@@ -103,27 +103,39 @@ const OwnerDashboard = () => {
   };
 
   // Re-add deleted product
-  const handleAddProductAgain = async (product) => {
-    try {
-      const token = localStorage.getItem("accessToken");
-      const res = await axios.post(
-        `${API_BASE}/api/owner/add-product`,
-        {
-          name: product.name,
-          price: product.price,
-          description: product.description,
-        },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
 
-      setProducts([...products, res.data.product]);
-      setMessage("Product added again successfully!");
-      setScannedProduct(null);
-    } catch (err) {
-      console.error(err);
-      setMessage(err.response?.data?.message || "Error adding product again");
+const handleAddProductAgain = async (product) => {
+  try {
+    const token = localStorage.getItem("accessToken");
+    const formData = new FormData();
+
+    formData.append("name", product.name);
+    formData.append("price", product.price);
+    formData.append("description", product.description);
+
+    // If the deleted product has an existing image, fetch it and append
+    if (product.imageFile) {
+      // Convert the existing image path to a File object
+      const imageResponse = await fetch(`http://localhost:8000/${product.imageFile}`);
+      const imageBlob = await imageResponse.blob();
+      const fileName = product.imageFile.split("/").pop(); // extract filename
+      const imageFile = new File([imageBlob], fileName, { type: imageBlob.type });
+      formData.append("image", imageFile);
     }
-  };
+
+    const res = await axios.post(`${API_BASE}/api/owner/add-product`, formData, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    setProducts([...products, res.data.product]);
+    setMessage("Product added again successfully!");
+    setScannedProduct(null);
+  } catch (err) {
+    console.error(err);
+    setMessage(err.response?.data?.message || "Error adding product again");
+  }
+};
+
 
   // Toggle QR visibility
   const toggleQR = (productId) => {
@@ -169,29 +181,43 @@ const OwnerDashboard = () => {
 
   // Handle QR scan success
   const handleScanSuccess = async (productId) => {
-    try {
-      const token = localStorage.getItem("accessToken");
-      const res = await axios.get(`${API_BASE}/api/owner/product/${productId}`, {
-        headers: { Authorization: `Bearer ${token}` },
+  try {
+    const token = localStorage.getItem("accessToken");
+    const res = await axios.get(`${API_BASE}/api/owner/product/${productId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    if (res.data.success && res.data.product) {
+      const product = res.data.product;
+      setScannedProduct({
+        ...product,
+        deleted: !!product.deleted,
+        imageFile: product.image ? product.image : null, // store image reference
       });
-
-      if (res.data.success && res.data.product) {
-        const product = res.data.product;
-        setScannedProduct({
-          ...product,
-          deleted: !!product.deleted,
-        });
-      } else {
-        setScannedProduct({ name: "Product not found", price: "-", description: "-", deleted: true });
-      }
-
-      setScannerOpen(false);
-    } catch (err) {
-      console.error("Product fetch failed:", err.response?.data || err.message);
-      setScannedProduct({ name: "Product not found", price: "-", description: "-", deleted: true });
-      setScannerOpen(false);
+    } else {
+      setScannedProduct({
+        name: "Product not found",
+        price: "-",
+        description: "-",
+        deleted: true,
+        imageFile: null,
+      });
     }
-  };
+
+    setScannerOpen(false);
+  } catch (err) {
+    console.error("Product fetch failed:", err.response?.data || err.message);
+    setScannedProduct({
+      name: "Product not found",
+      price: "-",
+      description: "-",
+      deleted: true,
+      imageFile: null,
+    });
+    setScannerOpen(false);
+  }
+};
+
 
   return (
     <div className="dashboard-container">
