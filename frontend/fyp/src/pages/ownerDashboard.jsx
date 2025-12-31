@@ -7,6 +7,8 @@ const OwnerDashboard = () => {
   const [owner, setOwner] = useState({});
   const [staffList, setStaffList] = useState([]);
   const [products, setProducts] = useState([]);
+  const [scannedProduct, setScannedProduct] = useState(null);
+
   const [staffName, setStaffName] = useState("");
   const [staffEmail, setStaffEmail] = useState("");
 
@@ -100,6 +102,29 @@ const OwnerDashboard = () => {
     }
   };
 
+  // Re-add deleted product
+  const handleAddProductAgain = async (product) => {
+    try {
+      const token = localStorage.getItem("accessToken");
+      const res = await axios.post(
+        `${API_BASE}/api/owner/add-product`,
+        {
+          name: product.name,
+          price: product.price,
+          description: product.description,
+        },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      setProducts([...products, res.data.product]);
+      setMessage("Product added again successfully!");
+      setScannedProduct(null);
+    } catch (err) {
+      console.error(err);
+      setMessage(err.response?.data?.message || "Error adding product again");
+    }
+  };
+
   // Toggle QR visibility
   const toggleQR = (productId) => {
     setQrVisible((prev) => ({ ...prev, [productId]: !prev[productId] }));
@@ -109,7 +134,6 @@ const OwnerDashboard = () => {
   const downloadQR = async (productId) => {
     try {
       const token = localStorage.getItem("accessToken");
-
       const res = await axios.get(`${API_BASE}/api/owner/download-qr/${productId}`, {
         headers: { Authorization: `Bearer ${token}` },
         responseType: "blob",
@@ -128,7 +152,7 @@ const OwnerDashboard = () => {
     }
   };
 
-  // Delete product
+  // Delete product (soft delete)
   const handleDeleteProduct = async (productId) => {
     try {
       const token = localStorage.getItem("accessToken");
@@ -144,23 +168,28 @@ const OwnerDashboard = () => {
   };
 
   // Handle QR scan success
-  const handleScanSuccess = async (decodedText) => {
+  const handleScanSuccess = async (productId) => {
     try {
-      const productId = decodedText;
       const token = localStorage.getItem("accessToken");
-
       const res = await axios.get(`${API_BASE}/api/owner/product/${productId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      const scannedProduct = res.data.product;
-      setProducts((prev) => [...prev, scannedProduct]);
-      setMessage(`Scanned & added: ${scannedProduct.name}`);
+      if (res.data.success && res.data.product) {
+        const product = res.data.product;
+        setScannedProduct({
+          ...product,
+          deleted: !!product.deleted,
+        });
+      } else {
+        setScannedProduct({ name: "Product not found", price: "-", description: "-", deleted: true });
+      }
 
-      setScannerOpen(false); // close scanner after scan
+      setScannerOpen(false);
     } catch (err) {
-      console.error(err);
-      setMessage("Invalid or unknown QR code");
+      console.error("Product fetch failed:", err.response?.data || err.message);
+      setScannedProduct({ name: "Product not found", price: "-", description: "-", deleted: true });
+      setScannerOpen(false);
     }
   };
 
@@ -181,6 +210,27 @@ const OwnerDashboard = () => {
           onScanSuccess={handleScanSuccess}
           onClose={() => setScannerOpen(false)}
         />
+      )}
+
+      {/* Display Scanned Product */}
+      {scannedProduct && (
+        <div className="scanned-product" style={{ marginTop: "15px" }}>
+          <h3>
+            {scannedProduct.name}
+            {scannedProduct.deleted ? " (Deleted)" : ""}
+          </h3>
+          <p>Price: NPR {scannedProduct.price}</p>
+          <p>{scannedProduct.description}</p>
+
+          {scannedProduct.deleted && (
+            <button
+              onClick={() => handleAddProductAgain(scannedProduct)}
+              style={{ marginTop: "10px" }}
+            >
+              Add Product Again
+            </button>
+          )}
+        </div>
       )}
 
       {/* Add Staff */}
@@ -245,7 +295,6 @@ const OwnerDashboard = () => {
             type="file"
             accept="image/*"
             onChange={(e) => setProductImage(e.target.files[0])}
-            required
           />
           <button type="submit">Add Product</button>
         </form>
@@ -255,31 +304,45 @@ const OwnerDashboard = () => {
       <section className="product-list">
         <h2>Products</h2>
         <ul>
-          {products.map((p) => (
-            <li key={p._id} style={{ marginBottom: "15px" }}>
-              {p.name} - NPR {p.price}
-              <button onClick={() => toggleQR(p._id)} style={{ marginLeft: "10px" }}>
-                {qrVisible[p._id] ? "Hide QR" : "Show QR"}
-              </button>
-              <button
-                onClick={() => handleDeleteProduct(p._id)}
-                style={{ marginLeft: "10px", backgroundColor: "red", color: "white" }}
-              >
-                Delete
-              </button>
-              {qrVisible[p._id] && p.qrCode && (
-                <div className="qr-code-section" style={{ marginTop: "10px" }}>
-                  <img
-                    src={`http://localhost:8000/${p.qrCode}`}
-                    alt="QR Code"
-                    width="150"
-                    style={{ display: "block", marginBottom: "5px" }}
-                  />
-                  <button onClick={() => downloadQR(p._id)}>Download QR</button>
-                </div>
-              )}
-            </li>
-          ))}
+          {Array.isArray(products) && products.length > 0 ? (
+            products.map((p) => (
+              <li key={p._id} style={{ marginBottom: "15px" }}>
+                {p.name} - NPR {p.price}
+
+                <button
+                  onClick={() => toggleQR(p._id)}
+                  style={{ marginLeft: "10px" }}
+                >
+                  {qrVisible[p._id] ? "Hide QR" : "Show QR"}
+                </button>
+
+                <button
+                  onClick={() => handleDeleteProduct(p._id)}
+                  style={{
+                    marginLeft: "10px",
+                    backgroundColor: "red",
+                    color: "white",
+                  }}
+                >
+                  Delete
+                </button>
+
+                {qrVisible[p._id] && p.qrCode && (
+                  <div className="qr-code-section" style={{ marginTop: "10px" }}>
+                    <img
+                      src={`http://localhost:8000/${p.qrCode}`}
+                      alt="QR Code"
+                      width="150"
+                      style={{ display: "block", marginBottom: "5px" }}
+                    />
+                    <button onClick={() => downloadQR(p._id)}>Download QR</button>
+                  </div>
+                )}
+              </li>
+            ))
+          ) : (
+            <li>No products found</li>
+          )}
         </ul>
       </section>
 

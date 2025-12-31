@@ -9,12 +9,12 @@ const QRScanner = ({ onScanSuccess, onClose }) => {
     if (!scannerRef.current) return;
 
     try {
-      if (scannerRef.current.isScanning) {
-        await scannerRef.current.stop(); // stop camera
+      const state = scannerRef.current.getState?.();
+      if (state === "SCANNING") {
+        await scannerRef.current.stop();
+        await scannerRef.current.clear();
       }
-      await scannerRef.current.clear(); // clear DOM
 
-      // Explicitly stop video tracks to turn off light
       const videoElem = document.querySelector("#qr-reader video");
       if (videoElem?.srcObject) {
         videoElem.srcObject.getTracks().forEach((track) => track.stop());
@@ -26,19 +26,20 @@ const QRScanner = ({ onScanSuccess, onClose }) => {
   };
 
   useEffect(() => {
-    if (!scannerRef.current) {
-      scannerRef.current = new Html5Qrcode("qr-reader");
-    }
-
     const startScanner = async () => {
-      if (!scannerRef.current.isScanning) {
+      if (!scannerRef.current) {
+        scannerRef.current = new Html5Qrcode("qr-reader");
+      }
+
+      const state = scannerRef.current.getState?.();
+      if (state !== "SCANNING") {
         try {
           await scannerRef.current.start(
             { facingMode: "environment" },
             { fps: 10, qrbox: 150 },
-            (decodedText) => {
+            async (decodedText) => {
               onScanSuccess(decodedText);
-              stopScanner();
+              await stopScanner();
             }
           );
         } catch (err) {

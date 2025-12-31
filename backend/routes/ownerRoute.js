@@ -30,7 +30,20 @@ router.get("/me", isAuthenticated, async (req, res) => {
   }
 });
 
-router.delete("/delete-product/:id", isAuthenticated, deleteProduct);
+router.delete("/delete-product/:id", isAuthenticated, async (req, res) => {
+  try {
+    const product = await Product.findOneAndUpdate(
+      { _id: req.params.id, shopId: req.user.shopId },
+      { deleted: true },
+      { new: true }
+    );
+    if (!product) return res.status(404).json({ message: "Product not found" });
+    res.json({ message: "Product deleted successfully", product });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
 
 
 // ----------------------- Staff List -----------------------
@@ -44,14 +57,17 @@ router.get("/staff", isAuthenticated, async (req, res) => {
 });
 
 // ----------------------- Products List -----------------------
+// ----------------------- Products List -----------------------
 router.get("/products", isAuthenticated, async (req, res) => {
   try {
-    const products = await Product.find({ shopId: req.user.shopId });
+    // Only fetch products that are not marked as deleted
+    const products = await Product.find({ shopId: req.user.shopId, deleted: false });
     res.json({ products });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 });
+
 
 // ----------------------- Add Staff -----------------------
 router.post("/add-staff", isAuthenticated, async (req, res) => {
@@ -78,43 +94,62 @@ router.post("/add-staff", isAuthenticated, async (req, res) => {
   }
 });
 // ----------------------- Add Product with QR -----------------------
-router.post(
-  "/add-product",
-  isAuthenticated,
-  upload.single("image"),
-  async (req, res) => {
-    try {
-      const { name, price, description } = req.body;
-      const imagePath = req.file ? req.file.path : null;
+router.post("/add-product", isAuthenticated, upload.single("image"), async (req, res) => {
+  try {
+    console.log("req.body:", req.body);
+    console.log("req.file:", req.file);
+    console.log("req.user:", req.user);
 
-      // Create product in DB
-      const product = await Product.create({
-        name,
-        price,
-        description,
-        image: imagePath,
-        shopId: req.user.shopId,
-      });
+    const { name, price, description } = req.body;
+    const imagePath = req.file ? req.file.path : null;
 
-      // Generate QR code
-      const qrFileName = `qr-${product._id}.png`;
-      const qrPath = `uploads/${qrFileName}`;
-      await QRCode.toFile(qrPath, product._id.toString());
+    const product = await Product.create({
+      name,
+      price,
+      description,
+      image: imagePath,
+      shopId: req.user.shopId,
+    });
 
-      // Save QR path in DB
-      product.qrCode = qrPath;
-      await product.save();
+    const qrFileName = `qr-${product._id}.png`;
+    const qrPath = `uploads/${qrFileName}`;
+    await QRCode.toFile(qrPath, product._id.toString());
 
-      res.json({
-        message: "Product added successfully",
-        product,
-      });
-    } catch (err) {
-      console.error(err);
-      res.status(500).json({ message: err.message });
-    }
+    product.qrCode = qrPath;
+    await product.save();
+
+    res.json({ message: "Product added successfully", product });
+  } catch (err) {
+    console.error("Add product error:", err);
+    res.status(500).json({ message: err.message });
   }
-);
+});
+
+
+// ----------------------- Get Single Product by ID -----------------------
+router.get("/product/:id", isAuthenticated, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Include deleted products too
+    const product = await Product.findOne({
+      _id: id,
+      shopId: req.user.shopId,
+    });
+
+    if (!product) {
+      return res.status(404).json({ success: false, message: "Product not found" });
+    }
+
+    res.status(200).json({ success: true, product });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+
+
 
 // ----------------------- Download QR -----------------------
 router.get("/download-qr/:productId", isAuthenticated, async (req, res) => {

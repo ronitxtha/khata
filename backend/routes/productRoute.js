@@ -6,7 +6,8 @@ const router = express.Router();
 // PUBLIC: Customer can see all products
 router.get("/products", async (req, res) => {
   try {
-    const products = await Product.find(); // no auth, no shop filter
+    // Only products not marked as deleted
+    const products = await Product.find({ deleted: false });
     res.json({ products });
   } catch (err) {
     res.status(500).json({ message: err.message });
