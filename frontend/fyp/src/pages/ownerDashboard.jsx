@@ -20,6 +20,8 @@ const OwnerDashboard = () => {
   const [qrVisible, setQrVisible] = useState({});
   const [message, setMessage] = useState("");
   const [scannerOpen, setScannerOpen] = useState(false);
+  const [productCategory, setProductCategory] = useState("");
+
 
   const API_BASE = "http://localhost:8000";
 
@@ -52,6 +54,20 @@ const OwnerDashboard = () => {
     fetchOwnerData();
   }, []);
 
+  //Catagory fetch
+  const CATEGORY_LIST = [
+  "Electronics",
+  "Fashion",
+  "Beauty & Personal Care",
+  "Home & Kitchen",
+  "Books & Stationery",
+  "Toys & Games",
+  "Sports & Fitness",
+  "Automotive",
+  "Others",
+];
+
+
   // Add staff
   const handleAddStaff = async (e) => {
     e.preventDefault();
@@ -77,30 +93,39 @@ const OwnerDashboard = () => {
 
   // Add product
   const handleAddProduct = async (e) => {
-    e.preventDefault();
-    try {
-      const token = localStorage.getItem("accessToken");
-      const formData = new FormData();
-      formData.append("name", productName);
-      formData.append("price", productPrice);
-      formData.append("description", productDescription);
-      formData.append("image", productImage);
+  e.preventDefault();
 
-      const res = await axios.post(`${API_BASE}/api/owner/add-product`, formData, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+  if (!productCategory) {
+    setMessage("Please select a product category");
+    return;
+  }
 
-      setMessage("Product added successfully!");
-      setProducts([...products, res.data.product]);
-      setProductName("");
-      setProductPrice("");
-      setProductDescription("");
-      setProductImage(null);
-    } catch (err) {
-      console.error(err);
-      setMessage(err.response?.data?.message || "Error adding product");
-    }
-  };
+  try {
+    const token = localStorage.getItem("accessToken");
+    const formData = new FormData();
+    formData.append("name", productName);
+    formData.append("price", productPrice);
+    formData.append("description", productDescription);
+    formData.append("image", productImage);
+    formData.append("category", productCategory); // ✅ already added
+
+    const res = await axios.post(`${API_BASE}/api/owner/add-product`, formData, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    setMessage("Product added successfully!");
+    setProducts([...products, res.data.product]);
+    setProductName("");
+    setProductPrice("");
+    setProductDescription("");
+    setProductCategory(""); // reset after submission
+    setProductImage(null);
+  } catch (err) {
+    console.error(err);
+    setMessage(err.response?.data?.message || "Error adding product");
+  }
+};
+
 
   // Re-add deleted product
 
@@ -112,13 +137,13 @@ const handleAddProductAgain = async (product) => {
     formData.append("name", product.name);
     formData.append("price", product.price);
     formData.append("description", product.description);
+    formData.append("category", product.category || "Others"); // make sure category is included
 
-    // If the deleted product has an existing image, fetch it and append
+    // Append existing image if available
     if (product.imageFile) {
-      // Convert the existing image path to a File object
       const imageResponse = await fetch(`http://localhost:8000/${product.imageFile}`);
       const imageBlob = await imageResponse.blob();
-      const fileName = product.imageFile.split("/").pop(); // extract filename
+      const fileName = product.imageFile.split("/").pop();
       const imageFile = new File([imageBlob], fileName, { type: imageBlob.type });
       formData.append("image", imageFile);
     }
@@ -127,14 +152,19 @@ const handleAddProductAgain = async (product) => {
       headers: { Authorization: `Bearer ${token}` },
     });
 
-    setProducts([...products, res.data.product]);
-    setMessage("Product added again successfully!");
+    // Update products list
+    setProducts((prevProducts) => [...prevProducts, res.data.product]);
+
+    // Clear scanned product immediately to prevent multiple clicks
     setScannedProduct(null);
+
+    setMessage("Product added again successfully!");
   } catch (err) {
     console.error(err);
     setMessage(err.response?.data?.message || "Error adding product again");
   }
 };
+
 
 
   // Toggle QR visibility
@@ -317,6 +347,19 @@ const handleAddProductAgain = async (product) => {
             onChange={(e) => setProductDescription(e.target.value)}
             required
           />
+          <select
+  value={productCategory}
+  onChange={(e) => setProductCategory(e.target.value)}
+  required
+>
+  <option value="">Select Category</option>
+  {CATEGORY_LIST.map((cat) => (
+    <option key={cat} value={cat}>
+      {cat}
+    </option>
+  ))}
+</select>
+
           <input
             type="file"
             accept="image/*"
@@ -333,7 +376,8 @@ const handleAddProductAgain = async (product) => {
           {Array.isArray(products) && products.length > 0 ? (
             products.map((p) => (
               <li key={p._id} style={{ marginBottom: "15px" }}>
-                {p.name} - NPR {p.price}
+                {p.name} - NPR {p.price} ({p.category})
+
 
                 <button
                   onClick={() => toggleQR(p._id)}

@@ -94,14 +94,26 @@ router.post("/add-staff", isAuthenticated, async (req, res) => {
   }
 });
 // ----------------------- Add Product with QR -----------------------
+
 router.post("/add-product", isAuthenticated, upload.single("image"), async (req, res) => {
   try {
-    console.log("req.body:", req.body);
-    console.log("req.file:", req.file);
-    console.log("req.user:", req.user);
-
-    const { name, price, description } = req.body;
+    const { name, price, description, category } = req.body; // include category
     const imagePath = req.file ? req.file.path : null;
+
+    // Optional: Validate category against allowed list
+    const MAIN_CATEGORIES = [
+      "Electronics",
+      "Fashion",
+      "Beauty & Personal Care",
+      "Home & Kitchen",
+      "Books & Stationery",
+      "Toys & Games",
+      "Sports & Fitness",
+      "Automotive",
+      "Others",
+    ];
+
+    const finalCategory = MAIN_CATEGORIES.includes(category) ? category : "Others";
 
     const product = await Product.create({
       name,
@@ -109,8 +121,10 @@ router.post("/add-product", isAuthenticated, upload.single("image"), async (req,
       description,
       image: imagePath,
       shopId: req.user.shopId,
+      category: finalCategory, // save category
     });
 
+    // Generate QR code
     const qrFileName = `qr-${product._id}.png`;
     const qrPath = `uploads/${qrFileName}`;
     await QRCode.toFile(qrPath, product._id.toString());
@@ -124,6 +138,7 @@ router.post("/add-product", isAuthenticated, upload.single("image"), async (req,
     res.status(500).json({ message: err.message });
   }
 });
+
 
 
 // ----------------------- Get Single Product by ID -----------------------

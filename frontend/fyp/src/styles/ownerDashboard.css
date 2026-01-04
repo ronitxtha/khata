@@ -1,4 +1,4 @@
-/* MAIN CONTAINER */
+/* ==================== MAIN CONTAINER ==================== */
 .dashboard-container {
   max-width: 1200px;
   margin: 40px auto;
@@ -10,7 +10,7 @@
   box-shadow: 0 10px 25px rgba(0,0,0,0.1);
 }
 
-/* HEADER */
+/* ==================== HEADER ==================== */
 header h1 {
   text-align: center;
   font-size: 32px;
@@ -19,7 +19,7 @@ header h1 {
   font-weight: 600;
 }
 
-/* BUTTONS */
+/* ==================== BUTTONS ==================== */
 button {
   cursor: pointer;
   border: none;
@@ -31,7 +31,7 @@ button:hover {
   opacity: 0.9;
 }
 
-/* SCAN BUTTON */
+/* Scan button */
 .scan-btn {
   display: block;
   margin: 0 auto 30px auto;
@@ -39,14 +39,13 @@ button:hover {
   font-size: 16px;
   background: #2563eb;
   color: #fff;
-  border-radius: 8px;
 }
 
 .scan-btn:hover {
   background: #1d4ed8;
 }
 
-/* SECTIONS */
+/* ==================== SECTIONS ==================== */
 .add-staff-section,
 .staff-list,
 .add-product-section,
@@ -58,52 +57,70 @@ button:hover {
   box-shadow: 0 6px 15px rgba(0,0,0,0.05);
 }
 
+/* Section headings */
 h2 {
   font-size: 22px;
   color: #2563eb;
-  margin-bottom: 15px;
+  margin-bottom: 20px;
   font-weight: 600;
 }
 
-/* FORMS */
+/* ==================== FORMS ==================== */
 form {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
+  gap: 15px;
 }
 
-/* INPUT, TEXTAREA, SELECT */
+/* Inputs, textarea, select */
 form input,
 form textarea,
 form select {
-  flex: 1;
-  padding: 12px;
+  flex: 1 1 100%;
+  padding: 12px 14px;
   border-radius: 8px;
   border: 1px solid #d1d5db;
   font-size: 15px;
-  background-color: #f3f4f6; /* light grey background */
-  color: #111827;             /* dark text */
+  background-color: #f3f4f6;
+  color: #111827;
+  outline: none;
+  transition: border 0.2s ease, box-shadow 0.2s ease;
+  height: 40px;
 }
 
-form textarea {
-  resize: vertical;
-}
-
+/* Focus state */
 form input:focus,
 form textarea:focus,
 form select:focus {
-  outline: none;
   border-color: #2563eb;
   box-shadow: 0 0 6px rgba(37, 99, 235, 0.2);
-  background-color: #f3f4f6; /* keep grey on focus */
+  background-color: #f3f4f6;
 }
 
-/* FORM BUTTONS */
+/* Textarea adjustments */
+form textarea {
+  resize: vertical;
+  min-height: 90px;
+}
+
+/* Dropdown specific */
+form select {
+  cursor: pointer;
+  background-color: #fff;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg width='10' height='6' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23666'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  background-size: 10px;
+}
+
+/* Form buttons */
 form button {
   background: #2563eb;
   color: #fff;
   padding: 12px 20px;
   font-weight: 600;
+  flex: 1 1 auto;
 }
 
 form button:hover {
@@ -112,10 +129,11 @@ form button:hover {
   box-shadow: 0 6px 12px rgba(29,78,216,0.3);
 }
 
-/* LISTS */
+/* ==================== LISTS ==================== */
 ul {
   list-style: none;
   padding-left: 0;
+  margin: 0;
 }
 
 li {
@@ -124,13 +142,14 @@ li {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-wrap: wrap;
 }
 
 li:last-child {
   border-bottom: none;
 }
 
-/* QR CODE SECTION */
+/* ==================== QR CODE ==================== */
 .qr-code-section {
   margin-top: 10px;
   text-align: center;
@@ -147,13 +166,14 @@ li:last-child {
   background: #10b981;
   color: #fff;
   padding: 8px 16px;
+  border-radius: 8px;
 }
 
 .qr-code-section button:hover {
   background: #059669;
 }
 
-/* MESSAGE BOX */
+/* ==================== MESSAGE ==================== */
 .message {
   margin-top: 20px;
   text-align: center;
@@ -164,7 +184,7 @@ li:last-child {
   font-weight: 600;
 }
 
-/* RESPONSIVE */
+/* ==================== RESPONSIVE ==================== */
 @media (max-width: 900px) {
   .dashboard-container {
     padding: 20px;
@@ -172,6 +192,7 @@ li:last-child {
 
   form {
     flex-direction: column;
+    gap: 12px;
   }
 
   li {

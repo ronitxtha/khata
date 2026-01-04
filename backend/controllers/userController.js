@@ -267,34 +267,25 @@ export const verifyOTP = async (req, res) => {
 export const deleteProduct = async (req, res) => {
   try {
     const productId = req.params.id;
-
     const product = await Product.findById(productId);
 
-    if (!product) {
-      return res.status(404).json({ message: "Product not found" });
-    }
+    if (!product) return res.status(404).json({ message: "Product not found" });
 
-    // Optional: verify ownership
     if (product.shopId.toString() !== req.user.shopId.toString()) {
       return res.status(403).json({ message: "You are not allowed to delete this product" });
     }
 
-    // Delete image and QR files if exist
-    if (product.image && fs.existsSync(product.image)) {
-      fs.unlinkSync(product.image);
-    }
-    if (product.qrCode && fs.existsSync(product.qrCode)) {
-      fs.unlinkSync(product.qrCode);
-    }
+    // Soft delete
+    product.deleted = true;
+    await product.save();
 
-    await Product.findByIdAndDelete(productId);
-
-    res.status(200).json({ message: "Product deleted successfully" });
+    res.status(200).json({ message: "Product deleted successfully", product });
   } catch (error) {
     console.error("Delete product error:", error);
     res.status(500).json({ message: "Server error while deleting product" });
   }
 };
+
 
 
 
