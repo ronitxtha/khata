@@ -204,3 +204,28 @@ li:last-child {
     max-width: 100%;
   }
 }
+.staff-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  border-bottom: 1px solid #ddd;
+  margin-bottom: 5px;
+  border-radius: 6px;
+  background-color: #f9f9f9;
+}
+
+.delete-staff-btn {
+  background-color: #e74c3c; /* red */
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: background-color 0.2s;
+}
+
+.delete-staff-btn:hover {
+  background-color: #c0392b;
+}

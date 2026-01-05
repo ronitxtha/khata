@@ -8,7 +8,7 @@ const router = express.Router();
 router.get("/products", isAuthenticated, async (req, res) => {
   try {
     // staff only sees products from their shop
-    const products = await Product.find({ shopId: req.user.shopId });
+    const products = await Product.find({ shopId: req.shopId });
     res.json({ products });
   } catch (err) {
     res.status(500).json({ message: err.message });

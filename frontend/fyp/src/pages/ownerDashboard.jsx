@@ -165,6 +165,21 @@ const handleAddProductAgain = async (product) => {
   }
 };
 
+// Delete staff
+const handleDeleteStaff = async (staffId) => {
+  try {
+    const token = localStorage.getItem("accessToken");
+    await axios.delete(`${API_BASE}/api/owner/delete-staff/${staffId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    setStaffList(staffList.filter((s) => s._id !== staffId));
+    setMessage("Staff deleted successfully");
+  } catch (err) {
+    console.error(err);
+    setMessage(err.response?.data?.message || "Error deleting staff");
+  }
+};
 
 
   // Toggle QR visibility
@@ -312,16 +327,23 @@ const handleAddProductAgain = async (product) => {
       </section>
 
       {/* Staff List */}
-      <section className="staff-list">
-        <h2>Staff List</h2>
-        <ul>
-          {staffList.map((staff) => (
-            <li key={staff._id}>
-              {staff.username} ({staff.email})
-            </li>
-          ))}
-        </ul>
-      </section>
+<section className="staff-list">
+  <h2>Staff List</h2>
+  <ul>
+    {staffList.map((staff) => (
+      <li key={staff._id} className="staff-item">
+        <span>{staff.username} ({staff.email})</span>
+        <button
+          className="delete-staff-btn"
+          onClick={() => handleDeleteStaff(staff._id)}
+        >
+          Delete
+        </button>
+      </li>
+    ))}
+  </ul>
+</section>
+
 
       {/* Add Product */}
       <section className="add-product-section">

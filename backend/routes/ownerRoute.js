@@ -30,6 +30,32 @@ router.get("/me", isAuthenticated, async (req, res) => {
   }
 });
 
+// ----------------------- Delete Staff -----------------------
+router.delete("/delete-staff/:id", isAuthenticated, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Find the staff in the same shop
+    const staff = await User.findOne({ _id: id, shopId: req.user.shopId, role: "staff" });
+    if (!staff) {
+      return res.status(404).json({ message: "Staff not found" });
+    }
+
+    // Option 1: Hard delete
+    await User.findByIdAndDelete(id);
+
+    // Option 2: Soft delete (optional)
+    // staff.deleted = true;
+    // await staff.save();
+
+    res.json({ message: "Staff deleted successfully" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
+
 router.delete("/delete-product/:id", isAuthenticated, async (req, res) => {
   try {
     const product = await Product.findOneAndUpdate(
