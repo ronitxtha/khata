@@ -3,7 +3,7 @@ import axios from "axios";
 import "../styles/customerDashboard.css";
 
 const CustomerDashboard = () => {
-  const [products, setProducts] = useState([]);
+  const [shops, setShops] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -11,37 +11,28 @@ const CustomerDashboard = () => {
   const API_BASE = "http://localhost:8000";
 
   useEffect(() => {
-    const fetchProducts = async () => {
+    const fetchMarketplace = async () => {
       try {
-        const res = await axios.get(`${API_BASE}/api/products`);
-        // Only products not deleted should come from backend
-        setProducts(res.data.products || []);
+        const res = await axios.get(`${API_BASE}/api/marketplace`);
+        setShops(res.data.shops || []);
       } catch (err) {
         console.error(err);
-        setError("Failed to load products");
+        setError("Failed to load stores");
       } finally {
         setLoading(false);
       }
     };
 
-    fetchProducts();
+    fetchMarketplace();
   }, []);
 
-  // Filter products based on search
-  const filteredProducts = products.filter(
-    (p) =>
-      (p.name || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (p.description || "").toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  if (loading) return <p className="loading">Loading products...</p>;
+  if (loading) return <p className="loading">Loading stores...</p>;
   if (error) return <p className="error">{error}</p>;
 
   return (
     <div className="customer-container">
-      <h1>Available Products</h1>
+      <h1>Stores</h1>
 
-      {/* Search Bar */}
       <input
         type="text"
         placeholder="Search products..."
@@ -50,21 +41,36 @@ const CustomerDashboard = () => {
         onChange={(e) => setSearchTerm(e.target.value)}
       />
 
-      <div className="product-grid">
-        {filteredProducts.length > 0 ? (
-          filteredProducts.map((p) => (
-            <div className="product-card" key={p._id}>
-              <img src={`${API_BASE}/${p.image}`} alt={p.name} />
-              <h3>{p.name}</h3>
-              <p className="price">NPR {p.price}</p>
-              <p className="desc">{p.description}</p>
-              <button className="buy-btn">Buy Now</button>
-            </div>
-          ))
-        ) : (
-          <p className="no-results">No products found</p>
-        )}
-      </div>
+      {(shops || []).map((shop) => {
+        // Filter products based on search
+        const filteredProducts = (shop.products || []).filter(
+          (p) =>
+            p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            p.description.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+
+        return (
+          <div key={shop._id} className="shop-container">
+            <h2>{shop.name}</h2>
+
+            {filteredProducts.length > 0 ? (
+              <div className="product-row">
+                {filteredProducts.map((p) => (
+                  <div key={p._id} className="product-card">
+                    <img src={`${API_BASE}/${p.image}`} alt={p.name} />
+                    <h3>{p.name}</h3>
+                    <p className="price">NPR {p.price}</p>
+                    <p className="desc">{p.description}</p>
+                    <button className="buy-btn">Buy Now</button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p>No products found in this store.</p>
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 };

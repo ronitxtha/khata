@@ -8,6 +8,8 @@ import { verification } from "./controllers/userController.js";
 import staffRoutes from "./routes/staffRoute.js";
 import productRoutes from "./routes/productRoute.js";
 import path from "path"; // ✅ add this
+import shopRoutes from "./routes/shopRoutes.js";
+import marketplaceRoute from "./routes/marketplaceRoute.js";
 
 const app = express();
 const PORT = process.env.PORT || 8000;
@@ -22,6 +24,10 @@ app.use(cors({
 // Serve uploads folder for images and QR codes
 app.use("/uploads", express.static(path.join(path.resolve(), "uploads")));
 
+app.use("/api/marketplace", marketplaceRoute);
+
+
+app.use("/api/shops", shopRoutes);
 // Attach all /user routes
 app.use('/user', userRoute);
 app.get("/user/verify/:token", verification);

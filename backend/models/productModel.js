@@ -9,7 +9,7 @@ const productSchema = new mongoose.Schema({
   qrCode: { type: String }, // stored as URL to QR image
   shopId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "User",
+    ref: "Shop",
     required: true
   },
   category: { 

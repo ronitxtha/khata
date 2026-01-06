@@ -44,7 +44,7 @@ export const registerUser = async (req, res) => {
         });
         if (role === "owner") {
     const newShop = await Shop.create({
-        name: `${username}'s Shop`,
+        name: username,
         ownerId: newUser._id
     });
 
@@ -287,6 +287,56 @@ export const deleteProduct = async (req, res) => {
 };
 
 
+export const getOwnerProducts = async (req, res) => {
+  try {
+    // find shop for logged-in owner
+    const shop = await Shop.findOne({ ownerId: req.user._id });
+
+    if (!shop) {
+      return res.status(404).json({ message: "Shop not found" });
+    }
+
+    // fetch products for that shop
+    const products = await Product.find({
+      shopId: shop._id,
+      deleted: false
+    }).sort({ createdAt: -1 });
+
+    res.status(200).json({ products });
+  } catch (error) {
+    console.error("Get owner products error:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+// controllers/productController.js (or same file)
+export const getAllStoresWithProducts = async (req, res) => {
+  try {
+    const shops = await Shop.find();
+
+    const result = [];
+
+    for (const shop of shops) {
+      const products = await Product.find({
+        shopId: shop._id,
+        deleted: false
+      });
+
+      if (products.length > 0) {
+        result.push({
+          shopId: shop._id,
+          shopName: shop.name,
+          products
+        });
+      }
+    }
+
+    res.status(200).json({ stores: result });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Failed to load stores" });
+  }
+};
 
 
 export const changePassword = async (req, res) => {
