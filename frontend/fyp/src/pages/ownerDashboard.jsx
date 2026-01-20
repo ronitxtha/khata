@@ -21,6 +21,8 @@ const OwnerDashboard = () => {
   const [message, setMessage] = useState("");
   const [scannerOpen, setScannerOpen] = useState(false);
   const [productCategory, setProductCategory] = useState("");
+  const [productQuantity, setProductQuantity] = useState("");
+
 
 
   const API_BASE = "http://localhost:8000";
@@ -105,6 +107,8 @@ const OwnerDashboard = () => {
     const formData = new FormData();
     formData.append("name", productName);
     formData.append("price", productPrice);
+    formData.append("quantity", productQuantity);
+
     formData.append("description", productDescription);
     formData.append("image", productImage);
     formData.append("category", productCategory); // ✅ already added
@@ -117,6 +121,8 @@ const OwnerDashboard = () => {
     setProducts([...products, res.data.product]);
     setProductName("");
     setProductPrice("");
+    setProductQuantity("");
+
     setProductDescription("");
     setProductCategory(""); // reset after submission
     setProductImage(null);
@@ -363,6 +369,15 @@ const handleDeleteStaff = async (staffId) => {
             onChange={(e) => setProductPrice(e.target.value)}
             required
           />
+          <input
+  type="number"
+  placeholder="Quantity"
+  value={productQuantity}
+  onChange={(e) => setProductQuantity(e.target.value)}
+  min="1"
+  required
+/>
+
           <textarea
             placeholder="Description"
             value={productDescription}
@@ -398,7 +413,8 @@ const handleDeleteStaff = async (staffId) => {
           {Array.isArray(products) && products.length > 0 ? (
             products.map((p) => (
               <li key={p._id} style={{ marginBottom: "15px" }}>
-                {p.name} - NPR {p.price} ({p.category})
+                {p.name} - NPR {p.price} | Qty: {p.quantity} ({p.category})
+
 
 
                 <button

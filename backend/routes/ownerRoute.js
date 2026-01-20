@@ -123,7 +123,7 @@ router.post("/add-staff", isAuthenticated, async (req, res) => {
 
 router.post("/add-product", isAuthenticated, upload.single("image"), async (req, res) => {
   try {
-    const { name, price, description, category } = req.body; // include category
+    const { name, price, description, category, quantity } = req.body; // include category
     const imagePath = req.file ? req.file.path : null;
 
     // Optional: Validate category against allowed list
@@ -147,7 +147,8 @@ router.post("/add-product", isAuthenticated, upload.single("image"), async (req,
       description,
       image: imagePath,
       shopId: req.user.shopId,
-      category: finalCategory, // save category
+      category: finalCategory,
+      quantity: Number(quantity) // save category
     });
 
     // Generate QR code
