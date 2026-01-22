@@ -146,6 +146,27 @@ const StaffDashboard = () => {
   }
 };
 
+//For logginout
+const handleLogoutClick = async () => {
+  try {
+    const token = localStorage.getItem("accessToken");
+
+    const res = await axios.post(
+      `${API_BASE}/api/staff/logout-click`,
+      {},
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      }
+    );
+
+    setMessage(res.data.message); // "Logout recorded (will be finalized at end of day)"
+  } catch (err) {
+    console.error(err);
+    setMessage("Failed to record logout");
+  }
+};
+
+
 
   const toggleQR = (id) => {
     setQrVisible((prev) => ({ ...prev, [id]: !prev[id] }));
@@ -225,6 +246,11 @@ const StaffDashboard = () => {
           <button type="submit">Add Product</button>
         </form>
       </section>
+
+      <button className="logout-btn" onClick={handleLogoutClick}>
+  Logout
+</button>
+
 
       {/* Product List */}
       <section className="product-list">

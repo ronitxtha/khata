@@ -10,6 +10,8 @@ import productRoutes from "./routes/productRoute.js";
 import path from "path"; // ✅ add this
 import shopRoutes from "./routes/shopRoutes.js";
 import marketplaceRoute from "./routes/marketplaceRoute.js";
+import "./cronJobs/endOfDayAttendance.js";
+
 
 const app = express();
 const PORT = process.env.PORT || 8000;
