@@ -17,6 +17,8 @@ const StaffDashboard = () => {
   const [qrVisible, setQrVisible] = useState({});
   const [scannerOpen, setScannerOpen] = useState(false);
   const [message, setMessage] = useState("");
+  const [productQuantity, setProductQuantity] = useState(""); // NEW
+
 
   const API_BASE = "http://localhost:8000";
 
@@ -57,42 +59,44 @@ const StaffDashboard = () => {
   }, []);
 
   // Add product
-  const handleAddProduct = async (e) => {
-    e.preventDefault();
+ const handleAddProduct = async (e) => {
+  e.preventDefault();
 
-    if (!productCategory) {
-      setMessage("Please select a product category");
-      return;
-    }
+  if (!productCategory) {
+    setMessage("Please select a product category");
+    return;
+  }
 
-    try {
-      const token = localStorage.getItem("accessToken");
-      const formData = new FormData();
+  try {
+    const token = localStorage.getItem("accessToken");
+    const formData = new FormData();
 
-      formData.append("name", productName);
-      formData.append("price", productPrice);
-      formData.append("description", productDescription);
-      formData.append("category", productCategory);
-      formData.append("image", productImage);
+    formData.append("name", productName);
+    formData.append("price", productPrice);
+    formData.append("quantity", productQuantity); // ✅ fixed
+    formData.append("description", productDescription);
+    formData.append("category", productCategory);
+    formData.append("image", productImage);
 
-      const res = await axios.post("http://localhost:8000/api/owner/add-product", formData, {
-  headers: { Authorization: `Bearer ${token}` },
-});
+    const res = await axios.post(`${API_BASE}/api/owner/add-product`, formData, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
 
+    setProducts((prev) => [...prev, res.data.product]);
+    setMessage("Product added successfully!");
 
-      setProducts((prev) => [...prev, res.data.product]);
-      setMessage("Product added successfully!");
+    setProductName("");
+    setProductPrice("");
+    setProductQuantity(""); // reset
+    setProductDescription("");
+    setProductCategory("");
+    setProductImage(null);
+  } catch (err) {
+    console.error(err);
+    setMessage("Error adding product");
+  }
+};
 
-      setProductName("");
-      setProductPrice("");
-      setProductDescription("");
-      setProductCategory("");
-      setProductImage(null);
-    } catch (err) {
-      console.error(err);
-      setMessage("Error adding product");
-    }
-  };
 
   // Re-add deleted product
   const handleAddProductAgain = async (product) => {
@@ -102,6 +106,7 @@ const StaffDashboard = () => {
 
       formData.append("name", product.name);
       formData.append("price", product.price);
+      formData.append("quantity", productQuantity);
       formData.append("description", product.description);
       formData.append("category", product.category || "Others");
 
@@ -224,6 +229,15 @@ const handleLogoutClick = async () => {
             onChange={(e) => setProductPrice(e.target.value)}
             required
           />
+          <input
+  type="number"
+  placeholder="Quantity"
+  value={productQuantity}
+  onChange={(e) => setProductQuantity(e.target.value)}
+  min="1"
+  required
+/>
+
           <textarea
             placeholder="Description"
             value={productDescription}
@@ -258,7 +272,7 @@ const handleLogoutClick = async () => {
         <ul>
           {products.map((p) => (
             <li key={p._id}>
-              {p.name} - NPR {p.price} ({p.category})
+              {p.name} - NPR {p.price} | Qty: {p.quantity} ({p.category})
               <button onClick={() => toggleQR(p._id)}>QR</button>
               {qrVisible[p._id] && p.qrCode && (
                 <img src={`${API_BASE}/${p.qrCode}`} width="120" />
