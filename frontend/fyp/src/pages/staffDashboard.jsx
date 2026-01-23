@@ -146,7 +146,7 @@ const StaffDashboard = () => {
   }
 };
 
-//For logginout
+//For loggingout
 const handleLogoutClick = async () => {
   try {
     const token = localStorage.getItem("accessToken");

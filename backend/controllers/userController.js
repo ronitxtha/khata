@@ -6,6 +6,8 @@ import jwt from "jsonwebtoken";
 import { sendOtpMail } from "../emailverify/sendOtpMail.js";
 import { Shop } from "../models/shopModel.js"; 
 import { Product } from "../models/productModel.js";
+import Attendance from "../models/attendance.js"; 
+
 import fs from "fs";
 
 export const registerUser = async (req, res) => {
@@ -135,6 +137,34 @@ if (user.role !== "staff" && !user.isVerified) {
         };
 
         await Session.create({ userId: user._id });
+        // 🔹 Create today's attendance for staff
+if (user.role === "staff") {
+    try {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0); // normalize to midnight
+
+        let attendance = await Attendance.findOne({
+            staffId: user._id,
+            date: today
+        });
+
+        if (!attendance) {
+            attendance = await Attendance.create({
+                staffId: user._id,
+                shopId: user.shopId,      // 🔹 required
+                date: today,
+                checkInTime: new Date(),
+                status: "present"
+            });
+            console.log("Attendance created:", attendance);
+        }
+    } catch (err) {
+        console.error("Attendance creation failed:", err);
+    }
+}
+
+
+
 
         //Generate Tokens
         const accessToken = jwt.sign({ id: user._id }, process.env.SECRET_KEY, { expiresIn: "10d" })

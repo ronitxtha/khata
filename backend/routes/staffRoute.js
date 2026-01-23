@@ -18,21 +18,40 @@ router.get("/products", isAuthenticated, async (req, res) => {
 
 router.post("/logout-click", isAuthenticated, async (req, res) => {
   try {
+    if (!req.user) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
     const staffId = req.user._id;
-    const today = new Date();
-    today.setHours(0,0,0,0);
 
-    const attendance = await Attendance.findOne({ staffId, date: today });
-    if (!attendance) return res.status(400).json({ message: "Attendance not found" });
+    const start = new Date();
+    start.setHours(0,0,0,0);
 
-    // Record only the last logout click
+    const end = new Date();
+    end.setHours(23,59,59,999);
+
+    const attendance = await Attendance.findOne({
+      staffId,
+      date: { $gte: start, $lte: end },
+    });
+
+    if (!attendance) {
+      return res.status(400).json({ message: "Attendance not found for today" });
+    }
+
     attendance.lastLogoutClick = new Date();
     await attendance.save();
 
-    res.json({ message: "Logout click recorded (will be saved at end of day)" });
+    res.json({
+      message: "Logout click recorded (finalized at end of day)",
+    });
+
   } catch (err) {
-    res.status(500).json({ message: "Server error", error: err.message });
+    console.error("Logout-click error:", err);
+    res.status(500).json({ message: "Server error" });
   }
 });
+
+
 
 export default router;
