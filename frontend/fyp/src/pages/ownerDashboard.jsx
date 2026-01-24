@@ -23,6 +23,13 @@ const OwnerDashboard = () => {
   const [productCategory, setProductCategory] = useState("");
   const [productQuantity, setProductQuantity] = useState("");
 
+const [editingProduct, setEditingProduct] = useState(null);
+const [editName, setEditName] = useState("");
+const [editPrice, setEditPrice] = useState("");
+const [editQuantity, setEditQuantity] = useState("");
+const [editCategory, setEditCategory] = useState("");
+const [editDescription, setEditDescription] = useState("");
+
 
 
   const API_BASE = "http://localhost:8000";
@@ -68,6 +75,47 @@ const OwnerDashboard = () => {
   "Automotive",
   "Others",
 ];
+
+const handleEditClick = (product) => {
+  setEditingProduct(product._id);
+  setEditName(product.name || "");
+  setEditPrice(product.price || "");
+  setEditQuantity(product.quantity || "");
+  setEditCategory(product.category || "Others");
+  setEditDescription(product.description || "");
+};
+
+
+const handleUpdateProduct = async (e, productId) => {
+  e.preventDefault(); // ⚠ THIS IS CRITICAL
+  try {
+    const token = localStorage.getItem("accessToken");
+
+    const res = await axios.put(
+  `${API_BASE}/api/owner/update-product/${productId}`,
+  {
+    name: editName,
+    price: editPrice,
+    quantity: editQuantity,
+    category: editCategory,
+    description: editDescription,
+  },
+  { headers: { Authorization: `Bearer ${token}` } }
+);
+
+// ✅ Update products state
+setProducts((prev) =>
+  prev.map((p) => (p._id === productId ? res.data.product : p))
+);
+
+setEditingProduct(null);
+setMessage("Product updated successfully!");
+
+  } catch (err) {
+    console.error(err);
+    setMessage(err.response?.data?.message || "Update failed");
+  }
+};
 
 
   // Add staff
@@ -406,53 +454,130 @@ const handleDeleteStaff = async (staffId) => {
         </form>
       </section>
 
-      {/* Product List */}
-      <section className="product-list">
-        <h2>Products</h2>
-        <ul>
-          {Array.isArray(products) && products.length > 0 ? (
-            products.map((p) => (
-              <li key={p._id} style={{ marginBottom: "15px" }}>
-                {p.name} - NPR {p.price} | Qty: {p.quantity} ({p.category})
+     {/* Product List */}
+<section className="product-list">
+  <h2>Products</h2>
+  <ul>
+    {Array.isArray(products) && products.length > 0 ? (
+      products.map((p) => 
+        p ? ( // ✅ check product exists
+          <li key={p._id || Math.random()} style={{ marginBottom: "15px" }}>
+            {p.name || "Unnamed"} - NPR {p.price ?? 0} | Qty: {p.quantity ?? 0} ({p.category || "Others"})
 
+            <button
+              onClick={() => toggleQR(p._id)}
+              style={{ marginLeft: "10px" }}
+            >
+              {qrVisible[p._id] ? "Hide QR" : "Show QR"}
+            </button>
 
+            <button
+              onClick={() => handleEditClick(p)}
+              style={{
+                marginLeft: "10px",
+                backgroundColor: "#4caf50",
+                color: "white",
+              }}
+            >
+              Edit
+            </button>
 
+            <button
+              onClick={() => handleDeleteProduct(p._id)}
+              style={{
+                marginLeft: "10px",
+                backgroundColor: "red",
+                color: "white",
+              }}
+            >
+              Delete
+            </button>
+
+            {/* Edit Form */}
+            {editingProduct === p._id && (
+              <form
+                onSubmit={(e) => handleUpdateProduct(e, p._id)}
+                style={{
+                  marginTop: "10px",
+                  padding: "10px",
+                  border: "1px solid #ccc",
+                }}
+              >
+                <input
+                  type="text"
+                  value={editName || ""}
+                  onChange={(e) => setEditName(e.target.value)}
+                  placeholder="Product Name"
+                  required
+                />
+
+                <input
+                  type="number"
+                  value={editPrice ?? ""}
+                  onChange={(e) => setEditPrice(e.target.value)}
+                  placeholder="Price"
+                  required
+                />
+
+                <input
+                  type="number"
+                  value={editQuantity ?? ""}
+                  onChange={(e) => setEditQuantity(e.target.value)}
+                  placeholder="Quantity"
+                  required
+                />
+
+                <select
+                  value={editCategory || "Others"}
+                  onChange={(e) => setEditCategory(e.target.value)}
+                  required
+                >
+                  {CATEGORY_LIST.map((cat) => (
+                    <option key={cat} value={cat}>
+                      {cat}
+                    </option>
+                  ))}
+                </select>
+
+                <textarea
+                  value={editDescription || ""}
+                  onChange={(e) => setEditDescription(e.target.value)}
+                  placeholder="Description"
+                  required
+                />
+
+                <button type="submit">Save</button>
                 <button
-                  onClick={() => toggleQR(p._id)}
+                  type="button"
+                  onClick={() => setEditingProduct(null)}
                   style={{ marginLeft: "10px" }}
                 >
-                  {qrVisible[p._id] ? "Hide QR" : "Show QR"}
+                  Cancel
                 </button>
+              </form>
+            )}
 
-                <button
-                  onClick={() => handleDeleteProduct(p._id)}
-                  style={{
-                    marginLeft: "10px",
-                    backgroundColor: "red",
-                    color: "white",
-                  }}
-                >
-                  Delete
-                </button>
+            {/* QR Code */}
+            {qrVisible[p._id] && p.qrCode && (
+              <div className="qr-code-section" style={{ marginTop: "10px" }}>
+                <img
+                  src={`http://localhost:8000/${p.qrCode}`}
+                  alt="QR Code"
+                  width="150"
+                  style={{ display: "block", marginBottom: "5px" }}
+                />
+                <button onClick={() => downloadQR(p._id)}>Download QR</button>
+              </div>
+            )}
+          </li>
+        ) : null // skip undefined products
+      )
+    ) : (
+      <li>No products found</li>
+    )}
+  </ul>
+</section>
 
-                {qrVisible[p._id] && p.qrCode && (
-                  <div className="qr-code-section" style={{ marginTop: "10px" }}>
-                    <img
-                      src={`http://localhost:8000/${p.qrCode}`}
-                      alt="QR Code"
-                      width="150"
-                      style={{ display: "block", marginBottom: "5px" }}
-                    />
-                    <button onClick={() => downloadQR(p._id)}>Download QR</button>
-                  </div>
-                )}
-              </li>
-            ))
-          ) : (
-            <li>No products found</li>
-          )}
-        </ul>
-      </section>
 
       {message && <p className="message">{message}</p>}
     </div>

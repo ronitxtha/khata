@@ -3,13 +3,12 @@ import { User } from "../models/userModel.js";
 import { Product } from "../models/productModel.js";
 import { isAuthenticated } from "../middleware/isAuthenticated.js";
 import { deleteProduct } from "../controllers/userController.js";
-
-
 import bcrypt from "bcryptjs";
 import multer from "multer";
 import QRCode from "qrcode";
 import path from "path";
 import fs from "fs";
+console.log("✅ Owner routes loaded");
 
 const router = express.Router();
 
@@ -166,6 +165,51 @@ router.post("/add-product", isAuthenticated, upload.single("image"), async (req,
   }
 });
 
+router.put("/update-product/:id", isAuthenticated, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, price, quantity, category, description } = req.body;
+
+    const MAIN_CATEGORIES = [
+      "Electronics",
+      "Fashion",
+      "Beauty & Personal Care",
+      "Home & Kitchen",
+      "Books & Stationery",
+      "Toys & Games",
+      "Sports & Fitness",
+      "Automotive",
+      "Others",
+    ];
+
+    const finalCategory = MAIN_CATEGORIES.includes(category) ? category : "Others";
+
+    const product = await Product.findOne({
+      _id: id,
+      shopId: req.user.shopId,
+      deleted: false,
+    });
+
+    if (!product) return res.status(404).json({ message: "Product not found" });
+
+    product.name = name;
+    product.price = price;
+    product.quantity = Number(quantity);
+    product.category = finalCategory;
+    product.description = description;
+
+    await product.save();
+
+    // ✅ Return the updated product
+    res.status(200).json({
+      message: "Product updated successfully",
+      product, // <-- THIS IS CRITICAL
+    });
+  } catch (err) {
+    console.error("Update product error:", err);
+    res.status(500).json({ message: err.message });
+  }
+});
 
 
 // ----------------------- Get Single Product by ID -----------------------
