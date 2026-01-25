@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import QRScanner from "./QRScanner";
 import "../styles/ownerDashboard.css"; // reuse same CSS
@@ -19,6 +20,8 @@ const StaffDashboard = () => {
   const [message, setMessage] = useState("");
   const [productQuantity, setProductQuantity] = useState(""); // NEW
 
+
+  const navigate = useNavigate();
 
   const API_BASE = "http://localhost:8000";
 
@@ -151,7 +154,7 @@ const StaffDashboard = () => {
   }
 };
 
-//For loggingout
+// For logging out
 const handleLogoutClick = async () => {
   try {
     const token = localStorage.getItem("accessToken");
@@ -164,12 +167,21 @@ const handleLogoutClick = async () => {
       }
     );
 
-    setMessage(res.data.message); // "Logout recorded (will be finalized at end of day)"
+    setMessage(res.data.message);
+
+    // 🔴 ADD THIS
+    localStorage.removeItem("accessToken");
+    navigate("/login");
+
   } catch (err) {
     console.error(err);
     setMessage("Failed to record logout");
+
+    // optional: redirect anyway
+    navigate("/login");
   }
 };
+
 
 
 

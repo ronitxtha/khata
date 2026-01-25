@@ -1,5 +1,5 @@
 import cron from "node-cron";
-import Attendance from "../models/attendance.js"; // correct relative path
+import Attendance from "../models/Attendance.js"; // correct relative path
 
 // Run every day at 11:59 PM
 cron.schedule("59 23 * * *", async () => {

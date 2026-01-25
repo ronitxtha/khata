@@ -229,3 +229,15 @@ li:last-child {
 .delete-staff-btn:hover {
   background-color: #c0392b;
 }
+.attendance-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 15px;
+}
+
+.attendance-card {
+  border: 1px solid #ddd;
+  padding: 12px;
+  border-radius: 8px;
+  background: #f9f9f9;
+}

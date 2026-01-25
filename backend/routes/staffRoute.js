@@ -1,7 +1,7 @@
 import express from "express";
 import { Product } from "../models/productModel.js";
 import { isAuthenticated } from "../middleware/isAuthenticated.js";
-import Attendance from "../models/attendance.js";
+import Attendance from "../models/Attendance.js";
 
 const router = express.Router();
 
@@ -13,6 +13,46 @@ router.get("/products", isAuthenticated, async (req, res) => {
     res.json({ products });
   } catch (err) {
     res.status(500).json({ message: err.message });
+  }
+});
+
+// Staff login endpoint
+router.post("/login", isAuthenticated, async (req, res) => {
+  try {
+    const staffId = req.user._id;
+    const shopId = req.user.shopId;
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const tomorrow = new Date(today);
+    tomorrow.setDate(today.getDate() + 1);
+
+    // Find today's attendance for staff
+    let attendance = await Attendance.findOne({
+      staffId,
+      shopId,
+      date: { $gte: today, $lt: tomorrow },
+    });
+
+    if (!attendance) {
+      // First login of the day
+      attendance = await Attendance.create({
+        staffId,
+        shopId,
+        date: today,
+        sessions: [{ checkInTime: new Date() }],
+      });
+    } else {
+      // Already has attendance today, add a new session
+      attendance.sessions.push({ checkInTime: new Date() });
+      await attendance.save();
+    }
+
+    res.json({ message: "Login recorded", attendance });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Login failed" });
   }
 });
 

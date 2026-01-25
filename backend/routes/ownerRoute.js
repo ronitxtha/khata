@@ -7,6 +7,7 @@ import bcrypt from "bcryptjs";
 import multer from "multer";
 import QRCode from "qrcode";
 import path from "path";
+import Attendance from "../models/Attendance.js";
 import fs from "fs";
 console.log("✅ Owner routes loaded");
 
@@ -258,5 +259,40 @@ router.get("/download-qr/:productId", isAuthenticated, async (req, res) => {
     res.status(500).json({ message: "Failed to download QR" });
   }
 });
+
+// ----------------------- Today's Attendance -----------------------
+router.get("/today-attendance", isAuthenticated, async (req, res) => {
+  try {
+    const shopId = req.user.shopId;
+
+    console.log("Fetching attendance for shopId:", shopId);
+
+    const start = new Date();
+    start.setHours(0, 0, 0, 0);
+    const end = new Date();
+    end.setHours(23, 59, 59, 999);
+
+    const attendance = await Attendance.find({
+  shopId,
+  checkInTime: { $gte: start, $lte: end },
+}).populate("staffId", "username email"); // works now because ref is "User"
+
+    console.log("Attendance raw:", attendance);
+
+    // Check if staffId references exist
+    const populatedAttendance = await Attendance.populate(attendance, {
+      path: "staffId",
+      select: "username email",
+    });
+
+    console.log("Attendance populated:", populatedAttendance);
+
+    res.json({ attendance: populatedAttendance });
+  } catch (err) {
+    console.error("Attendance fetch error:", err);
+    res.status(500).json({ message: "Failed to fetch attendance", error: err.message });
+  }
+});
+
 
 export default router;

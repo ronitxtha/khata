@@ -6,7 +6,7 @@ import jwt from "jsonwebtoken";
 import { sendOtpMail } from "../emailverify/sendOtpMail.js";
 import { Shop } from "../models/shopModel.js"; 
 import { Product } from "../models/productModel.js";
-import Attendance from "../models/attendance.js"; 
+import Attendance from "../models/Attendance.js"; 
 
 import fs from "fs";
 

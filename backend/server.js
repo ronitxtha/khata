@@ -40,6 +40,8 @@ app.use("/api", productRoutes); // customers
 // Attach all /api/owner routes
 app.use("/api/owner", ownerRoutes);
 
+
+
 // Connect DB and start server
 connectDB();
 app.listen(PORT, () => {

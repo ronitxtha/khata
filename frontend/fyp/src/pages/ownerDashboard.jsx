@@ -29,6 +29,7 @@ const [editPrice, setEditPrice] = useState("");
 const [editQuantity, setEditQuantity] = useState("");
 const [editCategory, setEditCategory] = useState("");
 const [editDescription, setEditDescription] = useState("");
+const [attendanceList, setAttendanceList] = useState([]);
 
 
 
@@ -50,6 +51,14 @@ const [editDescription, setEditDescription] = useState("");
         });
         setStaffList(resStaff.data.staff || []);
 
+        const resAttendance = await axios.get(
+  `${API_BASE}/api/owner/today-attendance`,
+  { headers: { Authorization: `Bearer ${token}` } }
+);
+
+setAttendanceList(resAttendance.data.attendance || []);
+
+
         const resProducts = await axios.get(`${API_BASE}/api/owner/products`, {
           headers: { Authorization: `Bearer ${token}` },
         });
@@ -59,7 +68,6 @@ const [editDescription, setEditDescription] = useState("");
         setMessage(err.response?.data?.message || "Error loading data");
       }
     };
-
     fetchOwnerData();
   }, []);
 
@@ -397,6 +405,53 @@ const handleDeleteStaff = async (staffId) => {
     ))}
   </ul>
 </section>
+<section className="attendance-section">
+  <h2>Today's Staff Attendance</h2>
+
+  {attendanceList.length === 0 ? (
+    <p className="no-attendance">No attendance recorded today</p>
+  ) : (
+    <div className="attendance-grid">
+      {attendanceList.map((a) => {
+        const isWorking = !a.lastLogoutClick;
+        const statusColor = isWorking ? "#28a745" : "#6c757d"; // green for working, gray for logged out
+        const statusIcon = isWorking ? "🟢" : "✔️"; // green dot or check
+        const statusText = isWorking ? "Present" : "Logged out";
+
+        return (
+          <div
+            key={a._id}
+            className="attendance-card"
+            style={{ borderLeft: `5px solid ${statusColor}` }}
+          >
+            <h4>{a.staffId?.username}</h4>
+            <p className="email">{a.staffId?.email}</p>
+
+            <p className="status">
+              Status:{" "}
+              <strong style={{ color: statusColor }}>
+                {statusIcon} {statusText}
+              </strong>
+            </p>
+
+            {a.checkInTime && (
+              <p className="login">
+                Login: {new Date(a.checkInTime).toLocaleTimeString()}
+              </p>
+            )}
+
+            {a.lastLogoutClick && (
+              <p className="logout">
+                Logout: {new Date(a.lastLogoutClick).toLocaleTimeString()}
+              </p>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  )}
+</section>
+
 
 
       {/* Add Product */}
