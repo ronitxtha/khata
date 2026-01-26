@@ -4,6 +4,8 @@ import QRScanner from "./QRScanner";
 import "../styles/ownerDashboard.css";
 
 const OwnerDashboard = () => {
+  const [toast, setToast] = useState({ message: "", type: "success", visible: false });
+
   const [owner, setOwner] = useState({});
   const [staffList, setStaffList] = useState([]);
   const [products, setProducts] = useState([]);
@@ -18,7 +20,7 @@ const OwnerDashboard = () => {
   const [productImage, setProductImage] = useState(null);
 
   const [qrVisible, setQrVisible] = useState({});
-  const [message, setMessage] = useState("");
+
   const [scannerOpen, setScannerOpen] = useState(false);
   const [productCategory, setProductCategory] = useState("");
   const [productQuantity, setProductQuantity] = useState("");
@@ -65,11 +67,19 @@ setAttendanceList(resAttendance.data.attendance || []);
         setProducts(resProducts.data.products || []);
       } catch (err) {
         console.error(err);
-        setMessage(err.response?.data?.message || "Error loading data");
+        showToast(err.response?.data?.message || "Error loading data");
       }
     };
     fetchOwnerData();
   }, []);
+
+  const showToast = (message, type = "success", duration = 3000) => {
+  setToast({ message, type, visible: true });
+  setTimeout(() => {
+    setToast({ ...toast, visible: false });
+  }, duration);
+};
+
 
   //Catagory fetch
   const CATEGORY_LIST = [
@@ -117,11 +127,12 @@ setProducts((prev) =>
 );
 
 setEditingProduct(null);
-setMessage("Product updated successfully!");
+showToast("Product added successfully!", "success");
+
 
   } catch (err) {
     console.error(err);
-    setMessage(err.response?.data?.message || "Update failed");
+    showToast(err.response?.data?.message || "Update failed");
   }
 };
 
@@ -139,13 +150,13 @@ setMessage("Product updated successfully!");
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      setMessage(`Staff added: ${staffName}, password: ${password}`);
+      showToast(`Staff added: ${staffName}, password: ${password}`);
       setStaffList([...staffList, res.data.staff]);
       setStaffName("");
       setStaffEmail("");
     } catch (err) {
       console.error(err);
-      setMessage(err.response?.data?.message || "Error adding staff");
+      showToast(err.response?.data?.message || "Error adding staff");
     }
   };
 
@@ -154,7 +165,7 @@ setMessage("Product updated successfully!");
   e.preventDefault();
 
   if (!productCategory) {
-    setMessage("Please select a product category");
+    showToast("Please select a product category");
     return;
   }
 
@@ -173,7 +184,7 @@ setMessage("Product updated successfully!");
       headers: { Authorization: `Bearer ${token}` },
     });
 
-    setMessage("Product added successfully!");
+    showToast("Product added successfully!");
     setProducts([...products, res.data.product]);
     setProductName("");
     setProductPrice("");
@@ -184,7 +195,7 @@ setMessage("Product updated successfully!");
     setProductImage(null);
   } catch (err) {
     console.error(err);
-    setMessage(err.response?.data?.message || "Error adding product");
+    showToast(err.response?.data?.message || "Error adding product");
   }
 };
 
@@ -196,18 +207,26 @@ const handleAddProductAgain = async (product) => {
     const token = localStorage.getItem("accessToken");
     const formData = new FormData();
 
-    formData.append("name", product.name);
-    formData.append("price", product.price);
-    formData.append("description", product.description);
-    formData.append("category", product.category || "Others"); // make sure category is included
+    // Use defaults to avoid backend 500 errors
+    formData.append("name", product.name || "Unnamed Product");
+    formData.append("price", product.price ?? 0);
+    formData.append("quantity", product.quantity ?? 1); // make sure quantity is included
+    formData.append("description", product.description || "");
+    formData.append("category", product.category || "Others");
 
     // Append existing image if available
     if (product.imageFile) {
-      const imageResponse = await fetch(`http://localhost:8000/${product.imageFile}`);
-      const imageBlob = await imageResponse.blob();
-      const fileName = product.imageFile.split("/").pop();
-      const imageFile = new File([imageBlob], fileName, { type: imageBlob.type });
-      formData.append("image", imageFile);
+      try {
+        const imageResponse = await fetch(`${API_BASE}/${product.imageFile}`);
+        if (imageResponse.ok) {
+          const imageBlob = await imageResponse.blob();
+          const fileName = product.imageFile.split("/").pop() || "product.png";
+          const imageFile = new File([imageBlob], fileName, { type: imageBlob.type });
+          formData.append("image", imageFile);
+        }
+      } catch (imgErr) {
+        console.warn("Failed to fetch product image, skipping image.", imgErr);
+      }
     }
 
     const res = await axios.post(`${API_BASE}/api/owner/add-product`, formData, {
@@ -217,15 +236,17 @@ const handleAddProductAgain = async (product) => {
     // Update products list
     setProducts((prevProducts) => [...prevProducts, res.data.product]);
 
-    // Clear scanned product immediately to prevent multiple clicks
+    // Clear scanned product immediately
     setScannedProduct(null);
 
-    setMessage("Product added again successfully!");
+    // Show toast notification
+    showToast("Product added again successfully!");
   } catch (err) {
-    console.error(err);
-    setMessage(err.response?.data?.message || "Error adding product again");
+    console.error("Re-add product failed:", err.response?.data || err.message);
+    showToast(err.response?.data?.message || "Error adding product again");
   }
 };
+
 
 // Delete staff
 const handleDeleteStaff = async (staffId) => {
@@ -236,10 +257,10 @@ const handleDeleteStaff = async (staffId) => {
     });
 
     setStaffList(staffList.filter((s) => s._id !== staffId));
-    setMessage("Staff deleted successfully");
+    showToast("Staff deleted successfully");
   } catch (err) {
     console.error(err);
-    setMessage(err.response?.data?.message || "Error deleting staff");
+    showToast(err.response?.data?.message || "Error deleting staff");
   }
 };
 
@@ -279,10 +300,10 @@ const handleDeleteStaff = async (staffId) => {
         headers: { Authorization: `Bearer ${token}` },
       });
       setProducts(products.filter((p) => p._id !== productId));
-      setMessage("Product deleted successfully");
+      showToast("Product deleted successfully");
     } catch (err) {
       console.error(err);
-      setMessage(err.response?.data?.message || "Delete failed");
+      showToast(err.response?.data?.message || "Delete failed");
     }
   };
 
@@ -634,7 +655,11 @@ const handleDeleteStaff = async (staffId) => {
 </section>
 
 
-      {message && <p className="message">{message}</p>}
+      {toast.visible && (
+  <div className={`toast ${toast.type}`}>
+    {toast.message}
+  </div>
+)}
     </div>
   );
 };

@@ -5,6 +5,7 @@ import QRScanner from "./QRScanner";
 import "../styles/ownerDashboard.css"; // reuse same CSS
 
 const StaffDashboard = () => {
+    const [toast, setToast] = useState({ message: "", type: "success", visible: false });
   const [staff, setStaff] = useState({});
   const [products, setProducts] = useState([]);
   const [scannedProduct, setScannedProduct] = useState(null);
@@ -17,8 +18,15 @@ const StaffDashboard = () => {
 
   const [qrVisible, setQrVisible] = useState({});
   const [scannerOpen, setScannerOpen] = useState(false);
-  const [message, setMessage] = useState("");
   const [productQuantity, setProductQuantity] = useState(""); // NEW
+
+  const [editingProduct, setEditingProduct] = useState(null);
+const [editName, setEditName] = useState("");
+const [editPrice, setEditPrice] = useState("");
+const [editQuantity, setEditQuantity] = useState("");
+const [editCategory, setEditCategory] = useState("");
+const [editDescription, setEditDescription] = useState("");
+
 
 
   const navigate = useNavigate();
@@ -54,7 +62,7 @@ const StaffDashboard = () => {
         setProducts(resProducts.data.products || []);
       } catch (err) {
         console.error(err);
-        setMessage("Failed to load staff data");
+        showToast("Failed to load staff data");
       }
     };
 
@@ -66,7 +74,7 @@ const StaffDashboard = () => {
   e.preventDefault();
 
   if (!productCategory) {
-    setMessage("Please select a product category");
+    showToast("Please select a product category");
     return;
   }
 
@@ -86,7 +94,7 @@ const StaffDashboard = () => {
     });
 
     setProducts((prev) => [...prev, res.data.product]);
-    setMessage("Product added successfully!");
+    showToast("Product added successfully!");
 
     setProductName("");
     setProductPrice("");
@@ -96,7 +104,7 @@ const StaffDashboard = () => {
     setProductImage(null);
   } catch (err) {
     console.error(err);
-    setMessage("Error adding product");
+    showToast("Error adding product");
   }
 };
 
@@ -125,12 +133,58 @@ const StaffDashboard = () => {
 
       setProducts((prev) => [...prev, res.data.product]);
       setScannedProduct(null);
-      setMessage("Product added again!");
+      showToast("Product added again!");
     } catch (err) {
       console.error(err);
-      setMessage("Failed to re-add product");
+      showToast("Failed to re-add product");
     }
   };
+
+  const handleEditClick = (product) => {
+  setEditingProduct(product._id);
+  setEditName(product.name || "");
+  setEditPrice(product.price || "");
+  setEditQuantity(product.quantity || "");
+  setEditCategory(product.category || "Others");
+  setEditDescription(product.description || "");
+};
+
+const handleUpdateProduct = async (e, productId) => {
+  e.preventDefault();
+  try {
+    const token = localStorage.getItem("accessToken");
+
+    const res = await axios.put(
+      `${API_BASE}/api/owner/update-product/${productId}`,
+      {
+        name: editName,
+        price: editPrice,
+        quantity: editQuantity,
+        category: editCategory,
+        description: editDescription,
+      },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+
+    setProducts((prev) =>
+      prev.map((p) => (p._id === productId ? res.data.product : p))
+    );
+
+    setEditingProduct(null);
+    showToast("Product updated successfully!");
+  } catch (err) {
+    console.error(err);
+    showToast("Failed to update product");
+  }
+};
+
+
+const showToast = (message, type = "success", duration = 3000) => {
+  setToast({ message, type, visible: true });
+  setTimeout(() => {
+    setToast({ ...toast, visible: false });
+  }, duration);
+};
 
   // QR scan success
   const handleScanSuccess = async (productId) => {
@@ -167,7 +221,7 @@ const handleLogoutClick = async () => {
       }
     );
 
-    setMessage(res.data.message);
+    showToast(res.data.message);
 
     // 🔴 ADD THIS
     localStorage.removeItem("accessToken");
@@ -175,7 +229,7 @@ const handleLogoutClick = async () => {
 
   } catch (err) {
     console.error(err);
-    setMessage("Failed to record logout");
+    showToast("Failed to record logout");
 
     // optional: redirect anyway
     navigate("/login");
@@ -282,19 +336,74 @@ const handleLogoutClick = async () => {
       <section className="product-list">
         <h2>Products</h2>
         <ul>
-          {products.map((p) => (
-            <li key={p._id}>
-              {p.name} - NPR {p.price} | Qty: {p.quantity} ({p.category})
-              <button onClick={() => toggleQR(p._id)}>QR</button>
-              {qrVisible[p._id] && p.qrCode && (
-                <img src={`${API_BASE}/${p.qrCode}`} width="120" />
-              )}
-            </li>
-          ))}
-        </ul>
+  {products.map((p) => (
+    <li key={p._id} style={{ marginBottom: "15px" }}>
+      {editingProduct === p._id ? (
+        // Edit Form
+        <form onSubmit={(e) => handleUpdateProduct(e, p._id)} style={{ border: "1px solid #ccc", padding: "10px" }}>
+          <input
+            type="text"
+            value={editName}
+            onChange={(e) => setEditName(e.target.value)}
+            placeholder="Product Name"
+            required
+          />
+          <input
+            type="number"
+            value={editPrice}
+            onChange={(e) => setEditPrice(e.target.value)}
+            placeholder="Price"
+            required
+          />
+          <input
+            type="number"
+            value={editQuantity}
+            onChange={(e) => setEditQuantity(e.target.value)}
+            placeholder="Quantity"
+            required
+          />
+          <select
+            value={editCategory}
+            onChange={(e) => setEditCategory(e.target.value)}
+            required
+          >
+            {CATEGORY_LIST.map((cat) => (
+              <option key={cat}>{cat}</option>
+            ))}
+          </select>
+          <textarea
+            value={editDescription}
+            onChange={(e) => setEditDescription(e.target.value)}
+            placeholder="Description"
+            required
+          />
+          <button type="submit">Save</button>
+          <button type="button" onClick={() => setEditingProduct(null)} style={{ marginLeft: "10px" }}>
+            Cancel
+          </button>
+        </form>
+      ) : (
+        <>
+          {p.name} - NPR {p.price} | Qty: {p.quantity} ({p.category})
+          <button onClick={() => toggleQR(p._id)} style={{ marginLeft: "10px" }}>QR</button>
+          <button onClick={() => handleEditClick(p)} style={{ marginLeft: "10px", backgroundColor: "#4caf50", color: "white" }}>Edit</button>
+
+          {qrVisible[p._id] && p.qrCode && (
+            <img src={`${API_BASE}/${p.qrCode}`} width="120" style={{ display: "block", marginTop: "5px" }} />
+          )}
+        </>
+      )}
+    </li>
+  ))}
+</ul>
+
       </section>
 
-      {message && <p className="message">{message}</p>}
+      {toast.visible && (
+        <div className={`toast ${toast.type}`}>
+          {toast.message}
+        </div>
+      )}
     </div>
   );
 };
