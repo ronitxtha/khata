@@ -2,17 +2,15 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import QRScanner from "./QRScanner"; 
 import "../styles/ownerDashboard.css";
+import Sidebar from "../components/Sidebar";
 
 const OwnerDashboard = () => {
   const [toast, setToast] = useState({ message: "", type: "success", visible: false });
 
   const [owner, setOwner] = useState({});
-  const [staffList, setStaffList] = useState([]);
   const [products, setProducts] = useState([]);
   const [scannedProduct, setScannedProduct] = useState(null);
 
-  const [staffName, setStaffName] = useState("");
-  const [staffEmail, setStaffEmail] = useState("");
 
   const [productName, setProductName] = useState("");
   const [productPrice, setProductPrice] = useState("");
@@ -31,7 +29,7 @@ const [editPrice, setEditPrice] = useState("");
 const [editQuantity, setEditQuantity] = useState("");
 const [editCategory, setEditCategory] = useState("");
 const [editDescription, setEditDescription] = useState("");
-const [attendanceList, setAttendanceList] = useState([]);
+
 
 
 
@@ -48,18 +46,7 @@ const [attendanceList, setAttendanceList] = useState([]);
         });
         setOwner(resOwner.data.owner);
 
-        const resStaff = await axios.get(`${API_BASE}/api/owner/staff`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        setStaffList(resStaff.data.staff || []);
-
-        const resAttendance = await axios.get(
-  `${API_BASE}/api/owner/today-attendance`,
-  { headers: { Authorization: `Bearer ${token}` } }
-);
-
-setAttendanceList(resAttendance.data.attendance || []);
-
+        
 
         const resProducts = await axios.get(`${API_BASE}/api/owner/products`, {
           headers: { Authorization: `Bearer ${token}` },
@@ -137,29 +124,7 @@ showToast("Product added successfully!", "success");
 };
 
 
-  // Add staff
-  const handleAddStaff = async (e) => {
-    e.preventDefault();
-    try {
-      const token = localStorage.getItem("accessToken");
-      const password = Math.random().toString(36).slice(-8);
-
-      const res = await axios.post(
-        `${API_BASE}/api/owner/add-staff`,
-        { name: staffName, email: staffEmail, password },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-
-      showToast(`Staff added: ${staffName}, password: ${password}`);
-      setStaffList([...staffList, res.data.staff]);
-      setStaffName("");
-      setStaffEmail("");
-    } catch (err) {
-      console.error(err);
-      showToast(err.response?.data?.message || "Error adding staff");
-    }
-  };
-
+  
   // Add product
   const handleAddProduct = async (e) => {
   e.preventDefault();
@@ -248,22 +213,6 @@ const handleAddProductAgain = async (product) => {
 };
 
 
-// Delete staff
-const handleDeleteStaff = async (staffId) => {
-  try {
-    const token = localStorage.getItem("accessToken");
-    await axios.delete(`${API_BASE}/api/owner/delete-staff/${staffId}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-
-    setStaffList(staffList.filter((s) => s._id !== staffId));
-    showToast("Staff deleted successfully");
-  } catch (err) {
-    console.error(err);
-    showToast(err.response?.data?.message || "Error deleting staff");
-  }
-};
-
 
   // Toggle QR visibility
   const toggleQR = (productId) => {
@@ -347,8 +296,12 @@ const handleDeleteStaff = async (staffId) => {
 };
 
 
-  return (
+ return (
+  <div className="owner-layout">
+    <Sidebar />
+
     <div className="dashboard-container">
+
       <header>
         <h1>Welcome, {owner?.username || "Owner"}</h1>
       </header>
@@ -386,92 +339,6 @@ const handleDeleteStaff = async (staffId) => {
           )}
         </div>
       )}
-
-      {/* Add Staff */}
-      <section className="add-staff-section">
-        <h2>Add Staff</h2>
-        <form onSubmit={handleAddStaff}>
-          <input
-            type="text"
-            placeholder="Staff Name"
-            value={staffName}
-            onChange={(e) => setStaffName(e.target.value)}
-            required
-          />
-          <input
-            type="email"
-            placeholder="Staff Email"
-            value={staffEmail}
-            onChange={(e) => setStaffEmail(e.target.value)}
-            required
-          />
-          <button type="submit">Add Staff</button>
-        </form>
-      </section>
-
-      {/* Staff List */}
-<section className="staff-list">
-  <h2>Staff List</h2>
-  <ul>
-    {staffList.map((staff) => (
-      <li key={staff._id} className="staff-item">
-        <span>{staff.username} ({staff.email})</span>
-        <button
-          className="delete-staff-btn"
-          onClick={() => handleDeleteStaff(staff._id)}
-        >
-          Delete
-        </button>
-      </li>
-    ))}
-  </ul>
-</section>
-<section className="attendance-section">
-  <h2>Today's Staff Attendance</h2>
-
-  {attendanceList.length === 0 ? (
-    <p className="no-attendance">No attendance recorded today</p>
-  ) : (
-    <div className="attendance-grid">
-      {attendanceList.map((a) => {
-        const isWorking = !a.lastLogoutClick;
-        const statusColor = isWorking ? "#28a745" : "#6c757d"; // green for working, gray for logged out
-        const statusIcon = isWorking ? "🟢" : "✔️"; // green dot or check
-        const statusText = isWorking ? "Present" : "Logged out";
-
-        return (
-          <div
-            key={a._id}
-            className="attendance-card"
-            style={{ borderLeft: `5px solid ${statusColor}` }}
-          >
-            <h4>{a.staffId?.username}</h4>
-            <p className="email">{a.staffId?.email}</p>
-
-            <p className="status">
-              Status:{" "}
-              <strong style={{ color: statusColor }}>
-                {statusIcon} {statusText}
-              </strong>
-            </p>
-
-            {a.checkInTime && (
-              <p className="login">
-                Login: {new Date(a.checkInTime).toLocaleTimeString()}
-              </p>
-            )}
-
-            {a.lastLogoutClick && (
-              <p className="logout">
-                Logout: {new Date(a.lastLogoutClick).toLocaleTimeString()}
-              </p>
-            )}
-          </div>
-        );
-      })}
-    </div>
-  )}
-</section>
 
 
 
@@ -656,12 +523,14 @@ const handleDeleteStaff = async (staffId) => {
 
 
       {toast.visible && (
-  <div className={`toast ${toast.type}`}>
-    {toast.message}
+        <div className={`toast ${toast.type}`}>
+          {toast.message}
+        </div>
+      )}
+        </div>
   </div>
-)}
-    </div>
-  );
+);
 };
+
 
 export default OwnerDashboard;

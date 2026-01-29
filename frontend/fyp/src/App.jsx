@@ -11,6 +11,9 @@ import StaffDashboard from "./pages/staffDashboard.jsx";
 import CustomerDashboard from "./pages/customerDashboard.jsx";
 import UserAuthentication from "./pages/UserAuthentication.jsx";
 import ProductManagement from "./pages/ProductManagement.jsx";
+import Sidebar from "./components/Sidebar";
+import Addstaff from "./pages/addStaff.jsx";
+
 
 
 export default function App() {
@@ -29,6 +32,7 @@ export default function App() {
         <Route path="/customer-dashboard" element={<CustomerDashboard />} />
         <Route path="/user-authentication" element={<UserAuthentication />} />
         <Route path="/product-management" element={<ProductManagement />} />
+        <Route path="/add-staff" element={<Addstaff />} />
 
 
       </Routes>

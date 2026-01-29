@@ -272,3 +272,13 @@ li:last-child {
   from { opacity: 1; }
   to { opacity: 0; }
 }
+
+.owner-layout {
+  display: flex;
+}
+
+.owner-content {
+  margin-left: 60px; /* space for hamburger */
+  width: 100%;
+  padding: 20px;
+}
