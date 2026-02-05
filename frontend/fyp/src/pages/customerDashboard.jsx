@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import "../styles/customerDashboard.css";
 
 const CustomerDashboard = () => {
+    const navigate = useNavigate()
   const [shops, setShops] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
@@ -61,7 +63,13 @@ const CustomerDashboard = () => {
                     <h3>{p.name}</h3>
                     <p className="price">NPR {p.price}</p>
                     <p className="desc">{p.description}</p>
-                    <button className="buy-btn">Buy Now</button>
+                   <button 
+  className="buy-btn"
+  onClick={() => navigate(`/product/${p._id}`)}
+>
+  View Details
+</button>
+
                   </div>
                 ))}
               </div>

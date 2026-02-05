@@ -13,6 +13,7 @@ import UserAuthentication from "./pages/UserAuthentication.jsx";
 import ProductManagement from "./pages/ProductManagement.jsx";
 import Sidebar from "./components/Sidebar";
 import Addstaff from "./pages/addStaff.jsx";
+import ProductDetails from "./pages/ProductDetails";
 
 
 
@@ -33,7 +34,7 @@ export default function App() {
         <Route path="/user-authentication" element={<UserAuthentication />} />
         <Route path="/product-management" element={<ProductManagement />} />
         <Route path="/add-staff" element={<Addstaff />} />
-
+        <Route path="/product/:id" element={<ProductDetails />} />
 
       </Routes>
    
