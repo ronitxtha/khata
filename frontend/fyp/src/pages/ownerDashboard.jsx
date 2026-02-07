@@ -29,6 +29,8 @@ const [editPrice, setEditPrice] = useState("");
 const [editQuantity, setEditQuantity] = useState("");
 const [editCategory, setEditCategory] = useState("");
 const [editDescription, setEditDescription] = useState("");
+const [editImage, setEditImage] = useState(null);
+
 
 
 
@@ -88,40 +90,55 @@ const handleEditClick = (product) => {
   setEditQuantity(product.quantity || "");
   setEditCategory(product.category || "Others");
   setEditDescription(product.description || "");
+  setEditImage(null);  
 };
 
 
 const handleUpdateProduct = async (e, productId) => {
-  e.preventDefault(); // ⚠ THIS IS CRITICAL
+  e.preventDefault();
+
   try {
     const token = localStorage.getItem("accessToken");
 
+    const formData = new FormData();
+    formData.append("name", editName);
+    formData.append("price", editPrice);
+    formData.append("quantity", editQuantity);
+    formData.append("category", editCategory);
+    formData.append("description", editDescription);
+
+    // 🔥 Add image only if user selected one
+    if (editImage) {
+      formData.append("image", editImage);
+    }
+
     const res = await axios.put(
-  `${API_BASE}/api/owner/update-product/${productId}`,
-  {
-    name: editName,
-    price: editPrice,
-    quantity: editQuantity,
-    category: editCategory,
-    description: editDescription,
-  },
-  { headers: { Authorization: `Bearer ${token}` } }
-);
+      `${API_BASE}/api/owner/update-product/${productId}`,
+      formData,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "multipart/form-data",
+        },
+      }
+    );
 
-// ✅ Update products state
-setProducts((prev) =>
-  prev.map((p) => (p._id === productId ? res.data.product : p))
-);
+    // Update UI instantly
+    setProducts((prev) =>
+      prev.map((p) =>
+        p._id === productId ? res.data.product : p
+      )
+    );
 
-setEditingProduct(null);
-showToast("Product added successfully!", "success");
-
+    setEditingProduct(null);
+    showToast("Product updated successfully!");
 
   } catch (err) {
     console.error(err);
     showToast(err.response?.data?.message || "Update failed");
   }
 };
+
 
 
   
@@ -488,6 +505,23 @@ const handleAddProductAgain = async (product) => {
                   placeholder="Description"
                   required
                 />
+
+                <input
+  type="file"
+  accept="image/*"
+  onChange={(e) => setEditImage(e.target.files[0])}
+/>
+
+{/* Show current image preview if exists */}
+{p.image && !editImage && (
+  <img
+    src={`http://localhost:8000/${p.image}`}
+    alt="Current product"
+    width="120"
+    style={{ display: "block", marginTop: "5px" }}
+  />
+)}
+
 
                 <button type="submit">Save</button>
                 <button

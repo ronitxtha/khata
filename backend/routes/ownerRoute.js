@@ -165,52 +165,64 @@ router.post("/add-product", isAuthenticated, upload.single("image"), async (req,
     res.status(500).json({ message: err.message });
   }
 });
+router.put(
+  "/update-product/:id",
+  upload.single("image"),   // 🔥 MUST come FIRST
+  isAuthenticated,          // then auth
+  async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { name, price, quantity, category, description } = req.body;
 
-router.put("/update-product/:id", isAuthenticated, async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { name, price, quantity, category, description } = req.body;
+      const MAIN_CATEGORIES = [
+        "Electronics",
+        "Fashion",
+        "Beauty & Personal Care",
+        "Home & Kitchen",
+        "Books & Stationery",
+        "Toys & Games",
+        "Sports & Fitness",
+        "Automotive",
+        "Others",
+      ];
 
-    const MAIN_CATEGORIES = [
-      "Electronics",
-      "Fashion",
-      "Beauty & Personal Care",
-      "Home & Kitchen",
-      "Books & Stationery",
-      "Toys & Games",
-      "Sports & Fitness",
-      "Automotive",
-      "Others",
-    ];
+      const finalCategory = MAIN_CATEGORIES.includes(category)
+        ? category
+        : "Others";
 
-    const finalCategory = MAIN_CATEGORIES.includes(category) ? category : "Others";
+      const product = await Product.findOne({
+        _id: id,
+        shopId: req.user.shopId,
+        deleted: false,
+      });
 
-    const product = await Product.findOne({
-      _id: id,
-      shopId: req.user.shopId,
-      deleted: false,
-    });
+      if (!product)
+        return res.status(404).json({ message: "Product not found" });
 
-    if (!product) return res.status(404).json({ message: "Product not found" });
+      product.name = name;
+      product.price = price;
+      product.quantity = Number(quantity);
+      product.category = finalCategory;
+      product.description = description;
 
-    product.name = name;
-    product.price = price;
-    product.quantity = Number(quantity);
-    product.category = finalCategory;
-    product.description = description;
+      // ✅ Update image only if new one uploaded
+      if (req.file) {
+        product.image = req.file.path;
+      }
 
-    await product.save();
+      await product.save();
 
-    // ✅ Return the updated product
-    res.status(200).json({
-      message: "Product updated successfully",
-      product, // <-- THIS IS CRITICAL
-    });
-  } catch (err) {
-    console.error("Update product error:", err);
-    res.status(500).json({ message: err.message });
+      res.status(200).json({
+        message: "Product updated successfully",
+        product,
+      });
+    } catch (err) {
+      console.error("Update product error:", err);
+      res.status(500).json({ message: err.message });
+    }
   }
-});
+);
+
 
 
 // ----------------------- Get Single Product by ID -----------------------
