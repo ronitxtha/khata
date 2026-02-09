@@ -12,6 +12,9 @@ const addStaff = () => {
   const [staffName, setStaffName] = useState("");
   const [staffEmail, setStaffEmail] = useState("");
   const [toast, setToast] = useState({ message: "", type: "success", visible: false });
+  const [staffPhone, setStaffPhone] = useState("");
+const [staffAddress, setStaffAddress] = useState("");
+
 
   const showToast = (message, type = "success", duration = 3000) => {
     setToast({ message, type, visible: true });
@@ -38,21 +41,40 @@ const addStaff = () => {
     fetchData();
   }, []);
 
+  const isValidPhone = (phone) => {
+  const phoneRegex = /^\d{10}$/;   // exactly 10 digits
+  return phoneRegex.test(phone);
+};
+
   const handleAddStaff = async (e) => {
     e.preventDefault();
+
+    
+  if (!isValidPhone(staffPhone)) {
+    showToast("Phone number must be exactly 10 digits", "error");
+    return;
+  }
     try {
       const token = localStorage.getItem("accessToken");
       const password = Math.random().toString(36).slice(-8);
 
       const res = await axios.post(
-        `${API_BASE}/api/owner/add-staff`,
-        { name: staffName, email: staffEmail, password },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+  `${API_BASE}/api/owner/add-staff`,
+  { 
+    name: staffName, 
+    email: staffEmail, 
+    phone: staffPhone,
+    address: staffAddress,
+    password 
+  },
+  { headers: { Authorization: `Bearer ${token}` } }
+);
 
       setStaffList([...staffList, res.data.staff]);
       setStaffName("");
       setStaffEmail("");
+      setStaffPhone("");
+      setStaffAddress("");
       showToast(`Staff added. Password: ${password}`);
     } catch (err) {
       showToast("Failed to add staff", "error");
@@ -86,19 +108,38 @@ const addStaff = () => {
         <h2>Add Staff</h2>
         <form onSubmit={handleAddStaff}>
           <input
-            type="text"
-            placeholder="Staff Name"
-            value={staffName}
-            onChange={(e) => setStaffName(e.target.value)}
-            required
-          />
-          <input
-            type="email"
-            placeholder="Staff Email"
-            value={staffEmail}
-            onChange={(e) => setStaffEmail(e.target.value)}
-            required
-          />
+  type="text"
+  placeholder="Staff Name"
+  value={staffName}
+  onChange={(e) => setStaffName(e.target.value)}
+  required
+/>
+
+<input
+  type="email"
+  placeholder="Staff Email"
+  value={staffEmail}
+  onChange={(e) => setStaffEmail(e.target.value)}
+  required
+/>
+
+<input
+  type="text"
+  placeholder="Phone Number"
+  value={staffPhone}
+  onChange={(e) => setStaffPhone(e.target.value.replace(/\D/g, ""))}
+  maxLength={10}
+  required
+/>
+
+<input
+  type="text"
+  placeholder="Address"
+  value={staffAddress}
+  onChange={(e) => setStaffAddress(e.target.value)}
+  required
+/>
+
           <button type="submit">Add Staff</button>
         </form>
       </section>
@@ -109,7 +150,9 @@ const addStaff = () => {
         <ul>
           {staffList.map((staff) => (
             <li key={staff._id} className="staff-item">
-              {staff.username} ({staff.email})
+              {staff.username} — {staff.email}  
+📞 {staff.phone || "N/A"} | 📍 {staff.address || "N/A"}
+
               <button onClick={() => handleDeleteStaff(staff._id)}>Delete</button>
             </li>
           ))}

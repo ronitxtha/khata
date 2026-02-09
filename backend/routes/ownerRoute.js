@@ -98,7 +98,7 @@ router.get("/products", isAuthenticated, async (req, res) => {
 // ----------------------- Add Staff -----------------------
 router.post("/add-staff", isAuthenticated, async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password, phone, address } = req.body;
 
     const existing = await User.findOne({ email });
     if (existing)
@@ -107,12 +107,14 @@ router.post("/add-staff", isAuthenticated, async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const staff = await User.create({
-      username: name,
-      email,
-      password: hashedPassword,
-      role: "staff",
-      shopId: req.user.shopId,
-    });
+  username: name,
+  email,
+  password: hashedPassword,
+  phone,
+  address,
+  role: "staff",
+  shopId: req.user.shopId
+});
 
     res.json({ message: "Staff added successfully", staff });
   } catch (err) {

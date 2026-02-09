@@ -4,11 +4,12 @@ import axios from "axios";
 import "../styles/customerDashboard.css";
 
 const CustomerDashboard = () => {
-    const navigate = useNavigate()
+    const navigate = useNavigate();
   const [shops, setShops] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [expandedShop, setExpandedShop] = useState(null); // Track which shop's modal is open
 
   const API_BASE = "http://localhost:8000";
 
@@ -33,11 +34,11 @@ const CustomerDashboard = () => {
 
   return (
     <div className="customer-container">
-      <h1>Stores</h1>
+      <h1>Browse Available Stores</h1>
 
       <input
         type="text"
-        placeholder="Search products..."
+        placeholder="🔍 Search products by name or description..."
         className="search-bar"
         value={searchTerm}
         onChange={(e) => setSearchTerm(e.target.value)}
@@ -51,34 +52,104 @@ const CustomerDashboard = () => {
             p.description.toLowerCase().includes(searchTerm.toLowerCase())
         );
 
+        // Show only first 5 products in horizontal view
+        const displayedProducts = filteredProducts.slice(0, 5);
+        const hasMore = filteredProducts.length > 5;
+
         return (
           <div key={shop._id} className="shop-container">
-            <h2>{shop.name}</h2>
+            <div className="shop-header">
+              <h2>{shop.name}</h2>
+              {hasMore && (
+                <button 
+                  className="show-all-btn"
+                  onClick={() => setExpandedShop(shop._id)}
+                >
+                  📦 Show All ({filteredProducts.length})
+                </button>
+              )}
+            </div>
 
             {filteredProducts.length > 0 ? (
               <div className="product-row">
-                {filteredProducts.map((p) => (
+                {displayedProducts.map((p) => (
                   <div key={p._id} className="product-card">
-                    <img src={`${API_BASE}/${p.image}`} alt={p.name} />
+                    <img 
+                      src={`${API_BASE}/${p.image}`} 
+                      alt={p.name}
+                      onError={(e) => {
+                        e.target.src = '📷';
+                      }}
+                    />
                     <h3>{p.name}</h3>
                     <p className="price">NPR {p.price}</p>
                     <p className="desc">{p.description}</p>
-                   <button 
-  className="buy-btn"
-  onClick={() => navigate(`/product/${p._id}`)}
->
-  View Details
-</button>
-
+                    <button 
+                      className="buy-btn"
+                      onClick={() => navigate(`/product/${p._id}`)}
+                    >
+                      View Details
+                    </button>
                   </div>
                 ))}
               </div>
             ) : (
-              <p>No products found in this store.</p>
+              <p className="no-results">No products found in this store.</p>
             )}
           </div>
         );
       })}
+
+      {/* Modal for showing all products of a shop */}
+      {expandedShop && (
+        <div className="modal-overlay" onClick={() => setExpandedShop(null)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>
+                {shops.find(s => s._id === expandedShop)?.name || "Products"}
+              </h2>
+              <button 
+                className="modal-close"
+                onClick={() => setExpandedShop(null)}
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="modal-products-grid">
+              {(shops.find(s => s._id === expandedShop)?.products || [])
+                .filter(
+                  (p) =>
+                    p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    p.description.toLowerCase().includes(searchTerm.toLowerCase())
+                )
+                .map((p) => (
+                  <div key={p._id} className="product-card">
+                    <img 
+                      src={`${API_BASE}/${p.image}`} 
+                      alt={p.name}
+                      onError={(e) => {
+                        e.target.src = '📷';
+                      }}
+                    />
+                    <h3>{p.name}</h3>
+                    <p className="price">NPR {p.price}</p>
+                    <p className="desc">{p.description}</p>
+                    <button 
+                      className="buy-btn"
+                      onClick={() => {
+                        navigate(`/product/${p._id}`);
+                        setExpandedShop(null);
+                      }}
+                    >
+                      View Details
+                    </button>
+                  </div>
+                ))}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

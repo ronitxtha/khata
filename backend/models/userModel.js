@@ -5,16 +5,19 @@ const userSchema = new mongoose.Schema({
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
 
+    phone: { type: String, default: "" },      // ✅ NEW
+    address: { type: String, default: "" },    // ✅ NEW
+
     role: { 
         type: String, 
-        enum: ["customer", "owner", "staff"],  // staff added
+        enum: ["customer", "owner", "staff"],
         default: "customer"
     },
 
     shopId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Shop",
-        default: null        // only owner/staff will have this
+        default: null
     },
 
     isVerified: { type: Boolean, default: false },
