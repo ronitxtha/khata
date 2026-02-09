@@ -1,0 +1,407 @@
+/* ==================== MAIN CONTAINER ==================== */
+.dashboard-container {
+  max-width: 100%;
+  width: 100%;
+  margin: 0;
+  padding: 40px 30px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: #1f2937;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  min-height: 100vh;
+  flex: 1;
+  overflow-y: auto;
+}
+
+/* Reset body and html */
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* ==================== HEADER SECTION ==================== */
+.dashboard-container h1 {
+  font-size: 36px;
+  color: #1e3a8a;
+  margin: 0 0 40px 0;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+
+/* ==================== SECTION STYLES ==================== */
+.section-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 28px;
+  border-bottom: 3px solid #2563eb;
+  padding-bottom: 12px;
+}
+
+.section-header h2,
+.add-staff-section h2,
+.staff-list h2,
+.attendance-section h2 {
+  font-size: 26px;
+  color: #1e3a8a;
+  margin: 0;
+  font-weight: 700;
+}
+
+/* ==================== ADD STAFF SECTION ==================== */
+.add-staff-section {
+  background: white;
+  padding: 40px;
+  border-radius: 16px;
+  margin-bottom: 45px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+}
+
+.add-staff-section h2 {
+  margin-bottom: 28px;
+  padding-bottom: 12px;
+  border-bottom: 3px solid #2563eb;
+}
+
+.add-staff-section form {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.add-staff-section input {
+  padding: 14px 16px;
+  border: 2px solid #e5e7eb;
+  border-radius: 10px;
+  font-size: 15px;
+  font-family: inherit;
+  background-color: #f9fafb;
+  color: #111827;
+  transition: all 0.3s ease;
+  outline: none;
+}
+
+.add-staff-section input:focus {
+  border-color: #2563eb;
+  background-color: #f0f4f8;
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+}
+
+.add-staff-section button[type="submit"] {
+  background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+  color: white;
+  padding: 16px 32px;
+  font-size: 16px;
+  font-weight: 700;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.3);
+  align-self: flex-start;
+}
+
+.add-staff-section button[type="submit"]:hover {
+  background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(37, 99, 235, 0.4);
+}
+
+.add-staff-section button[type="submit"]:active {
+  transform: translateY(0);
+}
+
+/* ==================== STAFF LIST SECTION ==================== */
+.staff-list {
+  background: white;
+  padding: 40px;
+  border-radius: 16px;
+  margin-bottom: 45px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+}
+
+.staff-list h2 {
+  margin-bottom: 28px;
+  padding-bottom: 12px;
+  border-bottom: 3px solid #2563eb;
+}
+
+.staff-list ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.staff-item {
+  background: linear-gradient(135deg, #15d845 0%, #3b82f6 100%);
+  padding: 20px;
+  border-radius: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+  border: 2px solid #1e40af;
+  color: white;
+  font-weight: 600;
+}
+
+.staff-item:hover {
+  border-color: #24cc2c;
+  box-shadow: 0 12px 30px rgba(37, 99, 235, 0.25);
+  transform: translateY(-4px);
+}
+
+.staff-item button {
+  background: #fee2e2;
+  color: #991b1b;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.staff-item button:hover {
+  background: #dc2626;
+  color: white;
+}
+
+/* ==================== ATTENDANCE SECTION ==================== */
+.attendance-section {
+  background: white;
+  padding: 40px;
+  border-radius: 16px;
+  margin-bottom: 45px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+}
+
+.attendance-section h2 {
+  margin-bottom: 28px;
+  padding-bottom: 12px;
+  border-bottom: 3px solid #2563eb;
+}
+
+.attendance-section > p {
+  font-size: 16px;
+  color: #6b7280;
+  font-weight: 500;
+  text-align: center;
+  padding: 40px 20px;
+}
+
+.attendance-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 24px;
+}
+
+.attendance-card {
+  background: linear-gradient(135deg, #dbeafe 0%, #e0e7ff 100%);
+  border: 2px solid #2563eb;
+  border-radius: 14px;
+  padding: 24px;
+  box-shadow: 0 6px 18px rgba(37, 99, 235, 0.15);
+  transition: all 0.3s ease;
+}
+
+.attendance-card:hover {
+  border-color: #1e40af;
+  box-shadow: 0 10px 30px rgba(37, 99, 235, 0.25);
+  transform: translateY(-4px);
+}
+
+.attendance-card h4 {
+  font-size: 18px;
+  color: #1e3a8a;
+  margin: 0 0 8px 0;
+  font-weight: 700;
+}
+
+.attendance-card p {
+  margin: 8px 0;
+  font-size: 15px;
+  color: #1f2937;
+  line-height: 1.5;
+}
+
+.attendance-card p strong {
+  color: #1e3a8a;
+  font-weight: 700;
+}
+
+/* ==================== TOAST NOTIFICATION ==================== */
+.toast {
+  position: fixed;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 16px 28px;
+  border-radius: 10px;
+  color: white;
+  font-weight: 600;
+  font-size: 15px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+  z-index: 9999;
+  animation: slideInUp 0.3s ease, slideOutUp 0.3s ease 2.7s forwards;
+}
+
+.toast.success {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+}
+
+.toast.error {
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+}
+
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 20px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+@keyframes slideOutUp {
+  from {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+  to {
+    opacity: 0;
+    transform: translate(-50%, -20px);
+  }
+}
+
+/* ==================== OWNER LAYOUT ==================== */
+.owner-layout {
+  display: flex;
+  width: 100%;
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+}
+
+/* ==================== RESPONSIVE DESIGN ==================== */
+@media (max-width: 1024px) {
+  .dashboard-container {
+    padding: 30px 20px;
+  }
+
+  .dashboard-container h1 {
+    font-size: 28px;
+  }
+
+  .add-staff-section,
+  .staff-list,
+  .attendance-section {
+    padding: 30px 20px;
+  }
+
+  .attendance-grid {
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboard-container {
+    padding: 20px 15px;
+  }
+
+  .dashboard-container h1 {
+    font-size: 26px;
+  }
+
+  .section-header h2,
+  .add-staff-section h2,
+  .staff-list h2,
+  .attendance-section h2 {
+    font-size: 22px;
+  }
+
+  .add-staff-section,
+  .staff-list,
+  .attendance-section {
+    padding: 25px 15px;
+  }
+
+  .attendance-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .staff-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .staff-item button {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .dashboard-container {
+    padding: 15px 10px;
+  }
+
+  .dashboard-container h1 {
+    font-size: 22px;
+    margin-bottom: 25px;
+  }
+
+  .add-staff-section,
+  .staff-list,
+  .attendance-section {
+    padding: 20px 12px;
+  }
+
+  .section-header h2,
+  .add-staff-section h2,
+  .staff-list h2,
+  .attendance-section h2 {
+    font-size: 18px;
+  }
+
+  .add-staff-section form {
+    gap: 16px;
+  }
+
+  .add-staff-section input {
+    font-size: 14px;
+  }
+
+  .attendance-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .staff-item {
+    padding: 16px;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .staff-item button {
+    width: 100%;
+  }
+
+  .attendance-card {
+    padding: 16px;
+  }
+
+  .attendance-card h4 {
+    font-size: 16px;
+  }
+
+  .attendance-card p {
+    font-size: 14px;
+  }
+}

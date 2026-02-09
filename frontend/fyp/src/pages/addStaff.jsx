@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import "../styles/ownerDashboard.css";
+import "../styles/addStaff.css";
 import Sidebar from "../components/Sidebar";
 
 

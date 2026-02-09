@@ -86,7 +86,7 @@ const [exactLocation, setExactLocation] = useState("");
       {/* ===== HEADER ===== */}
       <header className="pd-header">
         <div className="pd-logo" onClick={() => navigate("/")}>
-          <h2>MyEcommerce</h2>
+          <h2>Smart-  Khata</h2>
         </div>
         <div className="pd-search-bar">
           <input type="text" placeholder="Search products..." />
