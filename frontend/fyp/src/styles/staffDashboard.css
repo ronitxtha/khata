@@ -20,6 +20,15 @@ html, body {
   height: 100%;
 }
 
+/* ==================== STAFF LAYOUT ==================== */
+.staff-layout {
+  display: flex;
+  width: 100%;
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+}
+
 /* ==================== HEADER SECTION ==================== */
 .dashboard-header {
   display: flex;
@@ -961,4 +970,330 @@ html, body {
   .btn-cancel-modal {
     width: 100%;
   }
+}
+
+/* ==================== PROFILE SECTION ==================== */
+.profile-section {
+  background: white;
+  padding: 40px;
+  border-radius: 16px;
+  margin-bottom: 45px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+}
+
+.profile-section .section-header {
+  margin-bottom: 28px;
+  border-bottom: 3px solid #2563eb;
+  padding-bottom: 12px;
+}
+
+.profile-section h2 {
+  font-size: 26px;
+  color: #1e3a8a;
+  margin: 0;
+  font-weight: 700;
+}
+
+.profile-display {
+  padding: 20px 0;
+}
+
+.profile-card {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 32px;
+  margin-bottom: 32px;
+}
+
+.profile-item {
+  padding: 20px;
+  background: #f9fafb;
+  border-radius: 12px;
+  border-left: 4px solid #2563eb;
+}
+
+.profile-item .label {
+  display: block;
+  font-weight: 600;
+  color: #1e3a8a;
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+
+.profile-item .value {
+  display: block;
+  color: #374151;
+  font-size: 16px;
+  word-break: break-word;
+}
+
+.profile-item .value.status-active {
+  color: #16a34a;
+  font-weight: 600;
+}
+
+.profile-form {
+  padding: 20px 0;
+}
+
+.profile-form .form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 24px;
+  margin-bottom: 32px;
+}
+
+.profile-form .form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.profile-form .form-group label {
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: #1e3a8a;
+  font-size: 14px;
+}
+
+.profile-form .form-group input,
+.profile-form .form-group textarea {
+  padding: 12px 16px;
+  border: 2px solid #e5e7eb;
+  border-radius: 10px;
+  font-size: 15px;
+  font-family: inherit;
+  background-color: #f9fafb;
+  color: #111827;
+  transition: all 0.3s ease;
+  outline: none;
+}
+
+.profile-form .form-group input:focus,
+.profile-form .form-group textarea:focus {
+  border-color: #2563eb;
+  background-color: #f0f4f8;
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+}
+
+.profile-actions {
+  display: flex;
+  gap: 16px;
+}
+
+.btn-save,
+.btn-cancel {
+  padding: 12px 28px;
+  border: none;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-save {
+  background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+  color: white;
+  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.3);
+}
+
+.btn-save:hover {
+  background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(37, 99, 235, 0.4);
+}
+
+.btn-cancel {
+  background: #e5e7eb;
+  color: #374151;
+}
+
+.btn-cancel:hover {
+  background: #d1d5db;
+}
+
+.btn-edit-profile {
+  background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+  color: white;
+  padding: 12px 28px;
+  border: none;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.3);
+}
+
+.btn-edit-profile:hover {
+  background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(37, 99, 235, 0.4);
+}
+
+/* ==================== ATTENDANCE TABLE ==================== */
+.attendance-table-wrapper {
+  overflow-x: auto;
+}
+
+.attendance-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 15px;
+}
+
+.attendance-table thead {
+  background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+  color: white;
+}
+
+.attendance-table thead th {
+  padding: 16px 20px;
+  text-align: left;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  border: none;
+}
+
+.attendance-table tbody tr {
+  border-bottom: 1px solid #e5e7eb;
+  transition: background-color 0.2s ease;
+}
+
+.attendance-table tbody tr:hover {
+  background-color: #f9fafb;
+}
+
+.attendance-table tbody td {
+  padding: 16px 20px;
+  color: #374151;
+}
+
+.attendance-table tbody tr:last-child {
+  border-bottom: none;
+}
+
+.status-badge.completed {
+  background-color: #dcfce7;
+  color: #166534;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  display: inline-block;
+}
+
+.status-badge.active {
+  background-color: #dbeafe;
+  color: #1e40af;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  display: inline-block;
+}
+
+/* ==================== INVENTORY TABLE ==================== */
+.inventory-table-wrapper {
+  overflow-x: auto;
+}
+
+.inventory-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 15px;
+}
+
+.inventory-table thead {
+  background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+  color: white;
+}
+
+.inventory-table thead th {
+  padding: 16px 20px;
+  text-align: left;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  border: none;
+}
+
+.inventory-table tbody tr {
+  border-bottom: 1px solid #e5e7eb;
+  transition: background-color 0.2s ease;
+}
+
+.inventory-table tbody tr:hover {
+  background-color: #f9fafb;
+}
+
+.inventory-table tbody td {
+  padding: 16px 20px;
+  color: #374151;
+}
+
+.inventory-table tbody tr:last-child {
+  border-bottom: none;
+}
+
+.product-name-cell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.product-thumbnail {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  object-fit: cover;
+  border: 1px solid #e5e7eb;
+}
+
+.price-cell,
+.quantity-cell {
+  font-weight: 600;
+  color: #1e3a8a;
+}
+
+.stock-badge {
+  display: inline-block;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.stock-badge.in-stock {
+  background-color: #dcfce7;
+  color: #166534;
+}
+
+.stock-badge.out-stock {
+  background-color: #fee2e2;
+  color: #991b1b;
+}
+
+.description-cell {
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.search-input {
+  padding: 14px 16px;
+  border: 2px solid #e5e7eb;
+  border-radius: 10px;
+  font-size: 15px;
+  font-family: inherit;
+  background-color: #f9fafb;
+  color: #111827;
+  width: 100%;
+  max-width: 400px;
+  transition: all 0.3s ease;
+  outline: none;
+}
+
+.search-input:focus {
+  border-color: #2563eb;
+  background-color: #f0f4f8;
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
 }

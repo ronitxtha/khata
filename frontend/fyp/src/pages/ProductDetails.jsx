@@ -81,6 +81,14 @@ const [exactLocation, setExactLocation] = useState("");
   if (loading) return <p className="pd-loading">Loading product...</p>;
   if (!product) return <p className="pd-error">Product not found</p>;
 
+  const isDeliveryComplete =
+  province &&
+  district &&
+  municipality &&
+  ward &&
+  exactLocation.trim() !== "";
+
+
   return (
     <div className="pd-page">
       {/* ===== HEADER ===== */}
@@ -206,15 +214,18 @@ const [exactLocation, setExactLocation] = useState("");
   </select>
 
   {/* Exact location input */}
-  {ward && (
-    <input
-      type="text"
-      className="pd-exact-location"
-      placeholder="Enter exact location / street / house number"
-      value={exactLocation}
-      onChange={(e) => setExactLocation(e.target.value)}
-    />
-  )}
+  {/* Exact location input — ALWAYS VISIBLE */}
+<input
+  type="text"
+  className="pd-exact-location"
+  placeholder="Enter exact location / street / house number"
+  value={exactLocation}
+  onChange={(e) => setExactLocation(e.target.value)}
+  disabled={!ward}
+/>
+
+
+  
 
   {/* Display selected full address */}
   {province && district && municipality && ward && (
@@ -230,7 +241,33 @@ const [exactLocation, setExactLocation] = useState("");
           </div>
 
           <div className="pd-actions">
-            <button className="pd-buy-now">Buy Now</button>
+            
+           <button
+  className="pd-buy-now"
+  disabled={!isDeliveryComplete}
+  style={{
+    opacity: isDeliveryComplete ? 1 : 0.5,
+    cursor: isDeliveryComplete ? "pointer" : "not-allowed",
+  }}
+  onClick={() =>
+    navigate("/checkout", {
+      state: {
+        product,
+        deliveryAddress: {
+          province,
+          district,
+          municipality,
+          ward,
+          exactLocation,
+        },
+      },
+    })
+  }
+>
+  Buy Now
+</button>
+
+
             <button className="pd-add-cart">Add to Cart</button>
             <button className="pd-wishlist">Add to Wishlist</button>
           </div>

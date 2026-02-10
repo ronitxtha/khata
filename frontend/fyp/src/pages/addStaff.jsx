@@ -147,16 +147,43 @@ const [staffAddress, setStaffAddress] = useState("");
       {/* Staff List */}
       <section className="staff-list">
         <h2>Staff List</h2>
-        <ul>
-          {staffList.map((staff) => (
-            <li key={staff._id} className="staff-item">
-              {staff.username} — {staff.email}  
-📞 {staff.phone || "N/A"} | 📍 {staff.address || "N/A"}
-
-              <button onClick={() => handleDeleteStaff(staff._id)}>Delete</button>
-            </li>
-          ))}
-        </ul>
+        {staffList && staffList.length > 0 ? (
+          <div className="staff-table-wrapper">
+            <table className="staff-table">
+              <thead>
+                <tr>
+                  <th>Username</th>
+                  <th>Email</th>
+                  <th>Phone</th>
+                  <th>Address</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {staffList.map((staff) => (
+                  <tr key={staff._id}>
+                    <td>{staff.username || "N/A"}</td>
+                    <td>{staff.email || "N/A"}</td>
+                    <td>{staff.phone || "N/A"}</td>
+                    <td>{staff.address || "N/A"}</td>
+                    <td>
+                      <button 
+                        className="delete-btn"
+                        onClick={() => handleDeleteStaff(staff._id)}
+                      >
+                        🗑️ Delete
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="empty-state">
+            <p>No staff members added yet.</p>
+          </div>
+        )}
       </section>
 
       {/* Attendance */}

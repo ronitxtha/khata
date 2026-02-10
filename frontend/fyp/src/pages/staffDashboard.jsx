@@ -2,7 +2,8 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import QRScanner from "./QRScanner";
-import "../styles/staffDashboard.css"; 
+import StaffSidebar from "../components/StaffSidebar";
+import "../styles/staffDashboard.css";
 
 const StaffDashboard = () => {
     const [toast, setToast] = useState({ message: "", type: "success", visible: false });
@@ -255,69 +256,69 @@ const handleLogoutClick = async () => {
   }
 };
 
+const toggleQR = (id) => {
+  setQrVisible((prev) => ({ ...prev, [id]: !prev[id] }));
+};
 
+// Download QR
+const downloadQR = async (productId) => {
+  try {
+    const token = localStorage.getItem("accessToken");
+    const res = await axios.get(`${API_BASE}/api/owner/download-qr/${productId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+      responseType: "blob",
+    });
 
+    const url = window.URL.createObjectURL(new Blob([res.data]));
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", `product-${productId}-qr.png`);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+  } catch (err) {
+    console.error("Download failed", err);
+    showToast("Download failed", "error");
+  }
+};
 
-  const toggleQR = (id) => {
-    setQrVisible((prev) => ({ ...prev, [id]: !prev[id] }));
-  };
-
-  // Download QR
-  const downloadQR = async (productId) => {
-    try {
-      const token = localStorage.getItem("accessToken");
-      const res = await axios.get(`${API_BASE}/api/owner/download-qr/${productId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-        responseType: "blob",
-      });
-
-      const url = window.URL.createObjectURL(new Blob([res.data]));
-      const link = document.createElement("a");
-      link.href = url;
-      link.setAttribute("download", `product-${productId}-qr.png`);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-    } catch (err) {
-      console.error("Download failed", err);
-      showToast("Download failed", "error");
-    }
-  };
-
-  // Delete product (soft delete)
-  const handleDeleteProduct = async (productId) => {
-    try {
-      const token = localStorage.getItem("accessToken");
-      await axios.delete(`${API_BASE}/api/owner/delete-product/${productId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setProducts(products.filter((p) => p._id !== productId));
-      showToast("Product deleted successfully");
-    } catch (err) {
-      console.error(err);
-      showToast(err.response?.data?.message || "Delete failed", "error");
-    }
-  };
+// Delete product (soft delete)
+const handleDeleteProduct = async (productId) => {
+  try {
+    const token = localStorage.getItem("accessToken");
+    await axios.delete(`${API_BASE}/api/owner/delete-product/${productId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    setProducts(products.filter((p) => p._id !== productId));
+    showToast("Product deleted successfully");
+  } catch (err) {
+    console.error(err);
+    showToast(err.response?.data?.message || "Delete failed", "error");
+  }
+};
 
   return (
-    <div className="dashboard-container">
-      {/* Header Section */}
-      <div className="dashboard-header">
-        <header>
-          <h1>Welcome, {staff?.username || "Staff"}</h1>
-          <p className="subtitle">Manage your products and inventory</p>
-        </header>
-        <button className="scan-btn-primary" onClick={() => setScannerOpen(true)}>
-          📱 Scan Product QR
-        </button>
-      </div>
+    <div className="staff-layout">
+      <StaffSidebar />
 
-      {scannerOpen && (
-        <QRScanner
-          onScanSuccess={handleScanSuccess}
-          onClose={() => setScannerOpen(false)}
-        />
-      )}
+      <div className="dashboard-container">
+        {/* Header Section */}
+        <div className="dashboard-header">
+          <header>
+            <h1>Welcome, {staff?.username || "Staff"}</h1>
+            <p className="subtitle">Manage your products and inventory</p>
+          </header>
+          <button className="scan-btn-primary" onClick={() => setScannerOpen(true)}>
+            📱 Scan Product QR
+          </button>
+        </div>
+
+        {scannerOpen && (
+          <QRScanner
+            onScanSuccess={handleScanSuccess}
+            onClose={() => setScannerOpen(false)}
+          />
+        )}
 
       {/* Display Scanned Product */}
       {scannedProduct && (
@@ -662,6 +663,7 @@ const handleLogoutClick = async () => {
           {toast.message}
         </div>
       )}
+      </div>
     </div>
   );
 };
