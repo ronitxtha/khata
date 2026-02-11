@@ -12,6 +12,8 @@ import shopRoutes from "./routes/shopRoutes.js";
 import marketplaceRoute from "./routes/marketplaceRoute.js";
 import "./cronJobs/endOfDayAttendance.js";
 import userAddressRoute from "./routes/userAddressRoute.js";
+import orderRoutes from "./routes/orderRoutes.js";
+
 
 const app = express();
 const PORT = process.env.PORT || 8000;
@@ -41,6 +43,8 @@ app.use("/api", productRoutes); // customers
 app.use("/api/owner", ownerRoutes);
 
 app.use("/api/user", userAddressRoute);
+
+app.use("/api/orders", orderRoutes);
 
 // Connect DB and start server
 connectDB();

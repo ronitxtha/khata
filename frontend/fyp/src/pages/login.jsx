@@ -36,12 +36,15 @@ export default function Login() {
       );
 
       if (res.data.success) {
-        const user = res.data.user;
-        localStorage.setItem("accessToken", res.data.accessToken);
+  const user = res.data.user;
 
-        if (user.role === "owner") navigate("/owner-dashboard");
-        else if (user.role === "staff") navigate("/staff-dashboard");
-        else navigate("/customer-dashboard");
+  // Store both accessToken and user in localStorage
+  localStorage.setItem("accessToken", res.data.accessToken);
+  localStorage.setItem("user", JSON.stringify(user)); // <-- ADD THIS
+
+  if (user.role === "owner") navigate("/owner-dashboard");
+  else if (user.role === "staff") navigate("/staff-dashboard");
+  else navigate("/customer-dashboard");
       } else {
         setError(res.data.message);
       }
