@@ -10,19 +10,29 @@ router.post("/create", async (req, res) => {
   try {
     const { productId, quantity, userId } = req.body;
 
-    // 1️⃣ Find the product
-    const product = await Product.findById(productId).populate("shopId");
-    if (!product) return res.status(404).json({ message: "Product not found" });
+    if (!productId || !quantity) {
+      return res.status(400).json({ message: "Missing fields" });
+    }
 
-    // 2️⃣ Reduce quantity
+    // 1️⃣ Find product
+    const product = await Product.findById(productId).populate("shopId");
+    if (!product) {
+      return res.status(404).json({ message: "Product not found" });
+    }
+
+    // 2️⃣ Check stock before reducing
+    if (product.quantity < quantity) {
+      return res.status(400).json({ message: "Not enough stock available" });
+    }
+
+    // 3️⃣ Reduce stock
     product.quantity -= quantity;
     await product.save();
 
-    // 3️⃣ Fetch owner email from shop
+    // 4️⃣ Get owner + staff
     const shopOwner = await User.findById(product.shopId.ownerId);
     const ownerEmail = shopOwner?.email;
 
-    // 4️⃣ Fetch staff emails if needed (optional)
     const staffMembers = await User.find({
       shopId: product.shopId._id,
       role: "staff",
@@ -30,25 +40,39 @@ router.post("/create", async (req, res) => {
 
     const staffEmails = staffMembers.map(staff => staff.email);
 
-    // 5️⃣ Send email if remaining quantity is less than 5
+    // 5️⃣ Low stock alert
     if (product.quantity < 5) {
       const subject = `Stock Alert: ${product.name} is low`;
       const text = `The product "${product.name}" now has only ${product.quantity} items left in stock.`;
 
-      // Send to owner
-      if (ownerEmail) await sendEmail({ to: ownerEmail, subject, text });
+      if (ownerEmail) {
+        await sendEmail({ to: ownerEmail, subject, text });
+      }
 
-      // Send to staff (optional)
       for (const email of staffEmails) {
         await sendEmail({ to: email, subject, text });
       }
+
+      // 🔔 SOCKET NOTIFICATION
+      const io = req.app.get("io");
+
+      io.emit("lowStockAlert", {
+        message: `${product.name} is low in stock (${product.quantity} left)`,
+        productId: product._id,
+        quantity: product.quantity
+      });
     }
 
-    return res.json({ message: "Order placed successfully" });
+    return res.json({ 
+      message: "Order placed successfully",
+      remainingStock: product.quantity
+    });
+
   } catch (err) {
     console.error("ORDER ERROR:", err);
     res.status(500).json({ message: "Something went wrong" });
   }
 });
+
 
 export default router;

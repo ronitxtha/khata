@@ -3,6 +3,8 @@ import axios from "axios";
 import QRScanner from "./QRScanner"; 
 import "../styles/ownerDashboard.css";
 import Sidebar from "../components/Sidebar";
+import socket from "../socket";
+
 
 const OwnerDashboard = () => {
   const [toast, setToast] = useState({ message: "", type: "success", visible: false });
@@ -32,6 +34,16 @@ const [editDescription, setEditDescription] = useState("");
 const [editImage, setEditImage] = useState(null);
 
 
+// Initial state
+const [notifications, setNotifications] = useState(() => {
+  // Load from localStorage if exists
+  const saved = localStorage.getItem("notifications");
+  return saved ? JSON.parse(saved) : [];
+});
+
+const [showNotifications, setShowNotifications] = useState(false); // toggle dropdown
+
+
 
 
 
@@ -39,28 +51,60 @@ const [editImage, setEditImage] = useState(null);
 
   // Load owner, staff, products
   useEffect(() => {
-    const fetchOwnerData = async () => {
-      try {
-        const token = localStorage.getItem("accessToken");
+  const fetchOwnerData = async () => {
+    try {
+      const token = localStorage.getItem("accessToken");
 
-        const resOwner = await axios.get(`${API_BASE}/api/owner/me`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        setOwner(resOwner.data.owner);
+      // Fetch owner info
+      const resOwner = await axios.get(`${API_BASE}/api/owner/me`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setOwner(resOwner.data.owner);
 
-        
+      // Fetch owner products
+      const resProducts = await axios.get(`${API_BASE}/api/owner/products`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setProducts(resProducts.data.products || []);
+    } catch (err) {
+      console.error(err);
+      showToast(err.response?.data?.message || "Error loading data");
+    }
+  };
 
-        const resProducts = await axios.get(`${API_BASE}/api/owner/products`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        setProducts(resProducts.data.products || []);
-      } catch (err) {
-        console.error(err);
-        showToast(err.response?.data?.message || "Error loading data");
-      }
-    };
-    fetchOwnerData();
-  }, []);
+  fetchOwnerData();
+
+  // ================= SOCKET.IO LISTENER =================
+  socket.on("lowStockAlert", (data) => {
+  // Add new notification
+  const newNotification = { id: Date.now(), ...data, read: false };
+  setNotifications((prev) => {
+    const updated = [newNotification, ...prev];
+    localStorage.setItem("notifications", JSON.stringify(updated));
+    return updated;
+  });
+  // Show toast
+  showToast(data.message, "error");
+
+  // Update products quantity
+  setProducts((prevProducts) =>
+    prevProducts.map((p) =>
+      p._id === data.productId ? { ...p, quantity: data.quantity } : p
+    )
+  );
+
+  // Add notification to list
+  setNotifications((prev) => [
+    { id: Date.now(), ...data, read: false },
+    ...prev
+  ]);
+});
+
+  // Cleanup on unmount
+  return () => {
+    socket.off("lowStockAlert");
+  };
+}, []);
 
   const showToast = (message, type = "success", duration = 3000) => {
   setToast({ message, type, visible: true });
@@ -321,13 +365,59 @@ const handleAddProductAgain = async (product) => {
 
       {/* Header Section */}
       <div className="dashboard-header">
-        <header>
-          <h1>Welcome, {owner?.username || "Owner"}</h1>
-          <p className="subtitle">Manage your products and inventory</p>
-        </header>
+       <header>
+  <h1>Welcome, {owner?.username || "Owner"}</h1>
+  <p className="subtitle">Manage your products and inventory</p>
+</header>
+
         <button className="scan-btn-primary" onClick={() => setScannerOpen(true)}>
           📱 Scan Product QR
         </button>
+
+        {/* Notification Bell - Positioned on Right */}
+        <div className="notification-container">
+          <button 
+            className="notification-btn"
+            onClick={() => setShowNotifications(!showNotifications)}
+          >
+            🔔
+            {notifications.some(n => !n.read) && <span className="notification-badge"></span>}
+          </button>
+
+          {showNotifications && (
+  <div className="notification-dropdown">
+    <div className="notification-header">
+      <h4>Notifications</h4>
+      <button
+        onClick={() => {
+          setNotifications([]);
+          localStorage.removeItem("notifications");
+        }}
+        className="clear-btn"
+      >
+        Clear All
+      </button>
+    </div>
+
+    {notifications.length === 0 && <p className="notification-message">No notifications</p>}
+    {notifications.map((n) => (
+      <div
+        key={n.id}
+        className={`notification-item ${n.read ? "read" : "unread"}`}
+        onClick={() => {
+          n.read = true; // mark as read
+          setNotifications([...notifications]);
+          localStorage.setItem("notifications", JSON.stringify(notifications));
+        }}
+      >
+        <p>{n.message}</p>
+        <small>{new Date(n.id).toLocaleTimeString()}</small>
+      </div>
+    ))}
+  </div>
+)}
+
+        </div>
       </div>
 
       {/* QR Scanner */}

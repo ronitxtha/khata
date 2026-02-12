@@ -22,6 +22,7 @@ html, body {
 
 /* ==================== HEADER SECTION ==================== */
 .dashboard-header {
+  position: relative;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -53,9 +54,12 @@ html, body {
 
 /* Scan Button Primary */
 .scan-btn-primary {
+  position: relative;
+  z-index: 50;
   background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
   color: white;
   padding: 14px 32px;
+  margin-right: 90px;
   font-size: 16px;
   font-weight: 600;
   border: none;
@@ -208,30 +212,32 @@ html, body {
 }
 
 /* ==================== PRODUCT CARD ==================== */
+/* Updated: Modern blue to red hover effect */
 .product-card {
-  background: #15d845;
-  border: 2px solid #1e40af;
-  border-radius: 14px;
+  background: linear-gradient(135deg, #f09b08 0%, #2563eb 100%) !important;
+  border: 1px solid #2563eb !important;
+  border-radius: 16px;
   overflow: hidden;
-  transition: all 0.3s ease;
+  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
   display: flex;
   flex-direction: column;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 4px 6px rgba(37, 99, 235, 0.3);
   position: relative;
+  height: 100%;
 }
 
 .product-card:hover {
-  border-color: #24cc2c;
-  box-shadow: 0 12px 30px rgba(37, 99, 235, 0.25);
-  transform: translateY(-6px);
-  background: #3b82f6;
+  background: linear-gradient(135deg, #166fbd 0%, #dc2626 100%) !important;
+  border-color: #dc2626 !important;
+  box-shadow: 0 20px 25px -5px rgba(239, 68, 68, 0.4), 0 10px 10px -5px rgba(239, 68, 68, 0.2);
+  transform: translateY(-4px);
 }
 
 /* Product Image Container */
 .product-img-container {
   width: 100%;
   height: 220px;
-  background: #f3f4f6;
+  background: #f9fafb;
   overflow: hidden;
   position: relative;
 }
@@ -240,58 +246,62 @@ html, body {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform 0.3s ease;
+  transition: transform 0.4s ease;
 }
 
 .product-card:hover .product-img {
-  transform: scale(1.08);
+  transform: scale(1.05);
 }
 
 .product-img-placeholder {
   width: 100%;
   height: 220px;
-  background: linear-gradient(135deg, #e5e7eb 0%, #d1d5db 100%);
+  background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 60px;
+  font-size: 56px;
   color: #9ca3af;
 }
 
 /* Product Information */
 .product-info {
-  padding: 20px;
+  padding: 24px;
   flex: 1;
   display: flex;
   flex-direction: column;
+  gap: 12px;
 }
 
 .product-name {
-  font-size: 18px;
+  font-size: 19px;
   font-weight: 700;
   color: #ffffff;
-  margin: 0 0 6px 0;
-  word-break: break-word;
+  margin: 0;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
 }
 
 .product-category {
   display: inline-block;
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.25);
   color: #ffffff;
-  padding: 4px 12px;
-  border-radius: 20px;
-  font-size: 12px;
-  font-weight: 600;
-  margin-bottom: 12px;
+  padding: 6px 14px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  margin-bottom: 4px;
   width: fit-content;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .product-details {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
+  display: flex;
+  flex-direction: column;
   gap: 12px;
-  margin: 12px 0;
-  padding: 12px 0;
+  margin: 8px 0;
+  padding: 16px 0;
   border-top: 1px solid rgba(255, 255, 255, 0.2);
   border-bottom: 1px solid rgba(255, 255, 255, 0.2);
 }
@@ -303,60 +313,61 @@ html, body {
 }
 
 .detail-item .label {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
-  color: #cbd5e1;
+  color: rgba(255, 255, 255, 0.8);
   text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .detail-item .value {
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 700;
   color: #ffffff;
 }
 
 .detail-item .price {
-  color: #dc2626;
-  font-size: 16px;
+  color: #fde047;
+  font-size: 18px;
 }
 
 .detail-item .in-stock {
-  color: #10b981;
+  color: #86efac;
 }
 
 .detail-item .out-stock {
-  color: #dc2626;
+  color: #fca5a5;
   font-weight: 700;
 }
 
 .product-desc {
-  color: #e0e7ff;
+  color: rgba(255, 255, 255, 0.9);
   font-size: 14px;
-  line-height: 1.4;
-  margin: 12px 0 0 0;
-  flex: 1;
+  line-height: 1.6;
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 /* ==================== PRODUCT ACTIONS ==================== */
 .product-actions {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: 8px;
-  padding: 16px 20px;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(0, 0, 0, 0.1);
+  display: flex;
+  gap: 10px;
+  padding: 20px 24px;
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(0, 0, 0, 0.15);
 }
 
 .btn-qr,
 .btn-edit,
-.btn-delete,
-.btn-download-qr,
-.btn-save,
-.btn-cancel,
-.re-add-btn {
-  padding: 10px 12px;
+.btn-delete {
+  flex: 1;
+  padding: 11px 16px;
   border: none;
-  border-radius: 8px;
+  border-radius: 10px;
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
@@ -366,60 +377,81 @@ html, body {
 }
 
 .btn-qr {
-  background: #e0f2fe;
+  background: #dbeafe;
   color: #0369a1;
 }
 
 .btn-qr:hover {
-  background: #0369a1;
+  background: #03eb7b;
   color: white;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px rgba(3, 105, 161, 0.3);
 }
 
 .btn-edit {
-  background: #fef3c7;
-  color: #92400e;
+  background: #fed7aa;
+  color: #c2410c;
 }
 
 .btn-edit:hover {
   background: #d97706;
   color: white;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px rgba(217, 119, 6, 0.3);
 }
 
 .btn-delete {
-  background: #fee2e2;
-  color: #991b1b;
+  background: #fecaca;
+  color: #b91c1c;
 }
 
 .btn-delete:hover {
   background: #dc2626;
   color: white;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px rgba(220, 38, 38, 0.3);
 }
 
 /* ==================== QR CODE SECTION ==================== */
 .qr-code-section {
-  padding: 20px;
-  background: rgba(0, 0, 0, 0.1);
-  border-radius: 10px;
-  margin-bottom: 12px;
+  padding: 24px;
+  background: #f9fafb;
+  border-radius: 12px;
+  margin: 0 24px 20px 24px;
   text-align: center;
+  border: 2px dashed #d1d5db;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .qr-image {
-  max-width: 140px;
-  margin-bottom: 12px;
-  border-radius: 8px;
-  border: 2px solid rgba(255, 255, 255, 0.2);
+  width: 180px;
+  height: 180px;
+  margin-bottom: 16px;
+  border-radius: 10px;
+  border: 3px solid white;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  object-fit: contain;
 }
 
 .btn-download-qr {
   background: #10b981;
   color: white;
-  padding: 10px 20px;
+  padding: 12px 24px;
   width: 100%;
+  max-width: 200px;
+  border: none;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
 
 .btn-download-qr:hover {
   background: #059669;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(16, 185, 129, 0.3);
 }
 
 /* ==================== FULL PAGE EDIT MODAL ==================== */
@@ -961,4 +993,363 @@ html, body {
   .btn-cancel-modal {
     width: 100%;
   }
+}
+/* ==================== NOTIFICATION SYSTEM ==================== */
+.notification-container {
+  position: absolute;
+  top: 50%;
+  right: 40px;
+  transform: translateY(-50%);
+  z-index: 100;
+  pointer-events: auto;
+}
+
+.notification-btn {
+  position: relative;
+  font-size: 28px;
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  border: 2px solid #e5e7eb;
+  cursor: pointer;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  pointer-events: auto;
+}
+
+.notification-btn:hover {
+  background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+  border-color: #2563eb;
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: 0 8px 20px rgba(37, 99, 235, 0.3);
+}
+
+.notification-btn:active {
+  transform: translateY(0) scale(0.98);
+}
+
+.notification-badge {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 14px;
+  height: 14px;
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  border-radius: 50%;
+  border: 2px solid white;
+  animation: pulse 2s infinite;
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.4);
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.8;
+  }
+}
+
+.notification-dropdown {
+  position: absolute;
+  top: calc(100% + 16px);
+  right: 0;
+  width: 420px;
+  max-height: 580px;
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(0, 0, 0, 0.05);
+  border-radius: 20px;
+  overflow: hidden;
+  z-index: 2000;
+  animation: slideDown 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.notification-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px 24px 16px 24px;
+  border-bottom: 2px solid #e5e7eb;
+  background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
+}
+
+.notification-header h3 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  color: #1e3a8a;
+  letter-spacing: -0.02em;
+}
+
+.clear-all-btn {
+  background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+  color: #dc2626;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.clear-all-btn:hover {
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+  color: white;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
+}
+
+.no-notifications {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 24px;
+  text-align: center;
+  gap: 16px;
+}
+
+.no-notif-icon {
+  font-size: 64px;
+  opacity: 0.5;
+  filter: grayscale(0.3);
+}
+
+.no-notifications p {
+  margin: 0;
+  color: #6b7280;
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.notification-list {
+  max-height: 480px;
+  overflow-y: auto;
+  padding: 8px;
+}
+
+/* Custom Scrollbar for Notification List */
+.notification-list::-webkit-scrollbar {
+  width: 8px;
+}
+
+.notification-list::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 10px;
+}
+
+.notification-list::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #cbd5e1 0%, #94a3b8 100%);
+  border-radius: 10px;
+  transition: background 0.2s ease;
+}
+
+.notification-list::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, #94a3b8 0%, #64748b 100%);
+}
+
+.notification-item {
+  display: flex;
+  gap: 14px;
+  padding: 16px;
+  margin-bottom: 8px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid transparent;
+  position: relative;
+  overflow: hidden;
+}
+
+.notification-item::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+
+.notification-item.unread {
+  background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+  border-color: #fecaca;
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.1);
+}
+
+.notification-item.unread::before {
+  opacity: 1;
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+}
+
+.notification-item.read {
+  background: #f9fafb;
+  border-color: #e5e7eb;
+}
+
+.notification-item:hover {
+  background: linear-gradient(135deg, #dbeafe 0%, #e0e7ff 100%);
+  border-color: #93c5fd;
+  transform: translateX(-4px);
+  box-shadow: 0 4px 16px rgba(37, 99, 235, 0.15);
+}
+
+.notification-item:active {
+  transform: translateX(-2px) scale(0.98);
+}
+
+.notification-icon {
+  font-size: 28px;
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  border-radius: 12px;
+  border: 2px solid #e5e7eb;
+  transition: all 0.25s ease;
+}
+
+.notification-item:hover .notification-icon {
+  background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+  border-color: #2563eb;
+  transform: rotate(10deg) scale(1.1);
+}
+
+.notification-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.notification-message {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1f2937;
+  line-height: 1.5;
+  word-wrap: break-word;
+}
+
+.notification-item.unread .notification-message {
+  color: #dc2626;
+  font-weight: 700;
+}
+
+.notification-time {
+  font-size: 12px;
+  color: #6b7280;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.notification-time::before {
+  content: '🕐';
+  font-size: 11px;
+}
+
+/* Responsive Adjustments for Notifications */
+@media (max-width: 768px) {
+  .notification-container {
+    right: 20px;
+  }
+
+  .notification-dropdown {
+    width: 340px;
+    max-height: 500px;
+  }
+
+  .notification-btn {
+    width: 48px;
+    height: 48px;
+    font-size: 24px;
+  }
+}
+
+@media (max-width: 480px) {
+  .notification-container {
+    right: 10px;
+  }
+
+  .notification-dropdown {
+    width: calc(100vw - 40px);
+    right: -10px;
+  }
+
+  .notification-header {
+    padding: 20px 16px 12px 16px;
+  }
+
+  .notification-header h3 {
+    font-size: 18px;
+  }
+
+  .notification-btn {
+    width: 44px;
+    height: 44px;
+    font-size: 22px;
+  }
+
+  .notification-item {
+    padding: 12px;
+  }
+
+  .notification-icon {
+    width: 40px;
+    height: 40px;
+    font-size: 24px;
+  }
+}
+.notification-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 5px;
+  border-bottom: 1px solid #eee;
+}
+
+.clear-btn {
+  background: none;
+  border: none;
+  color: red;
+  cursor: pointer;
+  font-weight: bold;
+}
+.notification-message{
+  margin-left: 30px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1f2937;
+  line-height: 1.5;
+  word-wrap: break-word;
 }
