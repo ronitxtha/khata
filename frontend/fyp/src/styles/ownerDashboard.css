@@ -1330,26 +1330,3 @@ html, body {
     font-size: 24px;
   }
 }
-.notification-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding-bottom: 5px;
-  border-bottom: 1px solid #eee;
-}
-
-.clear-btn {
-  background: none;
-  border: none;
-  color: red;
-  cursor: pointer;
-  font-weight: bold;
-}
-.notification-message{
-  margin-left: 30px;
-  font-size: 14px;
-  font-weight: 600;
-  color: #1f2937;
-  line-height: 1.5;
-  word-wrap: break-word;
-}

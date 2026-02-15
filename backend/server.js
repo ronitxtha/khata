@@ -13,6 +13,7 @@ import marketplaceRoute from "./routes/marketplaceRoute.js";
 import "./cronJobs/endOfDayAttendance.js";
 import userAddressRoute from "./routes/userAddressRoute.js";
 import orderRoutes from "./routes/orderRoutes.js";
+import notificationRoutes from "./routes/notificationRoutes.js";
 
 import http from "http";                 // ✅ ADD
 import { Server } from "socket.io";      // ✅ ADD
@@ -62,6 +63,7 @@ app.use("/api", productRoutes);
 app.use("/api/owner", ownerRoutes);
 app.use("/api/user", userAddressRoute);
 app.use("/api/orders", orderRoutes);
+app.use("/api/notifications", notificationRoutes);
 
 /* ================= START SERVER ================= */
 

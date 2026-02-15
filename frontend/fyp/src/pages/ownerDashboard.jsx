@@ -32,12 +32,8 @@ const [editQuantity, setEditQuantity] = useState("");
 const [editCategory, setEditCategory] = useState("");
 const [editDescription, setEditDescription] = useState("");
 const [editImage, setEditImage] = useState(null);
-
-
-// Initial state
 const [notifications, setNotifications] = useState(() => {
-  // Load from localStorage if exists
-  const saved = localStorage.getItem("notifications");
+  const saved = localStorage.getItem("owner_notifications");
   return saved ? JSON.parse(saved) : [];
 });
 
@@ -60,6 +56,8 @@ const [showNotifications, setShowNotifications] = useState(false); // toggle dro
         headers: { Authorization: `Bearer ${token}` },
       });
       setOwner(resOwner.data.owner);
+      fetchNotifications(resOwner.data.owner.shopId);
+
 
       // Fetch owner products
       const resProducts = await axios.get(`${API_BASE}/api/owner/products`, {
@@ -76,29 +74,29 @@ const [showNotifications, setShowNotifications] = useState(false); // toggle dro
 
   // ================= SOCKET.IO LISTENER =================
   socket.on("lowStockAlert", (data) => {
-  // Add new notification
-  const newNotification = { id: Date.now(), ...data, read: false };
-  setNotifications((prev) => {
-    const updated = [newNotification, ...prev];
-    localStorage.setItem("notifications", JSON.stringify(updated));
-    return updated;
+    // Add new notification
+    const newNotification = {
+      id: data.productId + "_" + Date.now(), // Unique ID
+      message: data.message,
+      read: false,
+      createdAt: new Date()
+    };
+
+    setNotifications(prev => {
+      const updated = [newNotification, ...prev];
+      localStorage.setItem("owner_notifications", JSON.stringify(updated));
+      return updated;
+    });
+
+    showToast(data.message, "error");
+
+    // Update products quantity in real-time
+    setProducts(prev =>
+      prev.map(p =>
+        p._id === data.productId ? { ...p, quantity: data.quantity } : p
+      )
+    );
   });
-  // Show toast
-  showToast(data.message, "error");
-
-  // Update products quantity
-  setProducts((prevProducts) =>
-    prevProducts.map((p) =>
-      p._id === data.productId ? { ...p, quantity: data.quantity } : p
-    )
-  );
-
-  // Add notification to list
-  setNotifications((prev) => [
-    { id: Date.now(), ...data, read: false },
-    ...prev
-  ]);
-});
 
   // Cleanup on unmount
   return () => {
@@ -273,6 +271,28 @@ const handleAddProductAgain = async (product) => {
   }
 };
 
+const fetchNotifications = async (shopId) => {
+  try {
+    const token = localStorage.getItem("accessToken");
+    const res = await axios.get(`${API_BASE}/api/notifications/${shopId}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+
+    const backendNotifications = res.data.map(n => ({
+      id: n._id,
+      message: n.message,
+      read: n.isRead,
+      createdAt: n.createdAt
+    }));
+
+    setNotifications(backendNotifications);
+    localStorage.setItem("owner_notifications", JSON.stringify(backendNotifications));
+  } catch (err) {
+    console.error("Failed to load notifications", err);
+  }
+};
+
+
 
 
   // Toggle QR visibility
@@ -385,37 +405,69 @@ const handleAddProductAgain = async (product) => {
           </button>
 
           {showNotifications && (
-  <div className="notification-dropdown">
-    <div className="notification-header">
-      <h4>Notifications</h4>
-      <button
-        onClick={() => {
-          setNotifications([]);
-          localStorage.removeItem("notifications");
-        }}
-        className="clear-btn"
-      >
-        Clear All
-      </button>
-    </div>
+            <div className="notification-dropdown">
+              <div className="notification-header">
+                <h3>Notifications</h3>
+                <button
+                  onClick={async () => {
+                    if (!owner?.shopId) {
+                      showToast("Shop information not loaded yet", "error");
+                      return;
+                    }
+                    try {
+                      const token = localStorage.getItem("accessToken");
+                      await axios.put(`${API_BASE}/api/notifications/mark-all-read/${owner.shopId}`, {}, {
+                        headers: { Authorization: `Bearer ${token}` }
+                      });
+                      setNotifications([]);
+                      localStorage.setItem("owner_notifications", JSON.stringify([]));
+                    } catch (err) {
+                      console.error("Failed to clear notifications:", err);
+                      showToast("Failed to clear notifications", "error");
+                    }
+                  }}
+                  className="clear-all-btn"
+                >
+                  Clear All
+                </button>
+              </div>
 
-    {notifications.length === 0 && <p className="notification-message">No notifications</p>}
-    {notifications.map((n) => (
-      <div
-        key={n.id}
-        className={`notification-item ${n.read ? "read" : "unread"}`}
-        onClick={() => {
-          n.read = true; // mark as read
-          setNotifications([...notifications]);
-          localStorage.setItem("notifications", JSON.stringify(notifications));
-        }}
-      >
-        <p>{n.message}</p>
-        <small>{new Date(n.id).toLocaleTimeString()}</small>
-      </div>
-    ))}
-  </div>
-)}
+              {notifications.length === 0 ? (
+                <div className="no-notifications">
+                  <span className="no-notif-icon">📭</span>
+                  <p>No new notifications</p>
+                </div>
+              ) : (
+                <div className="notification-list">
+                  {notifications.map((n) => (
+                    <div
+                      key={n.id}
+                      className={`notification-item ${n.read ? "read" : "unread"}`}
+                      onClick={() => {
+                        const updated = notifications.map(notif => 
+  notif.id === n.id ? { ...notif, read: true } : notif
+);
+setNotifications(updated);
+localStorage.setItem("owner_notifications", JSON.stringify(updated));
+
+                      }}
+                    >
+                      <div className="notification-icon">⚠️</div>
+                      <div className="notification-content">
+                        <p className="notification-message">{n.message}</p>
+                        <span className="notification-time">
+  {n.createdAt
+    ? new Date(n.createdAt).toLocaleTimeString()
+    : ""}
+</span>
+
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
 
         </div>
       </div>

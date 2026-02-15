@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import QRScanner from "./QRScanner";
 import StaffSidebar from "../components/StaffSidebar";
+import socket from "../socket";
 import "../styles/staffDashboard.css";
 
 const StaffDashboard = () => {
@@ -28,6 +29,13 @@ const [editQuantity, setEditQuantity] = useState("");
 const [editCategory, setEditCategory] = useState("");
 const [editDescription, setEditDescription] = useState("");
 const [editImage, setEditImage] = useState(null);
+
+// Notification State
+const [notifications, setNotifications] = useState(() => {
+  const saved = localStorage.getItem("staff_notifications");
+  return saved ? JSON.parse(saved) : [];
+});
+const [showNotifications, setShowNotifications] = useState(false);
 
 
 
@@ -57,7 +65,11 @@ const [editImage, setEditImage] = useState(null);
         const resStaff = await axios.get(`${API_BASE}/api/owner/me`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        setStaff(resStaff.data.staff);
+        setStaff(resStaff.data.owner || resStaff.data.staff);
+        const shopId = resStaff.data.owner?.shopId || resStaff.data.staff?.shopId;
+        if (shopId) {
+          fetchNotifications(shopId);
+        }
 
         const resProducts = await axios.get(`${API_BASE}/api/owner/products`, {
           headers: { Authorization: `Bearer ${token}` },
@@ -70,7 +82,50 @@ const [editImage, setEditImage] = useState(null);
     };
 
     fetchData();
+
+    // ================= SOCKET.IO LISTENER =================
+    socket.on("lowStockAlert", (data) => {
+      const newNotification = { id: Date.now(), ...data, read: false };
+      setNotifications((prev) => {
+        const updated = [newNotification, ...prev];
+        localStorage.setItem("staff_notifications", JSON.stringify(updated));
+        return updated;
+      });
+      showToast(data.message, "error");
+
+      // Update products quantity in real-time
+      setProducts((prevProducts) =>
+        prevProducts.map((p) =>
+          p._id === data.productId ? { ...p, quantity: data.quantity } : p
+        )
+      );
+    });
+
+    return () => {
+      socket.off("lowStockAlert");
+    };
   }, []);
+
+  const fetchNotifications = async (shopId) => {
+    try {
+      const token = localStorage.getItem("accessToken");
+      const res = await axios.get(`${API_BASE}/api/notifications/${shopId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      const backendNotifications = res.data.map(n => ({
+        id: n._id,
+        message: n.message,
+        read: n.isRead,
+        createdAt: n.createdAt
+      }));
+
+      setNotifications(backendNotifications);
+      localStorage.setItem("staff_notifications", JSON.stringify(backendNotifications));
+    } catch (err) {
+      console.error("Failed to load notifications", err);
+    }
+  };
 
   // Add product
  const handleAddProduct = async (e) => {
@@ -311,6 +366,80 @@ const handleDeleteProduct = async (productId) => {
           <button className="scan-btn-primary" onClick={() => setScannerOpen(true)}>
             📱 Scan Product QR
           </button>
+
+          {/* Notification Bell */}
+          <div className="notification-container">
+            <button 
+              className="notification-btn"
+              onClick={() => setShowNotifications(!showNotifications)}
+            >
+              🔔
+              {notifications.some(n => !n.read) && <span className="notification-badge"></span>}
+            </button>
+
+            {showNotifications && (
+              <div className="notification-dropdown">
+                <div className="notification-header">
+                  <h3>Notifications</h3>
+                  <button
+                    onClick={async () => {
+                      if (!staff?.shopId) {
+                        showToast("Shop information not loaded yet", "error");
+                        return;
+                      }
+                      try {
+                        const token = localStorage.getItem("accessToken");
+                        await axios.put(`${API_BASE}/api/notifications/mark-all-read/${staff.shopId}`, {}, {
+                          headers: { Authorization: `Bearer ${token}` }
+                        });
+                        setNotifications([]);
+                        localStorage.setItem("staff_notifications", JSON.stringify([]));
+                      } catch (err) {
+                        console.error("Failed to clear notifications:", err);
+                        showToast("Failed to clear notifications", "error");
+                      }
+                    }}
+                    className="clear-all-btn"
+                  >
+                    Clear All
+                  </button>
+                </div>
+
+                {notifications.length === 0 ? (
+                  <div className="no-notifications">
+                    <span className="no-notif-icon">📭</span>
+                    <p>No new notifications</p>
+                  </div>
+                ) : (
+                  <div className="notification-list">
+                    {notifications.map((n) => (
+                      <div
+                        key={n.id}
+                        className={`notification-item ${n.read ? "read" : "unread"}`}
+                        onClick={() => {
+                          const updated = notifications.map(notif => 
+                            notif.id === n.id ? { ...notif, read: true } : notif
+                          );
+                          setNotifications(updated);
+                          localStorage.setItem("staff_notifications", JSON.stringify(updated));
+                        }}
+                      >
+                        <div className="notification-icon">⚠️</div>
+                        <div className="notification-content">
+                          <p className="notification-message">{n.message}</p>
+                          <span className="notification-time">
+                            {n.createdAt
+                              ? new Date(n.createdAt).toLocaleTimeString()
+                              : ""}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         </div>
 
         {scannerOpen && (

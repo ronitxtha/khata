@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import CustomerSidebar from "../components/CustomerSidebar";
 import "../styles/customerDashboard.css";
 
 const CustomerDashboard = () => {
@@ -33,7 +34,10 @@ const CustomerDashboard = () => {
   if (error) return <p className="error">{error}</p>;
 
   return (
-    <div className="customer-container">
+    <div className="staff-layout">
+      <CustomerSidebar />
+
+      <div className="dashboard-container">
       <h1>Browse Available Stores</h1>
 
       <input
@@ -150,6 +154,7 @@ const CustomerDashboard = () => {
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 };

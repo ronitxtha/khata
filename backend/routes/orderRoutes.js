@@ -3,6 +3,8 @@ import { Product } from "../models/productModel.js";
 import { User } from "../models/userModel.js";
 import { Shop } from "../models/shopModel.js";
 import { sendEmail } from "../utils/mailer.js";
+import { Notification } from "../models/notificationModel.js";
+
 
 const router = express.Router();
 
@@ -42,26 +44,41 @@ router.post("/create", async (req, res) => {
 
     // 5️⃣ Low stock alert
     if (product.quantity < 5) {
-      const subject = `Stock Alert: ${product.name} is low`;
-      const text = `The product "${product.name}" now has only ${product.quantity} items left in stock.`;
 
-      if (ownerEmail) {
-        await sendEmail({ to: ownerEmail, subject, text });
-      }
+  // 1️⃣ Check if notification already exists
+  const existingNotification = await Notification.findOne({
+    productId: product._id,
+    type: "low_stock",
+    isRead: false
+  });
 
-      for (const email of staffEmails) {
-        await sendEmail({ to: email, subject, text });
-      }
+  // 2️⃣ Create notification ONLY ONCE
+  if (!existingNotification) {
+    await Notification.create({
+      shopId: product.shopId._id,
+      productId: product._id,
+      message: `${product.name} is low in stock (${product.quantity} left)`
+    });
+  }
 
-      // 🔔 SOCKET NOTIFICATION
-      const io = req.app.get("io");
+  // 3️⃣ Email (keep as is)
+  const subject = `Stock Alert: ${product.name} is low`;
+  const text = `The product "${product.name}" now has only ${product.quantity} items left in stock.`;
 
-      io.emit("lowStockAlert", {
-        message: `${product.name} is low in stock (${product.quantity} left)`,
-        productId: product._id,
-        quantity: product.quantity
-      });
-    }
+  if (ownerEmail) await sendEmail({ to: ownerEmail, subject, text });
+  for (const email of staffEmails) {
+    await sendEmail({ to: email, subject, text });
+  }
+
+  // 4️⃣ Socket (only for online users)
+  const io = req.app.get("io");
+  io.emit("lowStockAlert", {
+    message: `${product.name} is low in stock (${product.quantity} left)`,
+    productId: product._id,
+    quantity: product.quantity
+  });
+}
+
 
     return res.json({ 
       message: "Order placed successfully",
