@@ -36,13 +36,21 @@ const [notifications, setNotifications] = useState(() => {
   return saved ? JSON.parse(saved) : [];
 });
 const [showNotifications, setShowNotifications] = useState(false);
-
-
-
+const [reAddQuantity, setReAddQuantity] = useState(1);
+const [isAddingStock, setIsAddingStock] = useState(false);
+const [closedScannedProduct, setClosedScannedProduct] = useState(false);
 
   const navigate = useNavigate();
 
   const API_BASE = "http://localhost:8000";
+
+  // Reset quantity when a new product is scanned
+  useEffect(() => {
+    if (scannedProduct?._id) {
+      setReAddQuantity(1);
+      setClosedScannedProduct(false); // Reset the flag when new product is scanned
+    }
+  }, [scannedProduct?._id]);
 
   const CATEGORY_LIST = [
     "Electronics",
@@ -113,12 +121,18 @@ const [showNotifications, setShowNotifications] = useState(false);
         headers: { Authorization: `Bearer ${token}` }
       });
 
-      const backendNotifications = res.data.map(n => ({
-        id: n._id,
-        message: n.message,
-        read: n.isRead,
-        createdAt: n.createdAt
-      }));
+      // Get cleared notifications for staff
+      const clearedIds = JSON.parse(localStorage.getItem("staff_cleared_notifications") || "[]");
+
+      // Filter out unread and already-cleared notifications
+      const backendNotifications = res.data
+        .filter(n => !n.isRead && !clearedIds.includes(n._id))
+        .map(n => ({
+          id: n._id,
+          message: n.message,
+          read: n.isRead,
+          createdAt: n.createdAt
+        }));
 
       setNotifications(backendNotifications);
       localStorage.setItem("staff_notifications", JSON.stringify(backendNotifications));
@@ -169,32 +183,42 @@ const [showNotifications, setShowNotifications] = useState(false);
 
   // Re-add deleted product
   const handleAddProductAgain = async (product) => {
+    setIsAddingStock(true);
+    setClosedScannedProduct(true); // Hide the card immediately
+    const quantityToAdd = reAddQuantity;
+
     try {
       const token = localStorage.getItem("accessToken");
-      const formData = new FormData();
 
-      formData.append("name", product.name);
-      formData.append("price", product.price);
-      formData.append("quantity", productQuantity);
-      formData.append("description", product.description);
-      formData.append("category", product.category || "Others");
+      const res = await axios.put(
+        `${API_BASE}/api/owner/restore-product/${product._id}`,
+        { quantity: quantityToAdd },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
 
-      if (product.imageFile) {
-        const imgRes = await fetch(`${API_BASE}/${product.imageFile}`);
-        const blob = await imgRes.blob();
-        formData.append("image", new File([blob], "product.png"));
-      }
+      setProducts(prev => {
+        const exists = prev.find(p => p._id === product._id);
 
-      const res = await axios.post("http://localhost:8000/api/owner/add-product", formData, {
-  headers: { Authorization: `Bearer ${token}` },
-});
+        if (exists) {
+          return prev.map(p =>
+            p._id === product._id ? res.data.product : p
+          );
+        } else {
+          return [...prev, res.data.product];
+        }
+      });
 
-      setProducts((prev) => [...prev, res.data.product]);
-      setScannedProduct(null);
-      showToast("Product added again!");
+      setReAddQuantity(1);
+      showToast("Stock added successfully!");
+
     } catch (err) {
       console.error(err);
-      showToast("Failed to re-add product");
+      showToast(err.response?.data?.message || "Failed to update stock");
+      setClosedScannedProduct(false); // Show card again on error
+    } finally {
+      setIsAddingStock(false);
     }
   };
 
@@ -382,23 +406,16 @@ const handleDeleteProduct = async (productId) => {
                 <div className="notification-header">
                   <h3>Notifications</h3>
                   <button
-                    onClick={async () => {
-                      if (!staff?.shopId) {
-                        showToast("Shop information not loaded yet", "error");
-                        return;
-                      }
-                      try {
-                        const token = localStorage.getItem("accessToken");
-                        await axios.put(`${API_BASE}/api/notifications/mark-all-read/${staff.shopId}`, {}, {
-                          headers: { Authorization: `Bearer ${token}` }
-                        });
-                        setNotifications([]);
-                        localStorage.setItem("staff_notifications", JSON.stringify([]));
-                      } catch (err) {
-                        console.error("Failed to clear notifications:", err);
-                        showToast("Failed to clear notifications", "error");
-                      }
-                    }}
+                  onClick={() => {
+                    // Add all current notification IDs to cleared list
+                    const clearedIds = JSON.parse(localStorage.getItem("staff_cleared_notifications") || "[]");
+                    const newClearedIds = [...clearedIds, ...notifications.map(n => n.id)];
+                    localStorage.setItem("staff_cleared_notifications", JSON.stringify(newClearedIds));
+                    
+                    setNotifications([]);
+                    localStorage.setItem("staff_notifications", JSON.stringify([]));
+                    showToast("Notifications cleared");
+                  }}
                     className="clear-all-btn"
                   >
                     Clear All
@@ -450,14 +467,17 @@ const handleDeleteProduct = async (productId) => {
         )}
 
       {/* Display Scanned Product */}
-      {scannedProduct && (
+      {scannedProduct && !closedScannedProduct && (
         <div className="scanned-product-card">
           <div className="scanned-header">
             <h3>
               {scannedProduct.name}
               {scannedProduct.deleted && <span className="deleted-badge">Deleted</span>}
             </h3>
-            <button className="close-scanned" onClick={() => setScannedProduct(null)}>✕</button>
+            <button className="close-scanned" onClick={() => {
+              setScannedProduct(null);
+              setClosedScannedProduct(false);
+            }}>✕</button>
           </div>
           
           {scannedProduct.imageFile && (
@@ -474,12 +494,26 @@ const handleDeleteProduct = async (productId) => {
           </div>
 
           {scannedProduct.deleted && (
-            <button
-              className="re-add-btn"
-              onClick={() => handleAddProductAgain(scannedProduct)}
-            >
-              ↻ Add Product Again
-            </button>
+            <div className="readd-section">
+              <div className="readd-input">
+                <label>Add Quantity:</label>
+                <input
+                  type="number"
+                  min="1"
+                  value={reAddQuantity}
+                  onChange={(e) => setReAddQuantity(Number(e.target.value))}
+                  disabled={isAddingStock}
+                />
+                <button
+                  type="button"
+                  className="re-add-btn"
+                  onClick={() => handleAddProductAgain(scannedProduct)}
+                  disabled={isAddingStock}
+                >
+                  {isAddingStock ? "Adding..." : "➕ Add Stock"}
+                </button>
+              </div>
+            </div>
           )}
         </div>
       )}

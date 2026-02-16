@@ -36,14 +36,20 @@ const [notifications, setNotifications] = useState(() => {
   const saved = localStorage.getItem("owner_notifications");
   return saved ? JSON.parse(saved) : [];
 });
-
+const [reAddQuantity, setReAddQuantity] = useState(1);
 const [showNotifications, setShowNotifications] = useState(false); // toggle dropdown
-
-
-
-
+const [isAddingStock, setIsAddingStock] = useState(false); // Loading state for stock add
+const [closedScannedProduct, setClosedScannedProduct] = useState(false); // Flag to prevent re-render
 
   const API_BASE = "http://localhost:8000";
+
+  // Reset quantity when a new product is scanned
+  useEffect(() => {
+    if (scannedProduct?._id) {
+      setReAddQuantity(1);
+      setClosedScannedProduct(false); // Reset the flag when new product is scanned
+    }
+  }, [scannedProduct?._id]);
 
   // Load owner, staff, products
   useEffect(() => {
@@ -71,6 +77,8 @@ const [showNotifications, setShowNotifications] = useState(false); // toggle dro
   };
 
   fetchOwnerData();
+
+  socket.off("lowStockAlert");
 
   // ================= SOCKET.IO LISTENER =================
   socket.on("lowStockAlert", (data) => {
@@ -227,49 +235,47 @@ const handleUpdateProduct = async (e, productId) => {
   // Re-add deleted product
 
 const handleAddProductAgain = async (product) => {
+  setIsAddingStock(true);
+  setClosedScannedProduct(true); // Hide the card immediately
+  const quantityToAdd = reAddQuantity;
+
   try {
     const token = localStorage.getItem("accessToken");
-    const formData = new FormData();
 
-    // Use defaults to avoid backend 500 errors
-    formData.append("name", product.name || "Unnamed Product");
-    formData.append("price", product.price ?? 0);
-    formData.append("quantity", product.quantity ?? 1); // make sure quantity is included
-    formData.append("description", product.description || "");
-    formData.append("category", product.category || "Others");
-
-    // Append existing image if available
-    if (product.imageFile) {
-      try {
-        const imageResponse = await fetch(`${API_BASE}/${product.imageFile}`);
-        if (imageResponse.ok) {
-          const imageBlob = await imageResponse.blob();
-          const fileName = product.imageFile.split("/").pop() || "product.png";
-          const imageFile = new File([imageBlob], fileName, { type: imageBlob.type });
-          formData.append("image", imageFile);
-        }
-      } catch (imgErr) {
-        console.warn("Failed to fetch product image, skipping image.", imgErr);
+    const res = await axios.put(
+      `${API_BASE}/api/owner/restore-product/${product._id}`,
+      { quantity: quantityToAdd },
+      {
+        headers: { Authorization: `Bearer ${token}` },
       }
-    }
+    );
 
-    const res = await axios.post(`${API_BASE}/api/owner/add-product`, formData, {
-      headers: { Authorization: `Bearer ${token}` },
+    setProducts(prev => {
+      const exists = prev.find(p => p._id === product._id);
+
+      if (exists) {
+        return prev.map(p =>
+          p._id === product._id ? res.data.product : p
+        );
+      } else {
+        return [...prev, res.data.product];
+      }
     });
 
-    // Update products list
-    setProducts((prevProducts) => [...prevProducts, res.data.product]);
+    setReAddQuantity(1);
+    showToast("Stock added successfully!");
 
-    // Clear scanned product immediately
-    setScannedProduct(null);
-
-    // Show toast notification
-    showToast("Product added again successfully!");
   } catch (err) {
-    console.error("Re-add product failed:", err.response?.data || err.message);
-    showToast(err.response?.data?.message || "Error adding product again");
+    console.error(err);
+    showToast(err.response?.data?.message || "Failed to update stock");
+    setClosedScannedProduct(false); // Show card again on error
+  } finally {
+    setIsAddingStock(false);
   }
 };
+
+
+
 
 const fetchNotifications = async (shopId) => {
   try {
@@ -278,12 +284,18 @@ const fetchNotifications = async (shopId) => {
       headers: { Authorization: `Bearer ${token}` }
     });
 
-    const backendNotifications = res.data.map(n => ({
-      id: n._id,
-      message: n.message,
-      read: n.isRead,
-      createdAt: n.createdAt
-    }));
+    // Get cleared notifications for owner
+    const clearedIds = JSON.parse(localStorage.getItem("owner_cleared_notifications") || "[]");
+
+    // Filter out unread and already-cleared notifications
+    const backendNotifications = res.data
+      .filter(n => !n.isRead && !clearedIds.includes(n._id))
+      .map(n => ({
+        id: n._id,
+        message: n.message,
+        read: n.isRead,
+        createdAt: n.createdAt
+      }));
 
     setNotifications(backendNotifications);
     localStorage.setItem("owner_notifications", JSON.stringify(backendNotifications));
@@ -409,22 +421,15 @@ const fetchNotifications = async (shopId) => {
               <div className="notification-header">
                 <h3>Notifications</h3>
                 <button
-                  onClick={async () => {
-                    if (!owner?.shopId) {
-                      showToast("Shop information not loaded yet", "error");
-                      return;
-                    }
-                    try {
-                      const token = localStorage.getItem("accessToken");
-                      await axios.put(`${API_BASE}/api/notifications/mark-all-read/${owner.shopId}`, {}, {
-                        headers: { Authorization: `Bearer ${token}` }
-                      });
-                      setNotifications([]);
-                      localStorage.setItem("owner_notifications", JSON.stringify([]));
-                    } catch (err) {
-                      console.error("Failed to clear notifications:", err);
-                      showToast("Failed to clear notifications", "error");
-                    }
+                  onClick={() => {
+                    // Add all current notification IDs to cleared list
+                    const clearedIds = JSON.parse(localStorage.getItem("owner_cleared_notifications") || "[]");
+                    const newClearedIds = [...clearedIds, ...notifications.map(n => n.id)];
+                    localStorage.setItem("owner_cleared_notifications", JSON.stringify(newClearedIds));
+                    
+                    setNotifications([]);
+                    localStorage.setItem("owner_notifications", JSON.stringify([]));
+                    showToast("Notifications cleared");
                   }}
                   className="clear-all-btn"
                 >
@@ -481,14 +486,17 @@ localStorage.setItem("owner_notifications", JSON.stringify(updated));
       )}
 
       {/* Display Scanned Product */}
-      {scannedProduct && (
+      {scannedProduct && !closedScannedProduct && (
         <div className="scanned-product-card">
           <div className="scanned-header">
             <h3>
               {scannedProduct.name}
               {scannedProduct.deleted && <span className="deleted-badge">Deleted</span>}
             </h3>
-            <button className="close-scanned" onClick={() => setScannedProduct(null)}>✕</button>
+            <button className="close-scanned" onClick={() => {
+              setScannedProduct(null);
+              setClosedScannedProduct(false);
+            }}>✕</button>
           </div>
           
           {scannedProduct.imageFile && (
@@ -505,13 +513,31 @@ localStorage.setItem("owner_notifications", JSON.stringify(updated));
           </div>
 
           {scannedProduct.deleted && (
-            <button
-              className="re-add-btn"
-              onClick={() => handleAddProductAgain(scannedProduct)}
-            >
-              ↻ Add Product Again
-            </button>
-          )}
+  <div className="readd-section">
+    <div className="readd-input">
+      <label>Add Quantity:</label>
+      <input
+        type="number"
+        min="1"
+        value={reAddQuantity}
+        onChange={(e) => setReAddQuantity(Number(e.target.value))}
+        disabled={isAddingStock}
+      />
+      <button
+  type="button"
+  className="re-add-btn"
+  onClick={() => handleAddProductAgain(scannedProduct)}
+  disabled={isAddingStock}
+>
+  {isAddingStock ? "Adding..." : "➕ Add Stock"}
+</button>
+    </div>
+
+    
+
+  </div>
+)}
+
         </div>
       )}
 

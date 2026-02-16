@@ -70,6 +70,46 @@ router.delete("/delete-product/:id", isAuthenticated, async (req, res) => {
   }
 });
 
+// ----------------------- Restore Product & Increase Quantity -----------------------
+// ----------------------- Restore Product & Increase Quantity -----------------------
+router.put("/restore-product/:id", isAuthenticated, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { quantity } = req.body;
+
+    const product = await Product.findOne({
+      _id: id,
+      shopId: req.user.shopId,
+    });
+
+    if (!product) {
+      return res.status(404).json({ message: "Product not found" });
+    }
+
+    const addQty = Number(quantity) || 1;
+
+    // Restore if deleted - SET quantity instead of adding
+    if (product.deleted) {
+      product.deleted = false;
+      product.quantity = addQty; // SET the quantity
+    } else {
+      // Increase quantity for existing products
+      product.quantity = Number(product.quantity || 0) + addQty;
+    }
+
+    await product.save();
+
+    res.status(200).json({
+      message: "Stock updated successfully",
+      product,
+    });
+
+  } catch (err) {
+    console.error("Restore product error:", err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
 
 
 // ----------------------- Staff List -----------------------
@@ -307,6 +347,8 @@ router.get("/today-attendance", isAuthenticated, async (req, res) => {
     res.status(500).json({ message: "Failed to fetch attendance", error: err.message });
   }
 });
+
+
 
 
 export default router;
