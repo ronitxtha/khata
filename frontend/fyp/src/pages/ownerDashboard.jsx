@@ -86,6 +86,7 @@ const [closedScannedProduct, setClosedScannedProduct] = useState(false); // Flag
     const newNotification = {
       id: data.productId + "_" + Date.now(), // Unique ID
       message: data.message,
+      type: "low_stock",
       read: false,
       createdAt: new Date()
     };
@@ -106,11 +107,33 @@ const [closedScannedProduct, setClosedScannedProduct] = useState(false); // Flag
     );
   });
 
+  socket.on("newOrder", (data) => {
+    // Check if it's for this shop
+    if (data.shopId === owner.shopId) {
+      const newNotification = {
+        id: data.orderId + "_" + Date.now(),
+        message: data.message,
+        type: "new_order",
+        read: false,
+        createdAt: new Date()
+      };
+
+      setNotifications(prev => {
+        const updated = [newNotification, ...prev];
+        localStorage.setItem("owner_notifications", JSON.stringify(updated));
+        return updated;
+      });
+
+      showToast(data.message, "success");
+    }
+  });
+
   // Cleanup on unmount
   return () => {
     socket.off("lowStockAlert");
+    socket.off("newOrder");
   };
-}, []);
+}, [owner.shopId]);
 
   const showToast = (message, type = "success", duration = 3000) => {
   setToast({ message, type, visible: true });
@@ -450,22 +473,20 @@ const fetchNotifications = async (shopId) => {
                       className={`notification-item ${n.read ? "read" : "unread"}`}
                       onClick={() => {
                         const updated = notifications.map(notif => 
-  notif.id === n.id ? { ...notif, read: true } : notif
-);
-setNotifications(updated);
-localStorage.setItem("owner_notifications", JSON.stringify(updated));
-
+                          notif.id === n.id ? { ...notif, read: true } : notif
+                        );
+                        setNotifications(updated);
+                        localStorage.setItem("owner_notifications", JSON.stringify(updated));
                       }}
                     >
-                      <div className="notification-icon">⚠️</div>
+                      <div className="notification-icon">
+                        {n.type === "new_order" ? "📦" : "⚠️"}
+                      </div>
                       <div className="notification-content">
                         <p className="notification-message">{n.message}</p>
                         <span className="notification-time">
-  {n.createdAt
-    ? new Date(n.createdAt).toLocaleTimeString()
-    : ""}
-</span>
-
+                          {n.createdAt ? new Date(n.createdAt).toLocaleTimeString() : ""}
+                        </span>
                       </div>
                     </div>
                   ))}

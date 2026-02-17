@@ -26,6 +26,7 @@ const Sidebar = () => {
         <Link to="/add-staff">Staff Management</Link>
         <Link to="/products">Products</Link>
         <Link to="/attendance">Attendance</Link>
+        <Link to="/order-management">Order Management</Link>
       </div>
     </>
   );

@@ -35,16 +35,23 @@ const OrderHistory = () => {
     if (user) fetchOrders();
   }, []);
 
-  const showToast = (message, type = "success") => {
-    setToast({ message, type });
-    setTimeout(() => setToast(null), 3000);
+  const updateStatus = async (orderId, newStatus) => {
+    try {
+      await axios.put(`${API_BASE}/api/orders/${orderId}/status`, {
+        status: newStatus,
+        role: "customer"
+      });
+      setOrders(orders.map(o => o._id === orderId ? { ...o, status: newStatus } : o));
+      showToast(`Order ${newStatus.toLowerCase()} successfully`);
+    } catch (err) {
+      console.error("STATUS UPDATE ERROR:", err);
+      showToast(err.response?.data?.message || "Failed to update status", "error");
+    }
   };
 
   const handleCancel = (orderId) => {
     if (window.confirm("Are you sure you want to cancel this order?")) {
-      setOrders(orders.map(o => o._id === orderId ? { ...o, status: "Cancelled" } : o));
-      showToast("Order cancelled successfully");
-      // TODO: Call backend API to cancel order properly
+      updateStatus(orderId, "Cancelled");
     }
   };
 
@@ -108,7 +115,7 @@ const OrderHistory = () => {
         <>
           <div className="filter-section">
             <span className="filter-label">Filter by status:</span>
-            {["all", "pending", "processing", "delivered"].map((f) => (
+            {["all", "pending", "processing", "delivered", "cancelled"].map((f) => (
               <button
                 key={f}
                 className={`filter-btn ${filter === f ? "active" : ""}`}
@@ -212,14 +219,6 @@ const OrderHistory = () => {
                           <span>Subtotal:</span>
                           <span>NPR {order.items?.reduce((sum, item) => sum + (item.price * item.quantity), 0)}</span>
                         </div>
-                        <div className="summary-row">
-                          <span>Shipping:</span>
-                          <span>NPR {order.shippingCost || 0}</span>
-                        </div>
-                        <div className="summary-row">
-                          <span>Tax:</span>
-                          <span>NPR {order.tax || 0}</span>
-                        </div>
                         <div className="summary-row total-row">
                           <span>Total Amount:</span>
                           <span>NPR {order.totalAmount}</span>
@@ -243,7 +242,7 @@ const OrderHistory = () => {
                             <button className="action-btn secondary" onClick={() => handleReview(order._id)}>
                               ⭐ Leave Review
                             </button>
-                            <button className="action-btn secondary" onClick={() => handleReorder(order._id)}>
+                            <button className="action-btn reorder" onClick={() => handleReorder(order._id)}>
                               🔄 Reorder
                             </button>
                           </>

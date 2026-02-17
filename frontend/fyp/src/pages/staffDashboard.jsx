@@ -93,7 +93,12 @@ const [closedScannedProduct, setClosedScannedProduct] = useState(false);
 
     // ================= SOCKET.IO LISTENER =================
     socket.on("lowStockAlert", (data) => {
-      const newNotification = { id: Date.now(), ...data, read: false };
+      const newNotification = { 
+        id: Date.now(), 
+        ...data, 
+        type: "low_stock",
+        read: false 
+      };
       setNotifications((prev) => {
         const updated = [newNotification, ...prev];
         localStorage.setItem("staff_notifications", JSON.stringify(updated));
@@ -109,10 +114,32 @@ const [closedScannedProduct, setClosedScannedProduct] = useState(false);
       );
     });
 
+    socket.on("newOrder", (data) => {
+      const shopId = staff?.shopId || staff?.owner?.shopId; // Ensure shopId is available
+      if (data.shopId === shopId) {
+        const newNotification = {
+          id: data.orderId + "_" + Date.now(),
+          message: data.message,
+          type: "new_order",
+          read: false,
+          createdAt: new Date()
+        };
+
+        setNotifications(prev => {
+          const updated = [newNotification, ...prev];
+          localStorage.setItem("staff_notifications", JSON.stringify(updated));
+          return updated;
+        });
+
+        showToast(data.message, "success");
+      }
+    });
+
     return () => {
       socket.off("lowStockAlert");
+      socket.off("newOrder");
     };
-  }, []);
+  }, [staff?.shopId]);
 
   const fetchNotifications = async (shopId) => {
     try {
@@ -441,7 +468,9 @@ const handleDeleteProduct = async (productId) => {
                           localStorage.setItem("staff_notifications", JSON.stringify(updated));
                         }}
                       >
-                        <div className="notification-icon">⚠️</div>
+                        <div className="notification-icon">
+                          {n.type === "new_order" ? "📦" : "⚠️"}
+                        </div>
                         <div className="notification-content">
                           <p className="notification-message">{n.message}</p>
                           <span className="notification-time">

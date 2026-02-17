@@ -19,6 +19,7 @@ import Addstaff from "./pages/addStaff.jsx";
 import ProductDetails from "./pages/ProductDetails";
 import Checkout from "./pages/Checkout.jsx";
 import OrderHistory from "./pages/OrderHistory.jsx";
+import OrderManagement from "./pages/OrderManagement.jsx";
 
 
 export default function App() {
@@ -44,6 +45,7 @@ export default function App() {
         <Route path="/product/:id" element={<ProductDetails />} />
         <Route path="/checkout" element={<Checkout />} />
         <Route path="/orders" element={<OrderHistory />} />
+        <Route path="/order-management" element={<OrderManagement />} />
 
 
 

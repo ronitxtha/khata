@@ -26,9 +26,15 @@ const OrderSchema = new mongoose.Schema(
       required: true
     },
 
+    shopId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Shop",
+      required: true
+    },
+
     status: {
       type: String,
-      default: "Processing"
+      default: "Pending"
     }
 
   },

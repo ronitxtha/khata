@@ -1,25 +1,28 @@
+// backend/utils/mailer.js
 import nodemailer from "nodemailer";
 
 export const sendEmail = async ({ to, subject, text }) => {
   try {
-    // Create transporter using your email provider
+    // Create a transporter using Gmail SMTP
     const transporter = nodemailer.createTransport({
-      service: "gmail", // or your email provider
+      service: "gmail",
       auth: {
-        user: process.env.MAIL_USER, // your email
-        pass: process.env.MAIL_PASS, // app password or email password
+        user: process.env.MAIL_USER, // your Gmail address
+        pass: process.env.MAIL_PASS, // NEW App Password
       },
     });
 
-    await transporter.sendMail({
-      from: process.env.EMAIL_USER,
+    const info = await transporter.sendMail({
+      from: process.env.MAIL_USER, // from same as MAIL_USER
       to,
       subject,
       text,
     });
 
-    console.log("Email sent to", to);
+    console.log(`✅ Email successfully sent to ${to}`);
+    console.log(`Message ID: ${info.messageId}`);
+
   } catch (err) {
-    console.error("Error sending email:", err);
+    console.error(`❌ Failed to send email to ${to}:`, err.message);
   }
 };

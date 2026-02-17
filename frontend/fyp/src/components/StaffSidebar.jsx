@@ -50,6 +50,7 @@ const StaffSidebar = () => {
         <Link to="/staff-dashboard">Dashboard</Link>
         <Link to="/staff-inventory">Inventory</Link>
         <Link to="/staff-attendance">Attendance</Link>
+        <Link to="/order-management">Order Management</Link>
         <Link to="/staff-profile">My Profile</Link>
         
         <button className="logout-btn" onClick={handleLogout}>

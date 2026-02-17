@@ -9,7 +9,7 @@ const notificationSchema = new mongoose.Schema({
   productId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Product",
-    required: true
+    required: false
   },
   message: {
     type: String,
@@ -17,8 +17,8 @@ const notificationSchema = new mongoose.Schema({
   },
   type: {
     type: String,
-    enum: ["low_stock"],
-    default: "low_stock"
+    enum: ["low_stock", "new_order"],
+    default: "new_order"
   },
   isRead: {
     type: Boolean,
