@@ -4,85 +4,90 @@ import { User } from "../models/userModel.js";
 import { Shop } from "../models/shopModel.js";
 import { sendEmail } from "../utils/mailer.js";
 import { Notification } from "../models/notificationModel.js";
+import Order from "../models/Order.js";
 
 
 const router = express.Router();
 
 router.post("/create", async (req, res) => {
   try {
-    const { productId, quantity, userId } = req.body;
+    const { userId, items } = req.body;
 
-    if (!productId || !quantity) {
-      return res.status(400).json({ message: "Missing fields" });
+    if (!userId || !items || items.length === 0) {
+      return res.status(400).json({ message: "Missing order data" });
     }
 
-    // 1️⃣ Find product
-    const product = await Product.findById(productId).populate("shopId");
-    if (!product) {
-      return res.status(404).json({ message: "Product not found" });
+    let totalAmount = 0;
+    const orderItems = [];
+
+    // 1️⃣ Validate all products first
+    for (const item of items) {
+      const product = await Product.findById(item.productId).populate("shopId");
+
+      if (!product) {
+        return res.status(404).json({ message: "Product not found" });
+      }
+
+      if (product.quantity < item.quantity) {
+        return res.status(400).json({
+          message: `${product.name} does not have enough stock`
+        });
+      }
+
+      totalAmount += product.price * item.quantity;
+
+      orderItems.push({
+        product: product._id,
+        name: product.name,
+        price: product.price,
+        quantity: item.quantity,
+        image: product.image
+      });
     }
 
-    // 2️⃣ Check stock before reducing
-    if (product.quantity < quantity) {
-      return res.status(400).json({ message: "Not enough stock available" });
-    }
-
-    // 3️⃣ Reduce stock
-    product.quantity -= quantity;
-    await product.save();
-
-    // 4️⃣ Get owner + staff
-    const shopOwner = await User.findById(product.shopId.ownerId);
-    const ownerEmail = shopOwner?.email;
-
-    const staffMembers = await User.find({
-      shopId: product.shopId._id,
-      role: "staff",
+    // 2️⃣ Create order FIRST
+    const order = await Order.create({
+      user: userId,
+      items: orderItems,
+      totalAmount,
+      status: "Processing"
     });
 
-    const staffEmails = staffMembers.map(staff => staff.email);
+    // 3️⃣ Now reduce stock
+    for (const item of items) {
+      const product = await Product.findById(item.productId).populate("shopId");
 
-    // 5️⃣ Low stock alert
-    if (product.quantity < 5) {
+      product.quantity -= item.quantity;
+      await product.save();
 
-  // 1️⃣ Check if notification already exists
-  const existingNotification = await Notification.findOne({
-    productId: product._id,
-    type: "low_stock",
-    isRead: false
-  });
+      // Low stock alert logic (reuse yours)
+      if (product.quantity < 5) {
+        const existingNotification = await Notification.findOne({
+          productId: product._id,
+          type: "low_stock",
+          isRead: false
+        });
 
-  // 2️⃣ Create notification ONLY ONCE
-  if (!existingNotification) {
-    await Notification.create({
-      shopId: product.shopId._id,
-      productId: product._id,
-      message: `${product.name} is low in stock (${product.quantity} left)`
-    });
-  }
+        if (!existingNotification) {
+          await Notification.create({
+            shopId: product.shopId._id,
+            productId: product._id,
+            message: `${product.name} is low in stock (${product.quantity} left)`
+          });
+        }
 
-  // 3️⃣ Email (keep as is)
-  const subject = `Stock Alert: ${product.name} is low`;
-  const text = `The product "${product.name}" now has only ${product.quantity} items left in stock.`;
+        const io = req.app.get("io");
+        io.emit("lowStockAlert", {
+          message: `${product.name} is low in stock (${product.quantity} left)`,
+          productId: product._id,
+          quantity: product.quantity
+        });
+      }
+    }
 
-  if (ownerEmail) await sendEmail({ to: ownerEmail, subject, text });
-  for (const email of staffEmails) {
-    await sendEmail({ to: email, subject, text });
-  }
-
-  // 4️⃣ Socket (only for online users)
-  const io = req.app.get("io");
-  io.emit("lowStockAlert", {
-    message: `${product.name} is low in stock (${product.quantity} left)`,
-    productId: product._id,
-    quantity: product.quantity
-  });
-}
-
-
-    return res.json({ 
+    return res.json({
       message: "Order placed successfully",
-      remainingStock: product.quantity
+      orderId: order._id
     });
 
   } catch (err) {
@@ -90,6 +95,19 @@ router.post("/create", async (req, res) => {
     res.status(500).json({ message: "Something went wrong" });
   }
 });
+
+
+router.get("/my-orders/:userId", async (req, res) => {
+  try {
+    const orders = await Order.find({ user: req.params.userId })
+      .sort({ createdAt: -1 });
+
+    res.json(orders);
+  } catch (err) {
+    res.status(500).json({ message: "Error fetching orders" });
+  }
+});
+
 
 
 export default router;

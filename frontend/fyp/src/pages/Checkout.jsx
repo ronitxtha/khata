@@ -28,39 +28,48 @@ const Checkout = () => {
   }
 
   const handleBuyNow = async () => {
-    if (!user) {
-      alert("Please login to place an order");
-      navigate("/login");
-      return;
+  if (!user) {
+    alert("Please login to place an order");
+    navigate("/login");
+    return;
+  }
+
+  if (!address) {
+    alert("Please select delivery address");
+    return;
+  }
+
+  try {
+    const payload = {
+  userId: user._id,
+  items: [
+    {
+      productId: product._id,
+      quantity: quantity
     }
+  ],
+  deliveryAddress: address,
+  paymentMethod: payment
+};
 
-    try {
-      const payload = {
-        productId: product._id,
-        quantity: quantity,
-        userId: user._id
-      };
 
-      console.log("ORDER PAYLOAD:", payload);
+    const res = await axios.post(
+      `${API_BASE}/api/orders/create`,
+      payload
+    );
 
-      const res = await axios.post(
-        "http://localhost:8000/api/orders/create",
-        payload
-      );
+    alert("Order placed successfully");
+    navigate("/orders");
 
-      alert(res.data.message);
-      navigate("/orders");
-    } catch (err) {
-      console.error("ORDER ERROR:", err);
+  } catch (err) {
+    const message =
+      err.response?.data?.message ||
+      "Order failed. Please try again.";
 
-      const message =
-        err.response?.data?.message ||
-        err.message ||
-        "Order failed. Please try again.";
+    alert(message);
+  }
+};
 
-      alert(message);
-    }
-  };
 
   const totalPrice = product.price * quantity;
 

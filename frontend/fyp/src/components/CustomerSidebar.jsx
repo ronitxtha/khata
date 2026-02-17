@@ -48,7 +48,7 @@ const CustomerSidebar = () => {
         <h3 className="menu">Menu</h3>
 
         <Link to="/customer-dashboard">Browse Stores</Link>
-        <Link to="/customer-orders">My Orders</Link>
+        <Link to="/orders">My Orders</Link>
         <Link to="/customer-cart">Shopping Cart</Link>
         <Link to="/customer-profile">My Profile</Link>
         
