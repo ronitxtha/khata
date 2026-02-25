@@ -149,18 +149,26 @@ const Checkout = () => {
             </div>
 
             <div className="address-display">
-              <p className="address-main">
-                {address?.province}, {address?.district}
-              </p>
-
-              <p className="address-sub">
-                {address?.municipality}, Ward {address?.ward}
-              </p>
-
-              {address?.exactLocation && (
-                <p className="address-exact">
-                  <span>Note:</span> {address.exactLocation}
+              {address?.fullAddress ? (
+                <p className="address-main">
+                  📌 {address.fullAddress}
                 </p>
+              ) : (
+                <>
+                  <p className="address-main">
+                    {address?.province}, {address?.district}
+                  </p>
+
+                  <p className="address-sub">
+                    {address?.municipality}, Ward {address?.ward}
+                  </p>
+
+                  {address?.exactLocation && (
+                    <p className="address-exact">
+                      <span>Note:</span> {address.exactLocation}
+                    </p>
+                  )}
+                </>
               )}
             </div>
           </div>

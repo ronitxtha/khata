@@ -12,6 +12,7 @@ const ProductDetails = () => {
 
   const [location, setLocation] = useState("");
   const [locationAdded, setLocationAdded] = useState(false);
+  const [geoLoading, setGeoLoading] = useState(false);
 
   const [province, setProvince] = useState("");
 const [district, setDistrict] = useState("");
@@ -43,6 +44,7 @@ const [exactLocation, setExactLocation] = useState("");
   // Get user's location if not already added
   const handleAddLocation = () => {
     if (navigator.geolocation) {
+      setGeoLoading(true);
       navigator.geolocation.getCurrentPosition(
         async (pos) => {
           const { latitude, longitude } = pos.coords;
@@ -52,19 +54,27 @@ const [exactLocation, setExactLocation] = useState("");
             const res = await axios.get(
               `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`
             );
-            const city = res.data.address.city || res.data.address.town || res.data.address.village || "Unknown place";
-            setLocation(city);
+            const addr = res.data.address;
+            const city = addr.city || addr.town || addr.village || "Unknown place";
+            const fullAddress = res.data.display_name || city;
+            setLocation(fullAddress);
             setLocationAdded(true);
-
-            // TODO: Save location to user account using backend API
           } catch (err) {
             console.error(err);
             setLocation("Location not available");
+          } finally {
+            setGeoLoading(false);
           }
         },
         (err) => {
           console.error(err);
           setLocation("Location not available");
+          setGeoLoading(false);
+        },
+        {
+          enableHighAccuracy: true,
+          maximumAge: 0,
+          timeout: 15000,
         }
       );
     } else {
@@ -81,12 +91,10 @@ const [exactLocation, setExactLocation] = useState("");
   if (loading) return <p className="pd-loading">Loading product...</p>;
   if (!product) return <p className="pd-error">Product not found</p>;
 
-  const isDeliveryComplete =
-  province &&
-  district &&
-  municipality &&
-  ward &&
-  exactLocation.trim() !== "";
+  const isDropdownComplete =
+    province && district && municipality && ward && exactLocation.trim() !== "";
+
+  const isDeliveryComplete = isDropdownComplete || locationAdded;
 
 
   return (
@@ -138,8 +146,40 @@ const [exactLocation, setExactLocation] = useState("");
               ))}
             </div>
 
-           
-            {/* ===== DELIVERY LOCATION DROPDOWNS ===== */}
+
+            {/* ===== USE MY LOCATION BUTTON ===== */}
+            <div className="pd-geolocation">
+              <button
+                className={`pd-geolocation-btn ${locationAdded ? "pd-geolocation-success" : ""}`}
+                onClick={handleAddLocation}
+                disabled={geoLoading || locationAdded}
+              >
+                {geoLoading
+                  ? "⏳ Detecting location..."
+                  : locationAdded
+                  ? "✅ Location detected"
+                  : "📍 Use My Location"}
+              </button>
+              {locationAdded && (
+                <div className="pd-geolocation-result">
+                  <p>📌 <b>{location}</b></p>
+                  <button
+                    className="pd-geolocation-reset"
+                    onClick={() => {
+                      setLocation("");
+                      setLocationAdded(false);
+                    }}
+                  >
+                    ✕ Clear
+                  </button>
+                </div>
+              )}
+            </div>
+
+            <div className="pd-location-divider">
+              <span>OR select manually</span>
+            </div>
+
 {/* ===== DELIVERY LOCATION DROPDOWNS + EXACT LOCATION ===== */}
 <div className="pd-location-dropdowns">
   <h4>📍 Select Delivery Location:</h4>
@@ -253,13 +293,15 @@ const [exactLocation, setExactLocation] = useState("");
     navigate("/checkout", {
       state: {
         product,
-        deliveryAddress: {
-          province,
-          district,
-          municipality,
-          ward,
-          exactLocation,
-        },
+        deliveryAddress: locationAdded
+          ? { fullAddress: location }
+          : {
+              province,
+              district,
+              municipality,
+              ward,
+              exactLocation,
+            },
       },
     })
   }
