@@ -7,6 +7,7 @@ import ForgotPassword from "./pages/forgot.jsx";
 import OTP from "./pages/otp.jsx";
 import ChangePassword from "./pages/changePassword.jsx";
 import OwnerDashboard from "./pages/ownerDashboard.jsx";
+import OwnerProfile from "./pages/OwnerProfile.jsx";
 import StaffDashboard from "./pages/staffDashboard.jsx";
 import StaffAttendance from "./pages/staffAttendance.jsx";
 import StaffInventory from "./pages/staffInventory.jsx";
@@ -34,6 +35,7 @@ export default function App() {
         <Route path="/change-password/:email" element={<ChangePassword />} />
         <Route path="/verify/:token" element={<VerifyEmail />} />
         <Route path="/owner-dashboard" element={<OwnerDashboard />} />
+        <Route path="/owner-profile" element={<OwnerProfile />} />
         <Route path="/staff-dashboard" element={<StaffDashboard />} />
         <Route path="/staff-attendance" element={<StaffAttendance />} />
         <Route path="/staff-inventory" element={<StaffInventory />} />

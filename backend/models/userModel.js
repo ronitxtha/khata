@@ -5,8 +5,24 @@ const userSchema = new mongoose.Schema({
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
 
-    phone: { type: String, default: "" },      // ✅ NEW
-    address: { type: String, default: "" },    // ✅ NEW
+    phone: { type: String, default: "" },
+    address: { type: String, default: "" },
+
+    // Profile image for user
+    profileImage: { type: String, default: "" },
+
+    // Shop information (for owners)
+    shopName: { type: String, default: "" },
+    shopEmail: { type: String, default: "" },
+    shopPhone: { type: String, default: "" },
+    shopAddress: { type: String, default: "" },
+    shopLogo: { type: String, default: "" },
+
+    // Shop location (Nepal)
+    province: { type: String, default: "" },
+    district: { type: String, default: "" },
+    municipality: { type: String, default: "" },
+    ward: { type: String, default: "" },
 
     role: { 
         type: String, 

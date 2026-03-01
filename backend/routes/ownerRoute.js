@@ -3,6 +3,14 @@ import { User } from "../models/userModel.js";
 import { Product } from "../models/productModel.js";
 import { isAuthenticated } from "../middleware/isAuthenticated.js";
 import { deleteProduct } from "../controllers/userController.js";
+import {
+  getOwnerProfile,
+  updateOwnerProfile,
+  changePassword,
+  uploadProfileImage,
+  uploadShopLogo,
+  getOwnerStatistics,
+} from "../controllers/ownerController.js";
 import bcrypt from "bcryptjs";
 import multer from "multer";
 import QRCode from "qrcode";
@@ -13,12 +21,45 @@ console.log("✅ Owner routes loaded");
 
 const router = express.Router();
 
-// Multer setup for image upload
+// Multer setup for various uploads
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, "uploads/"),
   filename: (req, file, cb) => cb(null, Date.now() + "-" + file.originalname),
 });
+
+const profileStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const dir = "uploads/profile";
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+    cb(null, dir);
+  },
+  filename: (req, file, cb) => cb(null, Date.now() + "-" + file.originalname),
+});
+
+const shopStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const dir = "uploads/shop";
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+    cb(null, dir);
+  },
+  filename: (req, file, cb) => cb(null, Date.now() + "-" + file.originalname),
+});
+
 const upload = multer({ storage });
+const uploadProfile = multer({ storage: profileStorage });
+const uploadShop = multer({ storage: shopStorage });
+
+// ======================== PROFILE ROUTES ========================
+router.get("/profile", isAuthenticated, getOwnerProfile);
+router.put("/profile", isAuthenticated, updateOwnerProfile);
+router.put("/change-password", isAuthenticated, changePassword);
+router.post("/upload-profile-image", isAuthenticated, uploadProfile.single("profileImage"), uploadProfileImage);
+router.post("/upload-shop-logo", isAuthenticated, uploadShop.single("shopLogo"), uploadShopLogo);
+router.get("/statistics", isAuthenticated, getOwnerStatistics);
 
 // ----------------------- Owner Info -----------------------
 router.get("/me", isAuthenticated, async (req, res) => {
