@@ -2,8 +2,30 @@ import express from "express";
 import { Product } from "../models/productModel.js";
 import { isAuthenticated } from "../middleware/isAuthenticated.js";
 import Attendance from "../models/Attendance.js";
+import {
+  getProfile,
+  updateProfile,
+  changePassword,
+  getTodayAttendance,
+  uploadProfileImage,
+} from "../controllers/staffProfileController.js";
+import { uploadStaff } from "../middleware/uploadStaff.js";
 
 const router = express.Router();
+
+// ─────────────────────────────────────────────
+// Staff Profile Routes
+// ─────────────────────────────────────────────
+router.get("/profile", isAuthenticated, getProfile);
+router.put("/profile", isAuthenticated, updateProfile);
+router.put("/change-password", isAuthenticated, changePassword);
+router.get("/today-attendance", isAuthenticated, getTodayAttendance);
+router.post(
+  "/upload-profile-image",
+  isAuthenticated,
+  uploadStaff.single("profileImage"),
+  uploadProfileImage
+);
 
 // ----------------------- Staff: View Products -----------------------
 router.get("/products", isAuthenticated, async (req, res) => {
