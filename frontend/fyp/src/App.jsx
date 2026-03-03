@@ -13,6 +13,7 @@ import StaffAttendance from "./pages/staffAttendance.jsx";
 import StaffInventory from "./pages/staffInventory.jsx";
 import StaffProfile from "./pages/staffProfile.jsx";
 import CustomerDashboard from "./pages/customerDashboard.jsx";
+import CustomerProfile from "./pages/CustomerProfile.jsx";
 import UserAuthentication from "./pages/UserAuthentication.jsx";
 import ProductManagement from "./pages/ProductManagement.jsx";
 import Sidebar from "./components/Sidebar";
@@ -41,6 +42,7 @@ export default function App() {
         <Route path="/staff-inventory" element={<StaffInventory />} />
         <Route path="/staff-profile" element={<StaffProfile />} />
         <Route path="/customer-dashboard" element={<CustomerDashboard />} />
+        <Route path="/customer-profile" element={<CustomerProfile />} />
         <Route path="/user-authentication" element={<UserAuthentication />} />
         <Route path="/product-management" element={<ProductManagement />} />
         <Route path="/add-staff" element={<Addstaff />} />

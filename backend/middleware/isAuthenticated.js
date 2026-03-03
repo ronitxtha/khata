@@ -25,15 +25,16 @@ export const isAuthenticated = async (req, res, next) => {
       });
     }
 
-    // 🔥 RESOLVE shopId for staff
+    // 🔥 RESOLVE shopId for staff / owner — customers don't have one
     let shopId = user.shopId;
 
-    if (!shopId && user.role === "staff") {
+    if (user.role === "staff" && !shopId) {
       const owner = await User.findById(user.ownerId);
       shopId = owner?.shopId || null;
     }
 
-    if (!shopId) {
+    // Only require shopId for non-customer roles
+    if (user.role !== "customer" && !shopId) {
       return res.status(400).json({
         success: false,
         message: "Shop not associated with this user",

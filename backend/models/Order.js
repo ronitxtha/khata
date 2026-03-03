@@ -35,6 +35,16 @@ const OrderSchema = new mongoose.Schema(
     status: {
       type: String,
       default: "Pending"
+    },
+
+    paymentMethod: {
+      type: String,
+      default: "Cash on Delivery"
+    },
+
+    cancelReason: {
+      type: String,
+      default: ""
     }
 
   },
