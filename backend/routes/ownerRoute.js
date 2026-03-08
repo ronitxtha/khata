@@ -388,8 +388,27 @@ router.get("/today-attendance", isAuthenticated, async (req, res) => {
     res.status(500).json({ message: "Failed to fetch attendance", error: err.message });
   }
 });
+// ----------------------- 3 Months Attendance History -----------------------
+router.get("/attendance-history", isAuthenticated, async (req, res) => {
+  try {
+    const shopId = req.user.shopId;
+    
+    // Get date for 3 months ago
+    const threeMonthsAgo = new Date();
+    threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+    
+    const attendance = await Attendance.find({
+      shopId,
+      date: { $gte: threeMonthsAgo }
+    })
+    .populate("staffId", "username email createdAt")
+    .sort({ date: -1 }); // Sort by newest first
 
-
-
+    res.json({ success: true, attendance });
+  } catch (err) {
+    console.error("Attendance history fetch error:", err);
+    res.status(500).json({ success: false, message: "Failed to fetch attendance history", error: err.message });
+  }
+});
 
 export default router;

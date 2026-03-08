@@ -22,7 +22,7 @@ import ProductDetails from "./pages/ProductDetails";
 import Checkout from "./pages/Checkout.jsx";
 import OrderHistory from "./pages/OrderHistory.jsx";
 import OrderManagement from "./pages/OrderManagement.jsx";
-
+import Attendance from "./pages/attendance.jsx";
 
 export default function App() {
   return (
@@ -44,12 +44,13 @@ export default function App() {
         <Route path="/customer-dashboard" element={<CustomerDashboard />} />
         <Route path="/customer-profile" element={<CustomerProfile />} />
         <Route path="/user-authentication" element={<UserAuthentication />} />
-        <Route path="/product-management" element={<ProductManagement />} />
+        <Route path="/products" element={<ProductManagement />} />
         <Route path="/add-staff" element={<Addstaff />} />
         <Route path="/product/:id" element={<ProductDetails />} />
         <Route path="/checkout" element={<Checkout />} />
         <Route path="/orders" element={<OrderHistory />} />
         <Route path="/order-management" element={<OrderManagement />} />
+        <Route path="/attendance" element={<Attendance />} />
 
 
 
