@@ -15,6 +15,7 @@ import userAddressRoute from "./routes/userAddressRoute.js";
 import orderRoutes from "./routes/orderRoutes.js";
 import notificationRoutes from "./routes/notificationRoutes.js";
 import customerProfileRoutes from "./routes/customerProfileRoutes.js";
+import supplierRoutes from "./routes/supplierRoutes.js";
 
 import http from "http";                 // ✅ ADD
 import { Server } from "socket.io";      // ✅ ADD
@@ -66,6 +67,7 @@ app.use("/api/user", userAddressRoute);
 app.use("/api/orders", orderRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/customer", customerProfileRoutes);
+app.use("/api/suppliers", supplierRoutes);
 
 /* ================= START SERVER ================= */
 

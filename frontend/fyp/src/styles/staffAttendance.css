@@ -1,0 +1,130 @@
+/* ============================================================
+   Staff Attendance – extends staffDashboard.css theme
+   ============================================================ */
+
+/* ---- Banner ---- */
+.sa-banner {
+  background: linear-gradient(135deg, #0f172a 0%, #047857 55%, #10b981 100%) !important;
+}
+
+/* ---- Mini cards adjustments ---- */
+.sa-mini-cards {
+  margin-top: -10px;
+  margin-bottom: 24px;
+}
+
+/* ---- Purple mini card ---- */
+.si-mini-card--purple::before {
+  background: linear-gradient(90deg, #8b5cf6, #a78bfa);
+}
+.si-mini-card--purple .si-mini-card__icon {
+  background: #ede9fe;
+}
+
+/* ---- Table panel ---- */
+.sa-table-panel {
+  padding-bottom: 8px !important;
+}
+
+.sa-table-wrap {
+  overflow-x: auto;
+  border-radius: 10px;
+}
+
+.sa-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13.5px;
+}
+
+.sa-table thead tr {
+  background: #f8fafc;
+}
+
+.sa-table th {
+  padding: 14px 16px;
+  text-align: left;
+  font-weight: 600;
+  color: #475569;
+  font-size: 13px;
+  letter-spacing: 0.3px;
+  border-bottom: 1px solid #e2e8f0;
+  white-space: nowrap;
+}
+
+.sa-table th:first-child { border-radius: 10px 0 0 10px; }
+.sa-table th:last-child  { border-radius: 0 10px 10px 0; }
+
+.sa-table td {
+  padding: 14px 16px;
+  border-bottom: 1px solid #f1f5f9;
+  color: #334155;
+  vertical-align: middle;
+}
+
+.sa-table tbody tr:hover td {
+  background: #f8fafc;
+}
+
+.sa-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* Specific columns */
+.sa-date-cell {
+  font-weight: 600;
+  color: #0f172a;
+  white-space: nowrap;
+}
+
+.sa-time-cell {
+  font-family: "Courier New", monospace;
+  font-size: 13.5px;
+  color: #475569;
+  font-weight: 500;
+}
+
+.sa-hours-cell {
+  font-weight: 700;
+  color: #1e40af;
+}
+
+.sa-active-text {
+  color: #d97706;
+  font-weight: 600;
+  font-style: italic;
+  font-size: 13px;
+  font-family: "Inter", sans-serif;
+}
+
+.sa-missing-text {
+  color: #ef4444;
+  font-weight: 600;
+  font-size: 13px;
+  font-family: "Inter", sans-serif;
+}
+
+/* ---- Loading Spinner ---- */
+.sa-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 60px 0;
+  color: #64748b;
+  font-size: 14px;
+}
+
+.sa-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3.5px solid #e2e8f0;
+  border-top-color: #10b981;
+  border-radius: 50%;
+  animation: sa-spin 0.8s linear infinite;
+}
+
+@keyframes sa-spin {
+  to { transform: rotate(360deg); }
+}

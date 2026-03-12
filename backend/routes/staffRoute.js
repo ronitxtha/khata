@@ -27,6 +27,21 @@ router.post(
   uploadProfileImage
 );
 
+// ----------------------- Staff: My Attendance History -----------------------
+router.get("/my-attendance", isAuthenticated, async (req, res) => {
+  try {
+    const staffId = req.user._id;
+
+    // Fetch all attendance records for this specific staff member
+    const attendance = await Attendance.find({ staffId }).sort({ date: -1 });
+
+    res.json({ attendance });
+  } catch (err) {
+    console.error("Fetch my-attendance error:", err);
+    res.status(500).json({ message: "Failed to fetch attendance history" });
+  }
+});
+
 // ----------------------- Staff: View Products -----------------------
 router.get("/products", isAuthenticated, async (req, res) => {
   try {

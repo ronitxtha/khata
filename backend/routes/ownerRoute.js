@@ -396,18 +396,199 @@ router.get("/attendance-history", isAuthenticated, async (req, res) => {
     // Get date for 3 months ago
     const threeMonthsAgo = new Date();
     threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+    threeMonthsAgo.setHours(0, 0, 0, 0);
+
+    const todayDate = new Date();
+    todayDate.setHours(23, 59, 59, 999);
     
-    const attendance = await Attendance.find({
+    // Fetch all active staff in the shop
+    const staffList = await User.find({ shopId, role: "staff" }).select("username email createdAt");
+
+    // Fetch actual attendance records for the last 3 months
+    const actualAttendance = await Attendance.find({
       shopId,
-      date: { $gte: threeMonthsAgo }
+      date: { $gte: threeMonthsAgo, $lte: todayDate }
     })
     .populate("staffId", "username email createdAt")
-    .sort({ date: -1 }); // Sort by newest first
+    .sort({ date: -1 });
 
-    res.json({ success: true, attendance });
+    // We need to build a complete attendance timeline per staff member
+    let combinedAttendance = [];
+
+    staffList.forEach(staff => {
+      // Determine the start date for this staff's timeline (either 3 months ago or their join date)
+      let staffStartDate = new Date(staff.createdAt);
+      staffStartDate.setHours(0, 0, 0, 0);
+
+      const timelineStart = staffStartDate > threeMonthsAgo ? staffStartDate : threeMonthsAgo;
+      
+      // Get all real records for this specific staff
+      const staffRecords = actualAttendance.filter(
+        record => record.staffId && record.staffId._id.toString() === staff._id.toString()
+      );
+
+      // Create a map of YYYY-MM-DD to easily check for existing records
+      const recordMap = {};
+      staffRecords.forEach(record => {
+        const dateStr = new Date(record.date).toISOString().split('T')[0];
+        // In case there are multiple records per day for some reason, just keep the first one
+        if (!recordMap[dateStr]) {
+          recordMap[dateStr] = record;
+        }
+      });
+
+      // Generate the daily timeline
+      let currentDateIterator = new Date(timelineStart);
+      while (currentDateIterator <= todayDate) {
+        const dateStr = currentDateIterator.toISOString().split('T')[0];
+        
+        if (recordMap[dateStr]) {
+          // If a real record exists for this day, use it
+          combinedAttendance.push(recordMap[dateStr]);
+        } else {
+          // Otherwise, create an 'absent' dummy record
+          combinedAttendance.push({
+            _id: `absent_${staff._id}_${dateStr}`, // Fake ID for React keys
+            staffId: staff,
+            shopId: shopId,
+            date: new Date(currentDateIterator),
+            status: "absent",
+            checkInTime: null,
+            lastLogoutClick: null,
+          });
+        }
+
+        // Increment day by 1
+        currentDateIterator.setDate(currentDateIterator.getDate() + 1);
+      }
+    });
+
+    // Sort the final combined array just like before: newest first
+    combinedAttendance.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+    res.json({ success: true, attendance: combinedAttendance });
   } catch (err) {
     console.error("Attendance history fetch error:", err);
     res.status(500).json({ success: false, message: "Failed to fetch attendance history", error: err.message });
+  }
+});
+// ----------------------- Sales Report (Dashboard Graph) -----------------------
+router.get("/sales-report", isAuthenticated, async (req, res) => {
+  try {
+    const shopId = req.user.shopId;
+    const { timeframe = "week" } = req.query; // 'today', 'week', 'month'
+    
+    const now = new Date();
+    let startDate, endDate;
+    let dataPoints = [];
+
+    if (timeframe === "today") {
+      // Data Points: 24 hours of today
+      startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      endDate = new Date(startDate);
+      endDate.setDate(endDate.getDate() + 1);
+      
+      for (let i = 0; i < 24; i++) {
+        // e.g., "12 AM", "1 AM", ...
+        const label = i === 0 ? "12 AM" : i < 12 ? `${i} AM` : i === 12 ? "12 PM" : `${i - 12} PM`;
+        dataPoints.push({ name: label, hour: i, sales: 0, items: 0 });
+      }
+    } else if (timeframe === "month") {
+      // Data Points: Last 30 days
+      startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 29);
+      endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+      
+      for (let i = 0; i < 30; i++) {
+        const d = new Date(startDate);
+        d.setDate(d.getDate() + i);
+        const label = d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }); // "01 Mar"
+        dataPoints.push({ name: label, timestamp: d.getTime(), sales: 0, items: 0 });
+      }
+    } else {
+      // Default to "week"
+      // Data Points: Last 7 days
+      startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 6);
+      endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+      
+      for (let i = 0; i < 7; i++) {
+        const d = new Date(startDate);
+        d.setDate(d.getDate() + i);
+        const label = d.toLocaleDateString('en-GB', { weekday: 'short' }); // "Mon", "Tue"
+        dataPoints.push({ name: label, timestamp: d.getTime(), sales: 0, items: 0 });
+      }
+    }
+
+    // Fetch orders within the date range
+    const recentOrders = await import("../models/Order.js").then(m => m.default.find({
+      shopId,
+      createdAt: { $gte: startDate, $lt: endDate },
+      status: { $ne: "Cancelled" }
+    }));
+
+    // Aggregate data into the pre-filled dataPoints buckets
+    recentOrders.forEach(order => {
+      const orderDate = new Date(order.createdAt);
+      const totalAmount = order.totalAmount || 0;
+      let itemsCount = 0;
+      if (order.items && order.items.length > 0) {
+        itemsCount = order.items.reduce((sum, item) => sum + (item.quantity || 1), 0);
+      }
+
+      if (timeframe === "today") {
+        const hour = orderDate.getHours();
+        const point = dataPoints.find(p => p.hour === hour);
+        if (point) {
+          point.sales += totalAmount;
+          point.items += itemsCount;
+        }
+      } else {
+        // "week" or "month" -> group by day
+        // Strip time from orderDate for comparison
+        const orderDay = new Date(orderDate.getFullYear(), orderDate.getMonth(), orderDate.getDate()).getTime();
+        const point = dataPoints.find(p => p.timestamp === orderDay);
+        if (point) {
+          point.sales += totalAmount;
+          point.items += itemsCount;
+        }
+      }
+    });
+
+    // Remove sorting metadata if present (hour or timestamp) before sending to client
+    const cleanData = dataPoints.map(({ name, sales, items }) => ({ name, sales, items }));
+
+    res.json({
+      success: true,
+      data: cleanData
+    });
+
+  } catch (err) {
+    console.error("Sales report error:", err);
+    res.status(500).json({ success: false, message: "Failed to fetch sales report" });
+  }
+});
+
+// ----------------------- Yearly Orders History -----------------------
+router.get("/yearly-orders", isAuthenticated, async (req, res) => {
+  try {
+    const shopId = req.user.shopId;
+    
+    const currentYear = new Date().getFullYear();
+    const startOfYear = new Date(currentYear, 0, 1);
+    const endOfYear = new Date(currentYear, 11, 31, 23, 59, 59, 999);
+
+    const Order = await import("../models/Order.js").then(m => m.default);
+    
+    const orders = await Order.find({
+      shopId,
+      createdAt: { $gte: startOfYear, $lte: endOfYear }
+    })
+    .populate("user", "username email")
+    .sort({ createdAt: -1 }); // Newest first
+
+    res.json({ success: true, orders });
+  } catch (err) {
+    console.error("Yearly orders error:", err);
+    res.status(500).json({ success: false, message: "Failed to fetch yearly orders" });
   }
 });
 

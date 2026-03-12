@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import StaffSidebar from "../components/StaffSidebar";
+import "../styles/staffDashboard.css";
 import "../styles/staffProfile.css";
 
 const API_BASE = "http://localhost:8000";
@@ -8,16 +9,6 @@ const API_BASE = "http://localhost:8000";
 const getAuthHeaders = () => ({
   Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
 });
-
-// ─── Toast Helper ────────────────────────────────────────────
-const useToast = () => {
-  const [toast, setToast] = useState({ message: "", type: "success", visible: false });
-  const show = (message, type = "success") => {
-    setToast({ message, type, visible: true });
-    setTimeout(() => setToast((t) => ({ ...t, visible: false })), 3500);
-  };
-  return { toast, show };
-};
 
 // ─── Format Helpers ──────────────────────────────────────────
 const formatTime = (date) => {
@@ -33,25 +24,30 @@ const formatDate = (date) => {
   if (!date) return "—";
   return new Date(date).toLocaleDateString("en-US", {
     year: "numeric",
-    month: "long",
+    month: "short",
     day: "numeric",
   });
 };
 
-// ─── Main Component ──────────────────────────────────────────
 const StaffProfile = () => {
-  const { toast, show: showToast } = useToast();
+  const navigate = useNavigate();
   const fileInputRef = useRef(null);
 
   // ── State ──
   const [loading, setLoading] = useState(true);
   const [staff, setStaff] = useState(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [toast, setToast] = useState({ message: "", type: "success", visible: false });
 
   // Profile edit
   const [isEditing, setIsEditing] = useState(false);
   const [editUsername, setEditUsername] = useState("");
   const [editPhone, setEditPhone] = useState("");
   const [savingProfile, setSavingProfile] = useState(false);
+
+  // Image upload
+  const [imagePreview, setImagePreview] = useState(null);
+  const [imageFile, setImageFile] = useState(null);
 
   // Password change
   const [pwForm, setPwForm] = useState({
@@ -70,10 +66,10 @@ const StaffProfile = () => {
   const [attendance, setAttendance] = useState(null);
   const [weekData, setWeekData] = useState([]);
 
-  // Image upload
-  const [imagePreview, setImagePreview] = useState(null);
-  const [imageFile, setImageFile] = useState(null);
-  const [uploadingImage, setUploadingImage] = useState(false);
+  const showToast = (message, type = "success", duration = 3000) => {
+    setToast({ message, type, visible: true });
+    setTimeout(() => setToast((t) => ({ ...t, visible: false })), duration);
+  };
 
   // ── Fetch on mount ──
   useEffect(() => {
@@ -106,11 +102,40 @@ const StaffProfile = () => {
   const handleEditClick = () => {
     setEditUsername(staff.username || "");
     setEditPhone(staff.phone || "");
+    setImagePreview(null);
+    setImageFile(null);
     setIsEditing(true);
   };
 
   const handleCancelEdit = () => {
     setIsEditing(false);
+    setImagePreview(null);
+    setImageFile(null);
+  };
+
+  const handleImageSelect = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setImageFile(file);
+    const reader = new FileReader();
+    reader.onload = (ev) => setImagePreview(ev.target.result);
+    reader.readAsDataURL(file);
+  };
+
+  const uploadSelectedImage = async () => {
+    if (!imageFile) return true; // nothing to upload
+    try {
+      const formData = new FormData();
+      formData.append("profileImage", imageFile);
+      const res = await axios.post(`${API_BASE}/api/staff/upload-profile-image`, formData, {
+        headers: { ...getAuthHeaders(), "Content-Type": "multipart/form-data" },
+      });
+      setStaff((prev) => ({ ...prev, profileImage: res.data.profileImage }));
+      return true;
+    } catch (err) {
+      showToast(err.response?.data?.message || "Image upload failed", "error");
+      return false;
+    }
   };
 
   const handleSaveProfile = async () => {
@@ -126,8 +151,15 @@ const StaffProfile = () => {
         { headers: getAuthHeaders() }
       );
       setStaff((prev) => ({ ...prev, username: res.data.staff.username, phone: res.data.staff.phone }));
-      setIsEditing(false);
-      showToast("Profile updated successfully!", "success");
+      
+      const imgUploadSuccess = await uploadSelectedImage();
+
+      if (imgUploadSuccess) {
+        setIsEditing(false);
+        setImagePreview(null);
+        setImageFile(null);
+        showToast("Profile updated successfully!");
+      }
     } catch (err) {
       showToast(err.response?.data?.message || "Update failed", "error");
     } finally {
@@ -149,7 +181,7 @@ const StaffProfile = () => {
       return;
     }
     if (newPassword !== confirmPassword) {
-      showToast("New password and confirm password do not match", "error");
+      showToast("Passwords do not match", "error");
       return;
     }
 
@@ -161,7 +193,7 @@ const StaffProfile = () => {
         { headers: getAuthHeaders() }
       );
       setPwForm({ currentPassword: "", newPassword: "", confirmPassword: "" });
-      showToast("Password changed successfully!", "success");
+      showToast("Password changed successfully!");
     } catch (err) {
       showToast(err.response?.data?.message || "Password change failed", "error");
     } finally {
@@ -169,435 +201,319 @@ const StaffProfile = () => {
     }
   };
 
-  // ── Image Upload ──
-  const handleImageSelect = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    setImageFile(file);
-    const reader = new FileReader();
-    reader.onload = (ev) => setImagePreview(ev.target.result);
-    reader.readAsDataURL(file);
-  };
-
-  const handleImageUpload = async () => {
-    if (!imageFile) {
-      showToast("Please select an image first", "error");
-      return;
-    }
+  // ── Logout ──
+  const handleLogout = async () => {
     try {
-      setUploadingImage(true);
-      const formData = new FormData();
-      formData.append("profileImage", imageFile);
-      const res = await axios.post(`${API_BASE}/api/staff/upload-profile-image`, formData, {
-        headers: {
-          ...getAuthHeaders(),
-          "Content-Type": "multipart/form-data",
-        },
-      });
-      setStaff((prev) => ({ ...prev, profileImage: res.data.profileImage }));
-      setImagePreview(null);
-      setImageFile(null);
-      if (fileInputRef.current) fileInputRef.current.value = "";
-      showToast("Profile image updated!", "success");
-    } catch (err) {
-      showToast(err.response?.data?.message || "Image upload failed", "error");
-    } finally {
-      setUploadingImage(false);
-    }
+      await axios.post(`${API_BASE}/api/staff/logout-click`, {}, { headers: getAuthHeaders() });
+    } catch (err) { console.error(err); }
+    localStorage.removeItem("accessToken");
+    navigate("/login");
   };
 
-  // ── Render ──
-  if (loading) {
-    return (
-      <div className="sp-container">
-        <StaffSidebar />
-        <div className="sp-content">
-          <div className="sp-loading">
-            <div className="sp-spinner"></div>
-            <p>Loading profile...</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  const navLinks = [
+    { label: "Dashboard", icon: "🏠", path: "/staff-dashboard" },
+    { label: "Product Management", icon: "📦", path: "/staff-inventory" },
+    { label: "Orders", icon: "🛒", path: "/order-management" },
+    { label: "Attendance", icon: "📅", path: "/staff-attendance" },
+    { label: "Profile", icon: "👤", path: "/staff-profile" },
+  ];
 
-  const avatarSrc = staff?.profileImage
-    ? `${API_BASE}/${staff.profileImage}`
-    : null;
+  const currentAvatarSrc = imagePreview || (staff?.profileImage ? `${API_BASE}/${staff.profileImage}` : null);
 
   return (
-    <div className="sp-container">
-      <StaffSidebar />
-
-      {/* Toast */}
-      {toast.visible && (
-        <div className={`sp-toast sp-toast-${toast.type}`}>{toast.message}</div>
-      )}
-
-      <div className="sp-content">
-        {/* ── Page Header ── */}
-        <div className="sp-page-header">
-          <div>
-            <h1 className="sp-page-title">My Profile</h1>
-            <p className="sp-page-subtitle">Manage your personal information and account settings</p>
-          </div>
+    <div className="sd-layout">
+      {/* ========== SIDEBAR ========== */}
+      <aside
+        className={`sd-sidebar ${sidebarOpen ? "sd-sidebar--open" : ""}`}
+        onMouseEnter={() => setSidebarOpen(true)}
+        onMouseLeave={() => setSidebarOpen(false)}
+      >
+        <div className="sd-sidebar__brand">
+          <span className="sd-sidebar__logo">🛍️</span>
+          <span className="sd-sidebar__brand-name">Khata</span>
         </div>
+        <nav className="sd-sidebar__nav">
+          {navLinks.map((link) => (
+            <button
+              key={link.path}
+              className={`sd-sidebar__link ${window.location.pathname === link.path ? "active" : ""}`}
+              onClick={() => navigate(link.path)}
+            >
+              <span className="sd-sidebar__icon">{link.icon}</span>
+              <span className="sd-sidebar__label">{link.label}</span>
+            </button>
+          ))}
+        </nav>
+        <div className="sd-sidebar__bottom">
+          <button className="sd-sidebar__link sd-sidebar__logout" onClick={handleLogout}>
+            <span className="sd-sidebar__icon">🚪</span>
+            <span className="sd-sidebar__label">Logout</span>
+          </button>
+        </div>
+      </aside>
 
-        {/* ════════════════════════════════════════════
-            CARD 1 – Profile Information
-        ════════════════════════════════════════════ */}
-        <div className="sp-card">
-          <h2 className="sp-card-title">👤 Profile Information</h2>
-
-          <div className="sp-profile-overview">
-            {/* Avatar */}
-            <div className="sp-avatar-wrapper">
-              {avatarSrc ? (
-                <img src={avatarSrc} alt="Profile" className="sp-avatar" />
+      {/* ========== MAIN ========== */}
+      <div className={`sd-main ${sidebarOpen ? "sd-main--shifted" : ""}`}>
+        {/* ---- NAVBAR ---- */}
+        <header className="sd-navbar">
+          <div className="sd-navbar__left">
+            <button className="sd-navbar__hamburger" onClick={() => setSidebarOpen((v) => !v)}>☰</button>
+            <div className="sd-navbar__title">
+              <h1>My Profile</h1>
+              <span className="sd-navbar__subtitle">Manage your personal information</span>
+            </div>
+          </div>
+          <div className="sd-navbar__right">
+            <div className="sd-avatar">
+              {currentAvatarSrc ? (
+                <img src={currentAvatarSrc} alt="avatar" />
               ) : (
-                <div className="sp-avatar-placeholder">
-                  {staff?.username?.[0]?.toUpperCase() || "S"}
-                </div>
+                <span>{(staff?.username || "S")[0].toUpperCase()}</span>
               )}
             </div>
-
-            {/* Info rows */}
-            <div className="sp-info-section">
-              {/* Full Name */}
-              <div className="sp-info-row">
-                <label>Full Name</label>
-                {isEditing ? (
-                  <input
-                    className="sp-input"
-                    type="text"
-                    value={editUsername}
-                    onChange={(e) => setEditUsername(e.target.value)}
-                    placeholder="Enter name"
-                  />
-                ) : (
-                  <span>{staff?.username || "—"}</span>
-                )}
-              </div>
-
-              {/* Email */}
-              <div className="sp-info-row">
-                <label>Email</label>
-                <span className="sp-readonly">{staff?.email || "—"}</span>
-              </div>
-
-              {/* Phone */}
-              <div className="sp-info-row">
-                <label>Phone</label>
-                {isEditing ? (
-                  <input
-                    className="sp-input"
-                    type="tel"
-                    value={editPhone}
-                    onChange={(e) => setEditPhone(e.target.value)}
-                    placeholder="Enter phone number"
-                  />
-                ) : (
-                  <span>{staff?.phone || <em className="sp-empty">Not set</em>}</span>
-                )}
-              </div>
-
-              {/* Role */}
-              <div className="sp-info-row">
-                <label>Role</label>
-                <span className="sp-badge-role">Staff</span>
-              </div>
-
-              {/* Shop */}
-              <div className="sp-info-row">
-                <label>Shop</label>
-                <span className="sp-readonly">{staff?.shopName || "—"}</span>
-              </div>
-
-              {/* Joined */}
-              <div className="sp-info-row">
-                <label>Member Since</label>
-                <span>{formatDate(staff?.createdAt)}</span>
-              </div>
+            <div className="sd-navbar__staff-info">
+              <span className="sd-navbar__name">{staff?.username || "Staff"}</span>
+              <span className="sd-navbar__role">Staff</span>
             </div>
           </div>
+        </header>
 
-          {/* Action buttons */}
-          <div className="sp-btn-group">
-            {!isEditing ? (
-              <button className="sp-btn sp-btn-primary" onClick={handleEditClick}>
-                ✏️ Edit Profile
-              </button>
-            ) : (
-              <>
-                <button
-                  className="sp-btn sp-btn-success"
-                  onClick={handleSaveProfile}
-                  disabled={savingProfile}
-                >
-                  {savingProfile ? "Saving..." : "💾 Save Changes"}
-                </button>
-                <button
-                  className="sp-btn sp-btn-secondary"
-                  onClick={handleCancelEdit}
-                  disabled={savingProfile}
-                >
-                  ✕ Cancel
-                </button>
-              </>
-            )}
-          </div>
-        </div>
-
-        {/* ════════════════════════════════════════════
-            CARD 2 – Change Password
-        ════════════════════════════════════════════ */}
-        <div className="sp-card">
-          <h2 className="sp-card-title">🔒 Change Password</h2>
-          <form className="sp-password-form" onSubmit={handlePasswordChange} noValidate>
-            {/* Current Password */}
-            <div className="sp-form-group">
-              <label>Current Password</label>
-              <div className="sp-input-eye">
-                <input
-                  className="sp-input"
-                  type={showPasswords.current ? "text" : "password"}
-                  placeholder="Enter current password"
-                  value={pwForm.currentPassword}
-                  onChange={(e) => setPwForm((p) => ({ ...p, currentPassword: e.target.value }))}
-                />
-                <button
-                  type="button"
-                  className="sp-eye-btn"
-                  onClick={() => setShowPasswords((s) => ({ ...s, current: !s.current }))}
-                  tabIndex={-1}
-                >
-                  {showPasswords.current ? "🙈" : "👁️"}
-                </button>
-              </div>
+        {/* ---- CONTENT ---- */}
+        <main className="sd-content">
+          {loading ? (
+            <div className="sp-loading">
+              <div className="sp-spinner"></div>
+              <p>Loading profile...</p>
             </div>
-
-            {/* New Password */}
-            <div className="sp-form-group">
-              <label>New Password <span className="sp-hint">(min 6 characters)</span></label>
-              <div className="sp-input-eye">
-                <input
-                  className="sp-input"
-                  type={showPasswords.new ? "text" : "password"}
-                  placeholder="Enter new password"
-                  value={pwForm.newPassword}
-                  onChange={(e) => setPwForm((p) => ({ ...p, newPassword: e.target.value }))}
-                />
-                <button
-                  type="button"
-                  className="sp-eye-btn"
-                  onClick={() => setShowPasswords((s) => ({ ...s, new: !s.new }))}
-                  tabIndex={-1}
-                >
-                  {showPasswords.new ? "🙈" : "👁️"}
-                </button>
-              </div>
-              {pwForm.newPassword && pwForm.newPassword.length < 6 && (
-                <p className="sp-field-error">Password must be at least 6 characters</p>
-              )}
-            </div>
-
-            {/* Confirm Password */}
-            <div className="sp-form-group">
-              <label>Confirm New Password</label>
-              <div className="sp-input-eye">
-                <input
-                  className="sp-input"
-                  type={showPasswords.confirm ? "text" : "password"}
-                  placeholder="Re-enter new password"
-                  value={pwForm.confirmPassword}
-                  onChange={(e) => setPwForm((p) => ({ ...p, confirmPassword: e.target.value }))}
-                />
-                <button
-                  type="button"
-                  className="sp-eye-btn"
-                  onClick={() => setShowPasswords((s) => ({ ...s, confirm: !s.confirm }))}
-                  tabIndex={-1}
-                >
-                  {showPasswords.confirm ? "🙈" : "👁️"}
-                </button>
-              </div>
-              {pwForm.confirmPassword && pwForm.newPassword !== pwForm.confirmPassword && (
-                <p className="sp-field-error">Passwords do not match</p>
-              )}
-            </div>
-
-            <div className="sp-btn-group">
-              <button
-                type="submit"
-                className="sp-btn sp-btn-primary"
-                disabled={savingPassword}
-              >
-                {savingPassword ? "Updating..." : "🔑 Update Password"}
-              </button>
-            </div>
-          </form>
-        </div>
-
-        {/* ════════════════════════════════════════════
-            CARD 3 – Today's Attendance
-        ════════════════════════════════════════════ */}
-        <div className="sp-card">
-          <h2 className="sp-card-title">📅 Today's Attendance</h2>
-
-          {attendance ? (
-            <>
-              <div className="sp-attendance-summary">
-                <div className="sp-att-stat">
-                  <span className="sp-att-icon">🟢</span>
-                  <div>
-                    <p className="sp-att-label">Login Time</p>
-                    <p className="sp-att-value">{formatTime(attendance.checkInTime)}</p>
-                  </div>
-                </div>
-
-                <div className="sp-att-divider"></div>
-
-                <div className="sp-att-stat">
-                  <span className="sp-att-icon">🔴</span>
-                  <div>
-                    <p className="sp-att-label">Logout Time</p>
-                    <p className="sp-att-value">
-                      {attendance.isStillWorking ? (
-                        <span className="sp-still-working">Still working...</span>
-                      ) : (
-                        formatTime(attendance.checkOutTime)
-                      )}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="sp-att-divider"></div>
-
-                <div className="sp-att-stat">
-                  <span className="sp-att-icon">⏱️</span>
-                  <div>
-                    <p className="sp-att-label">Total Hours</p>
-                    <p className="sp-att-value">
-                      {attendance.isStillWorking
-                        ? `${attendance.totalHours}h (ongoing)`
-                        : `${attendance.totalHours}h`}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Weekly Table */}
-              {weekData.length > 0 && (
-                <div className="sp-week-section">
-                  <h3 className="sp-week-title">📊 Last 7 Days</h3>
-                  <div className="sp-table-wrapper">
-                    <table className="sp-table">
-                      <thead>
-                        <tr>
-                          <th>Date</th>
-                          <th>Login</th>
-                          <th>Logout</th>
-                          <th>Hours</th>
-                          <th>Status</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {weekData.map((rec, idx) => (
-                          <tr key={idx}>
-                            <td>{formatDate(rec.date)}</td>
-                            <td>{formatTime(rec.checkIn)}</td>
-                            <td>{rec.checkOut ? formatTime(rec.checkOut) : <em className="sp-empty">—</em>}</td>
-                            <td>{rec.totalHours}h</td>
-                            <td>
-                              <span className={`sp-status-badge sp-status-${rec.status}`}>
-                                {rec.status}
-                              </span>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              )}
-            </>
           ) : (
-            <div className="sp-no-attendance">
-              <span className="sp-no-att-icon">📋</span>
-              <p>No attendance record found for today.</p>
-              <p className="sp-no-att-hint">Your attendance is automatically tracked when you log in.</p>
+            <div className="sp-grid">
+              
+              {/* ==== LEFT COLUMN ==== */}
+              <div className="sp-col">
+                
+                {/* 1. PROFILE INFO CARD */}
+                <div className="sd-panel sp-card">
+                  <div className="sd-panel__header">
+                    <h3>👤 Profile Information</h3>
+                    {!isEditing && (
+                      <button className="sp-link-btn" onClick={handleEditClick}>
+                        ✏️ Edit
+                      </button>
+                    )}
+                  </div>
+                  <div className="sp-profile-overview">
+                    <div className="sp-avatar-wrapper">
+                      {currentAvatarSrc ? (
+                        <img src={currentAvatarSrc} alt="Profile" className="sp-avatar-large" />
+                      ) : (
+                        <div className="sp-avatar-placeholder-large">
+                          {(staff?.username || "S")[0].toUpperCase()}
+                        </div>
+                      )}
+
+                      {/* Edit overlay with camera icon */}
+                      {isEditing && (
+                        <div
+                          className="sp-avatar-overlay"
+                          onClick={() => fileInputRef.current?.click()}
+                          title="Change Profile Picture"
+                        >
+                          📷
+                        </div>
+                      )}
+                      
+                      <input
+                        id="sp-file-input"
+                        type="file"
+                        accept="image/*"
+                        ref={fileInputRef}
+                        onChange={handleImageSelect}
+                        hidden
+                      />
+                    </div>
+
+                    <div className="sp-info-list">
+                      <div className="sp-info-row">
+                        <label>Full Name</label>
+                        {isEditing ? (
+                          <input type="text" className="sp-input" value={editUsername} onChange={(e) => setEditUsername(e.target.value)} />
+                        ) : (
+                          <span>{staff?.username || "—"}</span>
+                        )}
+                      </div>
+                      <div className="sp-info-row">
+                        <label>Phone</label>
+                        {isEditing ? (
+                          <input type="tel" className="sp-input" value={editPhone} onChange={(e) => setEditPhone(e.target.value)} />
+                        ) : (
+                          <span>{staff?.phone || <em className="sp-empty">Not set</em>}</span>
+                        )}
+                      </div>
+                      <div className="sp-info-row">
+                        <label>Email</label>
+                        <span className="sp-readonly">{staff?.email || "—"}</span>
+                      </div>
+                      <div className="sp-info-row">
+                        <label>Role</label>
+                        <span className="sd-badge badge-processing">Staff</span>
+                      </div>
+                      <div className="sp-info-row">
+                        <label>Member Since</label>
+                        <span className="sp-readonly">{formatDate(staff?.createdAt)}</span>
+                      </div>
+
+                      {isEditing && (
+                        <div className="sp-edit-actions">
+                          <button className="sp-btn-cancel" onClick={handleCancelEdit}>Cancel</button>
+                          <button className="sp-btn-save" onClick={handleSaveProfile} disabled={savingProfile}>
+                            {savingProfile ? "Saving..." : "💾 Save Changes"}
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* 2. SECURITY CARD */}
+                <div className="sd-panel sp-card">
+                  <div className="sd-panel__header">
+                    <h3>🔒 Change Password</h3>
+                  </div>
+                  <form className="sp-form" onSubmit={handlePasswordChange}>
+                    <div className="sp-form-group">
+                      <label>Current Password</label>
+                      <div className="sp-input-eye">
+                        <input
+                          type={showPasswords.current ? "text" : "password"}
+                          className="sp-input"
+                          value={pwForm.currentPassword}
+                          onChange={(e) => setPwForm((p) => ({ ...p, currentPassword: e.target.value }))}
+                        />
+                        <button type="button" onClick={() => setShowPasswords((s) => ({ ...s, current: !s.current }))}>
+                          {showPasswords.current ? "🙈" : "👁️"}
+                        </button>
+                      </div>
+                    </div>
+                    <div className="sp-form-group">
+                      <label>New Password</label>
+                      <div className="sp-input-eye">
+                        <input
+                          type={showPasswords.new ? "text" : "password"}
+                          className="sp-input"
+                          value={pwForm.newPassword}
+                          onChange={(e) => setPwForm((p) => ({ ...p, newPassword: e.target.value }))}
+                        />
+                        <button type="button" onClick={() => setShowPasswords((s) => ({ ...s, new: !s.new }))}>
+                          {showPasswords.new ? "🙈" : "👁️"}
+                        </button>
+                      </div>
+                    </div>
+                    <div className="sp-form-group">
+                      <label>Confirm Password</label>
+                      <div className="sp-input-eye">
+                        <input
+                          type={showPasswords.confirm ? "text" : "password"}
+                          className="sp-input"
+                          value={pwForm.confirmPassword}
+                          onChange={(e) => setPwForm((p) => ({ ...p, confirmPassword: e.target.value }))}
+                        />
+                        <button type="button" onClick={() => setShowPasswords((s) => ({ ...s, confirm: !s.confirm }))}>
+                          {showPasswords.confirm ? "🙈" : "👁️"}
+                        </button>
+                      </div>
+                    </div>
+                    <button type="submit" className="sp-btn-save sp-pw-btn" disabled={savingPassword}>
+                      {savingPassword ? "Updating..." : "Update Password"}
+                    </button>
+                  </form>
+                </div>
+
+              </div>
+
+              {/* ==== RIGHT COLUMN ==== */}
+              <div className="sp-col">
+                
+                {/* 3. ATTENDANCE SUMMARY */}
+                <div className="sd-panel sp-card sp-attendance-card">
+                  <div className="sd-panel__header">
+                    <h3>📅 Today's Attendance</h3>
+                  </div>
+                  {attendance ? (
+                    <div className="sp-att-stats">
+                      <div className="sp-att-stat">
+                        <div className="sp-att-icon">🟢</div>
+                        <div>
+                          <p className="sp-att-label">Login</p>
+                          <p className="sp-att-val">{formatTime(attendance.checkInTime)}</p>
+                        </div>
+                      </div>
+                      <div className="sp-att-stat">
+                        <div className="sp-att-icon">🔴</div>
+                        <div>
+                          <p className="sp-att-label">Logout</p>
+                          <p className="sp-att-val">
+                            {attendance.isStillWorking ? "Still working..." : formatTime(attendance.checkOutTime)}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="sp-att-stat">
+                        <div className="sp-att-icon">⏱️</div>
+                        <div>
+                          <p className="sp-att-label">Hours</p>
+                          <p className="sp-att-val">{attendance.totalHours}h</p>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="sd-empty sp-att-empty">
+                      <span>📋</span>
+                      <p>No attendance record for today.</p>
+                    </div>
+                  )}
+
+                  {weekData.length > 0 && (
+                    <div className="sp-week-table-wrap">
+                      <h4 className="sp-week-title">Last 7 Days</h4>
+                      <table className="sp-week-table">
+                        <thead>
+                          <tr>
+                            <th>Date</th>
+                            <th>Login</th>
+                            <th>Logout</th>
+                            <th>Hrs</th>
+                            <th>Stat</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {weekData.slice(0, 5).map((rec, idx) => (
+                            <tr key={idx}>
+                              <td>{formatDate(rec.date)}</td>
+                              <td>{formatTime(rec.checkIn)}</td>
+                              <td>{rec.checkOut ? formatTime(rec.checkOut) : "—"}</td>
+                              <td>{rec.totalHours}</td>
+                              <td>
+                                <span className={rec.status === "Present" ? "sp-status-green" : "sp-status-red"}>
+                                  {rec.status === "Present" ? "P" : "A"}
+                                </span>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+
+              </div>
             </div>
           )}
-        </div>
-
-        {/* ════════════════════════════════════════════
-            CARD 4 – Profile Image Upload
-        ════════════════════════════════════════════ */}
-        <div className="sp-card">
-          <h2 className="sp-card-title">🖼️ Profile Image</h2>
-
-          <div className="sp-upload-layout">
-            {/* Current / Preview */}
-            <div className="sp-upload-preview-box">
-              {imagePreview ? (
-                <img src={imagePreview} alt="Preview" className="sp-upload-preview-img" />
-              ) : avatarSrc ? (
-                <img src={avatarSrc} alt="Current" className="sp-upload-preview-img" />
-              ) : (
-                <div className="sp-upload-placeholder">
-                  <span>📷</span>
-                  <p>No image yet</p>
-                </div>
-              )}
-              {imagePreview && <div className="sp-preview-badge">Preview</div>}
-            </div>
-
-            {/* Upload controls */}
-            <div className="sp-upload-controls">
-              <p className="sp-upload-hint">
-                Upload a clear photo of yourself. Accepted formats: JPG, PNG, WEBP (max 5 MB).
-              </p>
-
-              <label className="sp-btn sp-btn-secondary sp-file-label" htmlFor="sp-file-input">
-                📁 Choose Image
-              </label>
-              <input
-                id="sp-file-input"
-                type="file"
-                accept="image/*"
-                className="sp-file-input-hidden"
-                ref={fileInputRef}
-                onChange={handleImageSelect}
-              />
-
-              {imageFile && (
-                <p className="sp-selected-file">✓ {imageFile.name}</p>
-              )}
-
-              <button
-                className="sp-btn sp-btn-success"
-                onClick={handleImageUpload}
-                disabled={!imageFile || uploadingImage}
-              >
-                {uploadingImage ? "Uploading..." : "⬆️ Upload Image"}
-              </button>
-
-              {imagePreview && (
-                <button
-                  className="sp-btn sp-btn-ghost"
-                  onClick={() => {
-                    setImagePreview(null);
-                    setImageFile(null);
-                    if (fileInputRef.current) fileInputRef.current.value = "";
-                  }}
-                >
-                  ✕ Remove Selection
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
+        </main>
       </div>
+
+      {/* ========== TOAST ========== */}
+      {toast.visible && (
+        <div className={`sd-toast sd-toast--${toast.type}`}>{toast.message}</div>
+      )}
     </div>
   );
 };

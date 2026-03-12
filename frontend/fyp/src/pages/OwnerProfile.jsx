@@ -1,99 +1,66 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import Sidebar from "../components/Sidebar";
-import "../styles/ownerProfile.css";
+import "../styles/staffDashboard.css";
+import "../styles/staffInventory.css";
+
+const API_BASE = "http://localhost:8000";
+
+const nepalData = {
+  provinces: ["Bagmati", "Dhawalagiri", "gandaki", "Karnali", "Lumbini", "Madhesh", "Mechi", "Sagarmatha"],
+  districts: {
+    Bagmati: ["Kathmandu", "Bhaktapur", "Lalitpur", "Kavre", "Sindhuli"],
+    Dhawalagiri: ["Baglung", "Myagdi", "Parbat"],
+    gandaki: ["Gorkha", "Lamjung", "Manang", "Kaski", "Syangja"],
+    Karnali: ["Dailekh", "Jumla", "Dolpa"],
+    Lumbini: ["Gulmi", "Palpa", "Nawalparasi", "Rupandehi"],
+    Madhesh: ["Parsa", "Bara", "Rautahat", "Saptari"],
+    Mechi: ["Ilam", "Jhapa"],
+    Sagarmatha: ["Dolakha", "Khotang", "Solukhumbu"],
+  },
+  municipalities: {
+    Kathmandu: ["Kathmandu", "Budhanilkantha", "Naksal"],
+    Lalitpur: ["Lalitpur", "Mahalaxmi"],
+    Bhaktapur: ["Bhaktapur", "Suryabinayak"],
+    Gulmi: ["Gulmi", "Resunga"],
+    Ilam: ["Ilam", "Mai"],
+  },
+};
 
 const OwnerProfile = () => {
-  const API_BASE = "http://localhost:8000";
+  const navigate = useNavigate();
   const token = localStorage.getItem("accessToken");
 
-  // ==================== STATE MANAGEMENT ====================
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [toast, setToast] = useState({ message: "", type: "success", visible: false });
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [toast, setToast] = useState({
-    message: "",
-    type: "success",
-    visible: false,
-  });
-  const [statistics, setStatistics] = useState({
-    totalProducts: 0,
-    totalOrders: 0,
-    lowStockProducts: 0,
-    lowStockDetails: [],
-  });
+  const [statistics, setStatistics] = useState({ totalProducts: 0, totalOrders: 0, lowStockProducts: 0, lowStockDetails: [] });
 
-  // Profile Edit States
+  // Profile edit
   const [isEditingProfile, setIsEditingProfile] = useState(false);
-  const [editFormData, setEditFormData] = useState({
-    username: "",
-    phone: "",
-  });
+  const [editFormData, setEditFormData] = useState({ username: "", phone: "" });
 
-  // Shop Info Edit States
+  // Shop edit
   const [isEditingShop, setIsEditingShop] = useState(false);
   const [shopFormData, setShopFormData] = useState({
-    shopName: "",
-    shopEmail: "",
-    shopPhone: "",
-    shopAddress: "",
-    province: "",
-    district: "",
-    municipality: "",
-    ward: "",
+    shopName: "", shopEmail: "", shopPhone: "", shopAddress: "",
+    province: "", district: "", municipality: "", ward: "",
   });
 
-  // Change Password States
-  const [passwordData, setPasswordData] = useState({
-    currentPassword: "",
-    newPassword: "",
-    confirmPassword: "",
-  });
+  // Password
+  const [passwordData, setPasswordData] = useState({ currentPassword: "", newPassword: "", confirmPassword: "" });
 
-  // Image Upload States
+  // Image upload
   const [profileImagePreview, setProfileImagePreview] = useState(null);
   const [shopLogoPreview, setShopLogoPreview] = useState(null);
   const [uploading, setUploading] = useState(false);
 
-  // Nepal Location Data
-  const nepalData = {
-    provinces: [
-      "Bagmati",
-      "Dhawalagiri",
-      "gandaki",
-      "Karnali",
-      "Lumbini",
-      "Madhesh",
-      "Mechi",
-      "Sagarmatha",
-    ],
-    districts: {
-      Bagmati: ["Kathmandu", "Bhaktapur", "Lalitpur", "Kavre", "Sindhuli"],
-      Dhawalagiri: ["Baglung", "Myagdi", "Parbat"],
-      gandaki: ["Gorkha", "Lamjung", "Manang", "Kaski", "Syangja"],
-      Karnali: ["Dailekh", "Jumla", "Dolpa"],
-      Lumbini: ["Gulmi", "Palpa", "Nawalparasi", "Rupandehi"],
-      Madhesh: ["Parsa", "Bara", "Rautahat", "Saptari"],
-      Mechi: ["Ilam", "Jhapa"],
-      Sagarmatha: ["Dolakha", "Khotang", "Solukhumbu"],
-    },
-    municipalities: {
-      Kathmandu: ["Kathmandu", "Budhanilkantha", "Naksal"],
-      Lalitpur: ["Lalitpur", "Mahalaxmi"],
-      Bhaktapur: ["Bhaktapur", "Suryabinayak"],
-      Gulmi: ["Gulmi", "Resunga"],
-      Ilam: ["Ilam", "Mai"],
-    },
-  };
-
-  // ==================== TOAST NOTIFICATION ====================
   const showToast = (message, type = "success") => {
     setToast({ message, type, visible: true });
-    setTimeout(() => {
-      setToast({ ...toast, visible: false });
-    }, 3000);
+    setTimeout(() => setToast((t) => ({ ...t, visible: false })), 3000);
   };
 
-  // ==================== FETCH PROFILE ====================
   useEffect(() => {
     fetchProfile();
     fetchStatistics();
@@ -102,33 +69,20 @@ const OwnerProfile = () => {
   const fetchProfile = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(`${API_BASE}/api/owner/profile`, {
+      const res = await axios.get(`${API_BASE}/api/owner/profile`, {
         headers: { Authorization: `Bearer ${token}` },
         withCredentials: true,
       });
-
-      const ownerData = response.data.data;
-      setProfile(ownerData);
-      setEditFormData({
-        username: ownerData.username || "",
-        phone: ownerData.phone || "",
-      });
+      const d = res.data.data;
+      setProfile(d);
+      setEditFormData({ username: d.username || "", phone: d.phone || "" });
       setShopFormData({
-        shopName: ownerData.shopName || "",
-        shopEmail: ownerData.shopEmail || "",
-        shopPhone: ownerData.shopPhone || "",
-        shopAddress: ownerData.shopAddress || "",
-        province: ownerData.province || "",
-        district: ownerData.district || "",
-        municipality: ownerData.municipality || "",
-        ward: ownerData.ward || "",
+        shopName: d.shopName || "", shopEmail: d.shopEmail || "", shopPhone: d.shopPhone || "",
+        shopAddress: d.shopAddress || "", province: d.province || "", district: d.district || "",
+        municipality: d.municipality || "", ward: d.ward || "",
       });
-    } catch (error) {
-      console.error("Error fetching profile:", error);
-      showToast(
-        error.response?.data?.message || "Failed to load profile",
-        "error"
-      );
+    } catch (err) {
+      showToast(err.response?.data?.message || "Failed to load profile", "error");
     } finally {
       setLoading(false);
     }
@@ -136,816 +90,488 @@ const OwnerProfile = () => {
 
   const fetchStatistics = async () => {
     try {
-      const response = await axios.get(`${API_BASE}/api/owner/statistics`, {
-        headers: { Authorization: `Bearer ${token}` },
-        withCredentials: true,
+      const res = await axios.get(`${API_BASE}/api/owner/statistics`, {
+        headers: { Authorization: `Bearer ${token}` }, withCredentials: true,
       });
-      setStatistics(response.data.data);
-    } catch (error) {
-      console.error("Error fetching statistics:", error);
+      setStatistics(res.data.data);
+    } catch (err) {
+      console.error(err);
     }
-  };
-
-  // ==================== PROFILE EDIT HANDLERS ====================
-  const handleProfileEdit = () => {
-    setIsEditingProfile(true);
   };
 
   const handleProfileSave = async () => {
     try {
       setLoading(true);
-      await axios.put(
-        `${API_BASE}/api/owner/profile`,
-        {
-          username: editFormData.username,
-          phone: editFormData.phone,
-        },
-        {
-          headers: { Authorization: `Bearer ${token}` },
-          withCredentials: true,
-        }
-      );
-      showToast("Profile updated successfully", "success");
+      await axios.put(`${API_BASE}/api/owner/profile`, editFormData, {
+        headers: { Authorization: `Bearer ${token}` }, withCredentials: true,
+      });
+      showToast("Profile updated successfully");
       setIsEditingProfile(false);
       fetchProfile();
-    } catch (error) {
-      showToast(
-        error.response?.data?.message || "Failed to update profile",
-        "error"
-      );
-    } finally {
-      setLoading(false);
-    }
+    } catch (err) {
+      showToast(err.response?.data?.message || "Update failed", "error");
+    } finally { setLoading(false); }
   };
 
   const handleProfileCancel = () => {
     setIsEditingProfile(false);
-    setEditFormData({
-      username: profile?.username || "",
-      phone: profile?.phone || "",
-    });
-  };
-
-  // ==================== SHOP INFO EDIT HANDLERS ====================
-  const handleShopEdit = () => {
-    setIsEditingShop(true);
+    setEditFormData({ username: profile?.username || "", phone: profile?.phone || "" });
   };
 
   const handleShopSave = async () => {
     try {
       setLoading(true);
-      await axios.put(
-        `${API_BASE}/api/owner/profile`,
-        shopFormData,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-          withCredentials: true,
-        }
-      );
-      showToast("Shop information updated successfully", "success");
+      await axios.put(`${API_BASE}/api/owner/profile`, shopFormData, {
+        headers: { Authorization: `Bearer ${token}` }, withCredentials: true,
+      });
+      showToast("Shop info updated successfully");
       setIsEditingShop(false);
       fetchProfile();
-    } catch (error) {
-      showToast(
-        error.response?.data?.message || "Failed to update shop info",
-        "error"
-      );
-    } finally {
-      setLoading(false);
-    }
+    } catch (err) {
+      showToast(err.response?.data?.message || "Update failed", "error");
+    } finally { setLoading(false); }
   };
 
   const handleShopCancel = () => {
     setIsEditingShop(false);
     setShopFormData({
-      shopName: profile?.shopName || "",
-      shopEmail: profile?.shopEmail || "",
-      shopPhone: profile?.shopPhone || "",
-      shopAddress: profile?.shopAddress || "",
-      province: profile?.province || "",
-      district: profile?.district || "",
-      municipality: profile?.municipality || "",
-      ward: profile?.ward || "",
+      shopName: profile?.shopName || "", shopEmail: profile?.shopEmail || "",
+      shopPhone: profile?.shopPhone || "", shopAddress: profile?.shopAddress || "",
+      province: profile?.province || "", district: profile?.district || "",
+      municipality: profile?.municipality || "", ward: profile?.ward || "",
     });
   };
 
-  // ==================== PASSWORD CHANGE HANDLER ====================
   const handlePasswordChange = async (e) => {
     e.preventDefault();
-
-    if (!passwordData.currentPassword) {
-      showToast("Current password is required", "error");
-      return;
-    }
-
-    if (passwordData.newPassword.length < 6) {
-      showToast("New password must be at least 6 characters", "error");
-      return;
-    }
-
-    if (passwordData.newPassword !== passwordData.confirmPassword) {
-      showToast("Passwords do not match", "error");
-      return;
-    }
-
+    if (!passwordData.currentPassword) { showToast("Current password required", "error"); return; }
+    if (passwordData.newPassword.length < 6) { showToast("New password must be ≥ 6 characters", "error"); return; }
+    if (passwordData.newPassword !== passwordData.confirmPassword) { showToast("Passwords do not match", "error"); return; }
     try {
       setLoading(true);
-      await axios.put(
-        `${API_BASE}/api/owner/change-password`,
-        {
-          currentPassword: passwordData.currentPassword,
-          newPassword: passwordData.newPassword,
-          confirmPassword: passwordData.confirmPassword,
-        },
-        {
-          headers: { Authorization: `Bearer ${token}` },
-          withCredentials: true,
-        }
-      );
-      showToast("Password changed successfully", "success");
-      setPasswordData({
-        currentPassword: "",
-        newPassword: "",
-        confirmPassword: "",
+      await axios.put(`${API_BASE}/api/owner/change-password`, passwordData, {
+        headers: { Authorization: `Bearer ${token}` }, withCredentials: true,
       });
-    } catch (error) {
-      showToast(
-        error.response?.data?.message || "Failed to change password",
-        "error"
-      );
-    } finally {
-      setLoading(false);
-    }
+      showToast("Password changed successfully");
+      setPasswordData({ currentPassword: "", newPassword: "", confirmPassword: "" });
+    } catch (err) {
+      showToast(err.response?.data?.message || "Failed to change password", "error");
+    } finally { setLoading(false); }
   };
 
-  // ==================== IMAGE UPLOAD HANDLERS ====================
-  const handleProfileImageChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setProfileImagePreview(reader.result);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const handleShopLogoChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setShopLogoPreview(reader.result);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const uploadProfileImageHandler = async () => {
+  const uploadProfileImage = async () => {
     const fileInput = document.getElementById("profileImageInput");
     const file = fileInput?.files[0];
-
-    if (!file) {
-      showToast("Please select an image", "error");
-      return;
-    }
-
+    if (!file) { showToast("Please select an image", "error"); return; }
     try {
       setUploading(true);
       const formData = new FormData();
       formData.append("profileImage", file);
-
-      const response = await axios.post(
-        `${API_BASE}/api/owner/upload-profile-image`,
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-            Authorization: `Bearer ${token}`,
-          },
-          withCredentials: true,
-        }
-      );
-
-      showToast("Profile image uploaded successfully", "success");
+      await axios.post(`${API_BASE}/api/owner/upload-profile-image`, formData, {
+        headers: { "Content-Type": "multipart/form-data", Authorization: `Bearer ${token}` }, withCredentials: true,
+      });
+      showToast("Profile image uploaded");
       setProfileImagePreview(null);
       fileInput.value = "";
       fetchProfile();
-    } catch (error) {
-      showToast(
-        error.response?.data?.message || "Failed to upload profile image",
-        "error"
-      );
-    } finally {
-      setUploading(false);
-    }
+    } catch (err) {
+      showToast(err.response?.data?.message || "Upload failed", "error");
+    } finally { setUploading(false); }
   };
 
-  const uploadShopLogoHandler = async () => {
+  const uploadShopLogo = async () => {
     const fileInput = document.getElementById("shopLogoInput");
     const file = fileInput?.files[0];
-
-    if (!file) {
-      showToast("Please select a logo", "error");
-      return;
-    }
-
+    if (!file) { showToast("Please select a logo", "error"); return; }
     try {
       setUploading(true);
       const formData = new FormData();
       formData.append("shopLogo", file);
-
-      const response = await axios.post(
-        `${API_BASE}/api/owner/upload-shop-logo`,
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-            Authorization: `Bearer ${token}`,
-          },
-          withCredentials: true,
-        }
-      );
-
-      showToast("Shop logo uploaded successfully", "success");
+      await axios.post(`${API_BASE}/api/owner/upload-shop-logo`, formData, {
+        headers: { "Content-Type": "multipart/form-data", Authorization: `Bearer ${token}` }, withCredentials: true,
+      });
+      showToast("Shop logo uploaded");
       setShopLogoPreview(null);
       fileInput.value = "";
       fetchProfile();
-    } catch (error) {
-      showToast(
-        error.response?.data?.message || "Failed to upload shop logo",
-        "error"
-      );
-    } finally {
-      setUploading(false);
-    }
+    } catch (err) {
+      showToast(err.response?.data?.message || "Upload failed", "error");
+    } finally { setUploading(false); }
   };
 
-  if (loading && !profile) {
-    return (
-      <div className="owner-profile-container">
-        <Sidebar />
-        <div className="profile-content">
-          <div className="loading">Loading profile...</div>
-        </div>
-      </div>
-    );
-  }
+  const handleLogout = () => {
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("user");
+    navigate("/login");
+  };
+
+  const navLinks = [
+    { label: "Dashboard", icon: "🏠", path: "/owner-dashboard" },
+    { label: "Product Management", icon: "📦", path: "/products" },
+    { label: "Orders", icon: "🛒", path: "/order-management" },
+    { label: "Staff Management", icon: "👥", path: "/add-staff" },
+    { label: "Attendance", icon: "📅", path: "/attendance" },
+    { label: "Profile", icon: "👤", path: "/owner-profile" },
+  ];
+
+  /* ── Shared input/select styles ── */
+  const inputStyle = {
+    width: "100%", padding: "10px 14px", border: "1.5px solid #e2e8f0",
+    borderRadius: 10, fontSize: 14, color: "#1e293b", background: "#f8fafc",
+    fontFamily: "Inter, sans-serif", outline: "none", boxSizing: "border-box",
+  };
+  const labelStyle = { fontSize: 13, fontWeight: 600, color: "#374151", display: "block", marginBottom: 5 };
+  const groupStyle = { display: "flex", flexDirection: "column", gap: 5 };
+  const infoRowStyle = { display: "flex", gap: 12, alignItems: "center", padding: "10px 0", borderBottom: "1px solid #f1f5f9" };
+  const infoLabelStyle = { fontSize: 13, fontWeight: 600, color: "#64748b", minWidth: 130 };
+  const infoValueStyle = { fontSize: 14, color: "#1e293b", fontWeight: 500 };
 
   return (
-    <div className="owner-profile-container">
-      <Sidebar />
-      <div className="profile-content">
-        {/* Toast Notification */}
-        {toast.visible && (
-          <div className={`toast toast-${toast.type}`}>{toast.message}</div>
-        )}
+    <div className="sd-layout">
+      {/* ========== SIDEBAR ========== */}
+      <aside
+        className={`sd-sidebar ${sidebarOpen ? "sd-sidebar--open" : ""}`}
+        onMouseEnter={() => setSidebarOpen(true)}
+        onMouseLeave={() => setSidebarOpen(false)}
+      >
+        <div className="sd-sidebar__brand">
+          <span className="sd-sidebar__logo">🛍️</span>
+          <span className="sd-sidebar__brand-name">Khata</span>
+        </div>
+        <nav className="sd-sidebar__nav">
+          {navLinks.map((link) => (
+            <button
+              key={link.path}
+              className={`sd-sidebar__link ${window.location.pathname === link.path ? "active" : ""}`}
+              onClick={() => navigate(link.path)}
+            >
+              <span className="sd-sidebar__icon">{link.icon}</span>
+              <span className="sd-sidebar__label">{link.label}</span>
+            </button>
+          ))}
+        </nav>
+        <div className="sd-sidebar__bottom">
+          <button className="sd-sidebar__link sd-sidebar__logout" onClick={handleLogout}>
+            <span className="sd-sidebar__icon">🚪</span>
+            <span className="sd-sidebar__label">Logout</span>
+          </button>
+        </div>
+      </aside>
 
-        {/* ==================== PROFILE OVERVIEW CARD ==================== */}
-        <div className="profile-card">
-          <h2 className="card-title">Profile Overview</h2>
-
-          <div className="profile-overview">
-            <div className="profile-image-section">
-              {profile?.profileImage ? (
-                <img
-                  src={`${API_BASE}/${profile.profileImage}`}
-                  alt="Profile"
-                  className="profile-image"
-                />
-              ) : (
-                <div className="profile-image-placeholder">
-                  <span>📷</span>
-                </div>
-              )}
-            </div>
-
-            <div className="profile-info">
-              {!isEditingProfile ? (
-                <>
-                  <div className="info-row">
-                    <label>Name:</label>
-                    <span>{profile?.username}</span>
-                  </div>
-                  <div className="info-row">
-                    <label>Email:</label>
-                    <span className="read-only">{profile?.email}</span>
-                  </div>
-                  <div className="info-row">
-                    <label>Phone:</label>
-                    <span>{profile?.phone || "Not provided"}</span>
-                  </div>
-                  <div className="info-row">
-                    <label>Role:</label>
-                    <span>{profile?.role}</span>
-                  </div>
-                  <div className="info-row">
-                    <label>Member Since:</label>
-                    <span>
-                      {new Date(profile?.createdAt).toLocaleDateString()}
-                    </span>
-                  </div>
-
-                  <div className="button-group">
-                    <button
-                      className="btn btn-primary"
-                      onClick={handleProfileEdit}
-                    >
-                      ✏️ Edit Profile
-                    </button>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div className="form-group">
-                    <label>Name</label>
-                    <input
-                      type="text"
-                      value={editFormData.username}
-                      onChange={(e) =>
-                        setEditFormData({
-                          ...editFormData,
-                          username: e.target.value,
-                        })
-                      }
-                      placeholder="Enter name"
-                    />
-                  </div>
-
-                  <div className="form-group">
-                    <label>Email</label>
-                    <input
-                      type="email"
-                      value={profile?.email}
-                      readOnly
-                      className="read-only-input"
-                      placeholder="Email (read-only)"
-                    />
-                  </div>
-
-                  <div className="form-group">
-                    <label>Phone</label>
-                    <input
-                      type="tel"
-                      value={editFormData.phone}
-                      onChange={(e) =>
-                        setEditFormData({
-                          ...editFormData,
-                          phone: e.target.value,
-                        })
-                      }
-                      placeholder="Enter phone"
-                    />
-                  </div>
-
-                  <div className="button-group">
-                    <button
-                      className="btn btn-success"
-                      onClick={handleProfileSave}
-                      disabled={loading}
-                    >
-                      ✓ Save
-                    </button>
-                    <button
-                      className="btn btn-secondary"
-                      onClick={handleProfileCancel}
-                      disabled={loading}
-                    >
-                      ✕ Cancel
-                    </button>
-                  </div>
-                </>
-              )}
+      {/* ========== MAIN ========== */}
+      <div className={`sd-main ${sidebarOpen ? "sd-main--shifted" : ""}`}>
+        <header className="sd-navbar">
+          <div className="sd-navbar__left">
+            <button className="sd-navbar__hamburger" onClick={() => setSidebarOpen((v) => !v)}>☰</button>
+            <div className="sd-navbar__title">
+              <h1>Owner Profile</h1>
+              <span className="sd-navbar__subtitle">Manage your account and shop settings</span>
             </div>
           </div>
-        </div>
+          <div className="sd-navbar__right">
+            <div className="sd-avatar">
+              {profile?.profileImage
+                ? <img src={`${API_BASE}/${profile.profileImage}`} alt="avatar" />
+                : <span>{(profile?.username || "O")[0].toUpperCase()}</span>}
+            </div>
+            <div className="sd-navbar__staff-info">
+              <span className="sd-navbar__name">{profile?.username || "Owner"}</span>
+              <span className="sd-navbar__role">Owner</span>
+            </div>
+          </div>
+        </header>
 
-        {/* ==================== SHOP INFORMATION CARD ==================== */}
-        <div className="profile-card">
-          <h2 className="card-title">Shop Information</h2>
+        <main className="sd-content">
+          {/* Banner */}
+          <div className="sd-welcome si-banner">
+            <div>
+              <h2>👤 Your Account</h2>
+              <p>Update your personal info, shop details, password, and images.</p>
+            </div>
+          </div>
 
-          {!isEditingShop ? (
-            <>
-              <div className="shop-info">
-                <div className="shop-logo-section">
-                  {profile?.shopLogo ? (
-                    <img
-                      src={`${API_BASE}/${profile.shopLogo}`}
-                      alt="Shop Logo"
-                      className="shop-logo"
-                    />
-                  ) : (
-                    <div className="shop-logo-placeholder">
-                      <span>🏪</span>
+          {/* Stats mini-cards */}
+          <div className="si-mini-cards">
+            <div className="si-mini-card si-mini-card--blue">
+              <span className="si-mini-card__icon">📦</span>
+              <div>
+                <div className="si-mini-card__num">{statistics.totalProducts}</div>
+                <div className="si-mini-card__label">Total Products</div>
+              </div>
+            </div>
+            <div className="si-mini-card si-mini-card--green">
+              <span className="si-mini-card__icon">📋</span>
+              <div>
+                <div className="si-mini-card__num">{statistics.totalOrders}</div>
+                <div className="si-mini-card__label">Total Orders</div>
+              </div>
+            </div>
+            <div className="si-mini-card si-mini-card--orange">
+              <span className="si-mini-card__icon">🚨</span>
+              <div>
+                <div className="si-mini-card__num">{statistics.lowStockProducts}</div>
+                <div className="si-mini-card__label">Low Stock</div>
+              </div>
+            </div>
+            <div className="si-mini-card si-mini-card--red">
+              <span className="si-mini-card__icon">🏪</span>
+              <div>
+                <div className="si-mini-card__num">{profile?.shopName ? 1 : 0}</div>
+                <div className="si-mini-card__label">Shop Configured</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Two-column layout for profile + shop */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24 }}>
+
+            {/* ── Profile Overview ── */}
+            <div className="sd-panel">
+              <div className="sd-panel__header" style={{ marginBottom: 16, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <h3>👤 Profile Details</h3>
+                {!isEditingProfile && (
+                  <button className="si-btn-submit" style={{ padding: "6px 16px", fontSize: 13 }} onClick={() => setIsEditingProfile(true)}>
+                    ✏️ Edit
+                  </button>
+                )}
+              </div>
+
+              {/* Profile image */}
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginBottom: 20 }}>
+                {profile?.profileImage ? (
+                  <img src={`${API_BASE}/${profile.profileImage}`} alt="Profile" style={{ width: 88, height: 88, borderRadius: "50%", objectFit: "cover", border: "3px solid #e2e8f0" }} />
+                ) : (
+                  <div className="sd-avatar" style={{ width: 88, height: 88, fontSize: 34 }}>
+                    <span>{(profile?.username || "O")[0].toUpperCase()}</span>
+                  </div>
+                )}
+                <div style={{ marginTop: 10, textAlign: "center" }}>
+                  <input type="file" id="profileImageInput" accept="image/*" style={{ display: "none" }}
+                    onChange={(e) => { const f = e.target.files[0]; if (f) { const r = new FileReader(); r.onloadend = () => setProfileImagePreview(r.result); r.readAsDataURL(f); } }} />
+                  <button className="si-btn-cancel" style={{ fontSize: 12, padding: "5px 14px" }}
+                    onClick={() => document.getElementById("profileImageInput").click()}>
+                    📷 Change Photo
+                  </button>
+                  {profileImagePreview && (
+                    <div style={{ marginTop: 8 }}>
+                      <img src={profileImagePreview} alt="preview" style={{ width: 60, height: 60, borderRadius: "50%", objectFit: "cover", border: "2px solid #3b82f6" }} />
+                      <br />
+                      <button className="si-btn-submit" style={{ fontSize: 12, padding: "5px 14px", marginTop: 6 }}
+                        onClick={uploadProfileImage} disabled={uploading}>
+                        {uploading ? "Uploading..." : "📤 Upload"}
+                      </button>
                     </div>
                   )}
                 </div>
+              </div>
 
-                <div className="shop-details">
-                  <div className="info-row">
-                    <label>Shop Name:</label>
-                    <span>{profile?.shopName || "Not provided"}</span>
+              {!isEditingProfile ? (
+                <div>
+                  <div style={infoRowStyle}><span style={infoLabelStyle}>Name</span><span style={infoValueStyle}>{profile?.username || "—"}</span></div>
+                  <div style={infoRowStyle}><span style={infoLabelStyle}>Email</span><span style={infoValueStyle}>{profile?.email || "—"}</span></div>
+                  <div style={infoRowStyle}><span style={infoLabelStyle}>Phone</span><span style={infoValueStyle}>{profile?.phone || "Not provided"}</span></div>
+                  <div style={infoRowStyle}><span style={infoLabelStyle}>Role</span><span className="sd-badge badge-delivered">{profile?.role}</span></div>
+                  <div style={{ ...infoRowStyle, borderBottom: "none" }}><span style={infoLabelStyle}>Member Since</span><span style={infoValueStyle}>{profile?.createdAt ? new Date(profile.createdAt).toLocaleDateString() : "—"}</span></div>
+                </div>
+              ) : (
+                <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                  <div style={groupStyle}>
+                    <label style={labelStyle}>Name</label>
+                    <input style={inputStyle} type="text" value={editFormData.username}
+                      onChange={(e) => setEditFormData({ ...editFormData, username: e.target.value })} placeholder="Your name" />
                   </div>
-                  <div className="info-row">
-                    <label>Email:</label>
-                    <span>{profile?.shopEmail || "Not provided"}</span>
+                  <div style={groupStyle}>
+                    <label style={labelStyle}>Email (read-only)</label>
+                    <input style={{ ...inputStyle, background: "#f1f5f9", color: "#94a3b8" }} type="email" value={profile?.email} readOnly />
                   </div>
-                  <div className="info-row">
-                    <label>Phone:</label>
-                    <span>{profile?.shopPhone || "Not provided"}</span>
+                  <div style={groupStyle}>
+                    <label style={labelStyle}>Phone</label>
+                    <input style={inputStyle} type="tel" value={editFormData.phone}
+                      onChange={(e) => setEditFormData({ ...editFormData, phone: e.target.value })} placeholder="Phone number" />
                   </div>
-                  <div className="info-row">
-                    <label>Address:</label>
-                    <span>{profile?.shopAddress || "Not provided"}</span>
-                  </div>
-                  <div className="location-info">
-                    <div className="info-row">
-                      <label>Province:</label>
-                      <span>{profile?.province || "Not provided"}</span>
-                    </div>
-                    <div className="info-row">
-                      <label>District:</label>
-                      <span>{profile?.district || "Not provided"}</span>
-                    </div>
-                    <div className="info-row">
-                      <label>Municipality:</label>
-                      <span>{profile?.municipality || "Not provided"}</span>
-                    </div>
-                    <div className="info-row">
-                      <label>Ward:</label>
-                      <span>{profile?.ward || "Not provided"}</span>
-                    </div>
+                  <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
+                    <button className="si-btn-cancel" onClick={handleProfileCancel}>Cancel</button>
+                    <button className="si-btn-submit" onClick={handleProfileSave} disabled={loading}>✓ Save</button>
                   </div>
                 </div>
-              </div>
-
-              <div className="button-group">
-                <button className="btn btn-primary" onClick={handleShopEdit}>
-                  ✏️ Edit Shop Info
-                </button>
-              </div>
-            </>
-          ) : (
-            <>
-              <div className="form-grid">
-                <div className="form-group">
-                  <label>Shop Name</label>
-                  <input
-                    type="text"
-                    value={shopFormData.shopName}
-                    onChange={(e) =>
-                      setShopFormData({
-                        ...shopFormData,
-                        shopName: e.target.value,
-                      })
-                    }
-                    placeholder="Enter shop name"
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label>Shop Email</label>
-                  <input
-                    type="email"
-                    value={shopFormData.shopEmail}
-                    onChange={(e) =>
-                      setShopFormData({
-                        ...shopFormData,
-                        shopEmail: e.target.value,
-                      })
-                    }
-                    placeholder="Enter shop email"
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label>Shop Phone</label>
-                  <input
-                    type="tel"
-                    value={shopFormData.shopPhone}
-                    onChange={(e) =>
-                      setShopFormData({
-                        ...shopFormData,
-                        shopPhone: e.target.value,
-                      })
-                    }
-                    placeholder="Enter shop phone"
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label>Shop Address</label>
-                  <input
-                    type="text"
-                    value={shopFormData.shopAddress}
-                    onChange={(e) =>
-                      setShopFormData({
-                        ...shopFormData,
-                        shopAddress: e.target.value,
-                      })
-                    }
-                    placeholder="Enter shop address"
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label>Province</label>
-                  <select
-                    value={shopFormData.province}
-                    onChange={(e) =>
-                      setShopFormData({
-                        ...shopFormData,
-                        province: e.target.value,
-                        district: "",
-                        municipality: "",
-                        ward: "",
-                      })
-                    }
-                  >
-                    <option value="">Select Province</option>
-                    {nepalData.provinces.map((prov) => (
-                      <option key={prov} value={prov}>
-                        {prov}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="form-group">
-                  <label>District</label>
-                  <select
-                    value={shopFormData.district}
-                    onChange={(e) =>
-                      setShopFormData({
-                        ...shopFormData,
-                        district: e.target.value,
-                        municipality: "",
-                        ward: "",
-                      })
-                    }
-                    disabled={!shopFormData.province}
-                  >
-                    <option value="">Select District</option>
-                    {shopFormData.province &&
-                      nepalData.districts[shopFormData.province]?.map(
-                        (dist) => (
-                          <option key={dist} value={dist}>
-                            {dist}
-                          </option>
-                        )
-                      )}
-                  </select>
-                </div>
-
-                <div className="form-group">
-                  <label>Municipality</label>
-                  <select
-                    value={shopFormData.municipality}
-                    onChange={(e) =>
-                      setShopFormData({
-                        ...shopFormData,
-                        municipality: e.target.value,
-                        ward: "",
-                      })
-                    }
-                    disabled={!shopFormData.district}
-                  >
-                    <option value="">Select Municipality</option>
-                    {shopFormData.district &&
-                      nepalData.municipalities[shopFormData.district]?.map(
-                        (mun) => (
-                          <option key={mun} value={mun}>
-                            {mun}
-                          </option>
-                        )
-                      )}
-                  </select>
-                </div>
-
-                <div className="form-group">
-                  <label>Ward</label>
-                  <input
-                    type="number"
-                    min="1"
-                    max="32"
-                    value={shopFormData.ward}
-                    onChange={(e) =>
-                      setShopFormData({
-                        ...shopFormData,
-                        ward: e.target.value,
-                      })
-                    }
-                    placeholder="Enter ward number"
-                  />
-                </div>
-              </div>
-
-              <div className="button-group">
-                <button
-                  className="btn btn-success"
-                  onClick={handleShopSave}
-                  disabled={loading}
-                >
-                  ✓ Save
-                </button>
-                <button
-                  className="btn btn-secondary"
-                  onClick={handleShopCancel}
-                  disabled={loading}
-                >
-                  ✕ Cancel
-                </button>
-              </div>
-            </>
-          )}
-        </div>
-
-        {/* ==================== CHANGE PASSWORD CARD ==================== */}
-        <div className="profile-card">
-          <h2 className="card-title">Change Password</h2>
-
-          <form onSubmit={handlePasswordChange} className="password-form">
-            <div className="form-group">
-              <label>Current Password</label>
-              <input
-                type="password"
-                value={passwordData.currentPassword}
-                onChange={(e) =>
-                  setPasswordData({
-                    ...passwordData,
-                    currentPassword: e.target.value,
-                  })
-                }
-                placeholder="Enter current password"
-              />
+              )}
             </div>
 
-            <div className="form-group">
-              <label>New Password</label>
-              <input
-                type="password"
-                value={passwordData.newPassword}
-                onChange={(e) =>
-                  setPasswordData({
-                    ...passwordData,
-                    newPassword: e.target.value,
-                  })
-                }
-                placeholder="Enter new password (min 6 characters)"
-              />
-            </div>
-
-            <div className="form-group">
-              <label>Confirm Password</label>
-              <input
-                type="password"
-                value={passwordData.confirmPassword}
-                onChange={(e) =>
-                  setPasswordData({
-                    ...passwordData,
-                    confirmPassword: e.target.value,
-                  })
-                }
-                placeholder="Confirm new password"
-              />
-            </div>
-
-            <button
-              type="submit"
-              className="btn btn-primary"
-              disabled={loading}
-            >
-              🔐 Change Password
-            </button>
-          </form>
-        </div>
-
-        {/* ==================== STATISTICS CARD ==================== */}
-        <div className="profile-card">
-          <h2 className="card-title">Account Statistics</h2>
-
-          <div className="statistics-grid">
-            <div className="stat-card">
-              <div className="stat-icon">📦</div>
-              <div className="stat-content">
-                <div className="stat-number">{statistics.totalProducts}</div>
-                <div className="stat-label">Total Products</div>
+            {/* ── Change Password ── */}
+            <div className="sd-panel">
+              <div className="sd-panel__header" style={{ marginBottom: 16 }}>
+                <h3>🔐 Change Password</h3>
               </div>
-            </div>
-
-            <div className="stat-card">
-              <div className="stat-icon">📋</div>
-              <div className="stat-content">
-                <div className="stat-number">{statistics.totalOrders}</div>
-                <div className="stat-label">Total Orders</div>
-              </div>
-            </div>
-
-            <div className="stat-card">
-              <div className="stat-icon">🚨</div>
-              <div className="stat-content">
-                <div className="stat-number">{statistics.lowStockProducts}</div>
-                <div className="stat-label">Low Stock Products</div>
-              </div>
+              <form onSubmit={handlePasswordChange} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                <div style={groupStyle}>
+                  <label style={labelStyle}>Current Password</label>
+                  <input style={inputStyle} type="password" value={passwordData.currentPassword}
+                    onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
+                    placeholder="Enter current password" />
+                </div>
+                <div style={groupStyle}>
+                  <label style={labelStyle}>New Password</label>
+                  <input style={inputStyle} type="password" value={passwordData.newPassword}
+                    onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
+                    placeholder="Min 6 characters" />
+                </div>
+                <div style={groupStyle}>
+                  <label style={labelStyle}>Confirm Password</label>
+                  <input style={inputStyle} type="password" value={passwordData.confirmPassword}
+                    onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
+                    placeholder="Re-enter new password" />
+                </div>
+                <div style={{ display: "flex", justifyContent: "flex-end" }}>
+                  <button type="submit" className="si-btn-submit" disabled={loading}>🔐 Change Password</button>
+                </div>
+              </form>
             </div>
           </div>
 
-          {statistics.lowStockDetails.length > 0 && (
-            <div className="low-stock-section">
-              <h3>Low Stock Products</h3>
-              <table className="low-stock-table">
-                <thead>
-                  <tr>
-                    <th>Product Name</th>
-                    <th>Current Quantity</th>
-                    <th>Price</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {statistics.lowStockDetails.map((product) => (
-                    <tr key={product._id}>
-                      <td>{product.name}</td>
-                      <td className="quantity-low">{product.quantity}</td>
-                      <td>Rs. {product.price}</td>
-                    </tr>
+          {/* ── Shop Information ── */}
+          <div className="sd-panel">
+            <div className="sd-panel__header" style={{ marginBottom: 16, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <h3>🏪 Shop Information</h3>
+              {!isEditingShop && (
+                <button className="si-btn-submit" style={{ padding: "6px 16px", fontSize: 13 }} onClick={() => setIsEditingShop(true)}>
+                  ✏️ Edit Shop
+                </button>
+              )}
+            </div>
+
+            {/* Shop Logo */}
+            <div style={{ display: "flex", gap: 20, alignItems: "flex-start", marginBottom: 20 }}>
+              {profile?.shopLogo ? (
+                <img src={`${API_BASE}/${profile.shopLogo}`} alt="Shop Logo" style={{ width: 70, height: 70, borderRadius: 12, objectFit: "cover", border: "2px solid #e2e8f0" }} />
+              ) : (
+                <div style={{ width: 70, height: 70, borderRadius: 12, background: "#f1f5f9", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 28 }}>🏪</div>
+              )}
+              <div>
+                <p style={{ fontSize: 13, color: "#64748b", marginBottom: 8 }}>Upload or update your shop logo</p>
+                <input type="file" id="shopLogoInput" accept="image/*" style={{ display: "none" }}
+                  onChange={(e) => { const f = e.target.files[0]; if (f) { const r = new FileReader(); r.onloadend = () => setShopLogoPreview(r.result); r.readAsDataURL(f); } }} />
+                <button className="si-btn-cancel" style={{ fontSize: 12, padding: "5px 14px" }}
+                  onClick={() => document.getElementById("shopLogoInput").click()}>
+                  📷 Choose Logo
+                </button>
+                {shopLogoPreview && (
+                  <span style={{ marginLeft: 8 }}>
+                    <button className="si-btn-submit" style={{ fontSize: 12, padding: "5px 14px" }}
+                      onClick={uploadShopLogo} disabled={uploading}>
+                      {uploading ? "Uploading..." : "📤 Upload"}
+                    </button>
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {!isEditingShop ? (
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0 24px" }}>
+                {[
+                  ["Shop Name", profile?.shopName],
+                  ["Shop Email", profile?.shopEmail],
+                  ["Shop Phone", profile?.shopPhone],
+                  ["Address", profile?.shopAddress],
+                  ["Province", profile?.province],
+                  ["District", profile?.district],
+                  ["Municipality", profile?.municipality],
+                  ["Ward", profile?.ward],
+                ].map(([label, value]) => (
+                  <div key={label} style={{ ...infoRowStyle, gridColumn: "auto" }}>
+                    <span style={infoLabelStyle}>{label}</span>
+                    <span style={infoValueStyle}>{value || "Not provided"}</span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div>
+                <div className="si-form__grid" style={{ marginBottom: 16 }}>
+                  {[
+                    ["Shop Name", "text", "shopName", "Enter shop name"],
+                    ["Shop Email", "email", "shopEmail", "shop@email.com"],
+                    ["Shop Phone", "tel", "shopPhone", "Phone number"],
+                    ["Shop Address", "text", "shopAddress", "Street address"],
+                  ].map(([label, type, key, placeholder]) => (
+                    <div key={key} style={groupStyle}>
+                      <label style={labelStyle}>{label}</label>
+                      <input style={inputStyle} type={type} value={shopFormData[key]}
+                        onChange={(e) => setShopFormData({ ...shopFormData, [key]: e.target.value })}
+                        placeholder={placeholder} />
+                    </div>
                   ))}
-                </tbody>
-              </table>
+                  <div style={groupStyle}>
+                    <label style={labelStyle}>Province</label>
+                    <select style={inputStyle} value={shopFormData.province}
+                      onChange={(e) => setShopFormData({ ...shopFormData, province: e.target.value, district: "", municipality: "", ward: "" })}>
+                      <option value="">Select Province</option>
+                      {nepalData.provinces.map((p) => <option key={p}>{p}</option>)}
+                    </select>
+                  </div>
+                  <div style={groupStyle}>
+                    <label style={labelStyle}>District</label>
+                    <select style={inputStyle} value={shopFormData.district} disabled={!shopFormData.province}
+                      onChange={(e) => setShopFormData({ ...shopFormData, district: e.target.value, municipality: "", ward: "" })}>
+                      <option value="">Select District</option>
+                      {(nepalData.districts[shopFormData.province] || []).map((d) => <option key={d}>{d}</option>)}
+                    </select>
+                  </div>
+                  <div style={groupStyle}>
+                    <label style={labelStyle}>Municipality</label>
+                    <select style={inputStyle} value={shopFormData.municipality} disabled={!shopFormData.district}
+                      onChange={(e) => setShopFormData({ ...shopFormData, municipality: e.target.value, ward: "" })}>
+                      <option value="">Select Municipality</option>
+                      {(nepalData.municipalities[shopFormData.district] || []).map((m) => <option key={m}>{m}</option>)}
+                    </select>
+                  </div>
+                  <div style={groupStyle}>
+                    <label style={labelStyle}>Ward</label>
+                    <input style={inputStyle} type="number" min="1" max="32" value={shopFormData.ward}
+                      onChange={(e) => setShopFormData({ ...shopFormData, ward: e.target.value })} placeholder="Ward number" />
+                  </div>
+                </div>
+                <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
+                  <button className="si-btn-cancel" onClick={handleShopCancel}>Cancel</button>
+                  <button className="si-btn-submit" onClick={handleShopSave} disabled={loading}>✓ Save Shop Info</button>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Low stock alert */}
+          {statistics.lowStockDetails.length > 0 && (
+            <div className="sd-panel si-table-panel">
+              <div className="sd-panel__header" style={{ marginBottom: 12 }}>
+                <h3>🚨 Low Stock Products</h3>
+              </div>
+              <div className="si-table-wrap">
+                <table className="si-table">
+                  <thead>
+                    <tr>
+                      <th>Product</th>
+                      <th>Qty</th>
+                      <th>Price</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {statistics.lowStockDetails.map((p) => (
+                      <tr key={p._id}>
+                        <td className="si-product-name">{p.name}</td>
+                        <td><span className="si-qty low">{p.quantity}</span></td>
+                        <td className="si-price-cell">NPR {(p.price ?? 0).toLocaleString()}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           )}
-        </div>
-
-        {/* ==================== IMAGE UPLOAD CARD ==================== */}
-        <div className="profile-card">
-          <h2 className="card-title">Upload Images</h2>
-
-          <div className="upload-grid">
-            <div className="upload-section">
-              <h3>Profile Image</h3>
-              <div className="upload-preview">
-                {profileImagePreview ? (
-                  <img
-                    src={profileImagePreview}
-                    alt="Preview"
-                    className="preview-img"
-                  />
-                ) : (
-                  <div className="preview-placeholder">
-                    <span>📷</span>
-                    <p>No preview</p>
-                  </div>
-                )}
-              </div>
-              <input
-                type="file"
-                id="profileImageInput"
-                accept="image/*"
-                onChange={handleProfileImageChange}
-                className="file-input"
-              />
-              <button
-                className="btn btn-primary"
-                onClick={uploadProfileImageHandler}
-                disabled={uploading || !profileImagePreview}
-              >
-                {uploading ? "⏳ Uploading..." : "📤 Upload Profile Image"}
-              </button>
-            </div>
-
-            <div className="upload-section">
-              <h3>Shop Logo</h3>
-              <div className="upload-preview">
-                {shopLogoPreview ? (
-                  <img
-                    src={shopLogoPreview}
-                    alt="Preview"
-                    className="preview-img"
-                  />
-                ) : (
-                  <div className="preview-placeholder">
-                    <span>🏪</span>
-                    <p>No preview</p>
-                  </div>
-                )}
-              </div>
-              <input
-                type="file"
-                id="shopLogoInput"
-                accept="image/*"
-                onChange={handleShopLogoChange}
-                className="file-input"
-              />
-              <button
-                className="btn btn-primary"
-                onClick={uploadShopLogoHandler}
-                disabled={uploading || !shopLogoPreview}
-              >
-                {uploading ? "⏳ Uploading..." : "📤 Upload Shop Logo"}
-              </button>
-            </div>
-          </div>
-        </div>
+        </main>
       </div>
+
+      {/* TOAST */}
+      {toast.visible && (
+        <div className={`sd-toast sd-toast--${toast.type}`}>{toast.message}</div>
+      )}
     </div>
   );
 };
