@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import CustomerSidebar from "../components/CustomerSidebar";
+import "../styles/staffDashboard.css";
 import "../styles/customerDashboard.css";
 
 const CustomerDashboard = () => {
@@ -11,6 +12,7 @@ const CustomerDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [expandedShop, setExpandedShop] = useState(null); // Track which shop's modal is open
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const API_BASE = "http://localhost:8000";
 
@@ -34,19 +36,34 @@ const CustomerDashboard = () => {
   if (error) return <p className="error">{error}</p>;
 
   return (
-    <div className="staff-layout">
-      <CustomerSidebar />
+    <div className="sd-layout">
+      <CustomerSidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} />
 
-      <div className="dashboard-container">
-      <h1>Browse Available Stores</h1>
+      <div className={`sd-main ${sidebarOpen ? "sd-main--shifted" : ""}`}>
+        {/* NAVBAR */}
+        <header className="sd-navbar">
+          <div className="sd-navbar__left">
+            <h2>🛍️ Browse Marketplace</h2>
+          </div>
+          <div className="sd-navbar__right">
+            <div className="sd-profile-menu">
+              <div className="sd-profile-icon">👤</div>
+              <span className="sd-profile-name">Customer</span>
+            </div>
+          </div>
+        </header>
 
-      <input
-        type="text"
-        placeholder="🔍 Search products by name or description..."
-        className="search-bar"
-        value={searchTerm}
-        onChange={(e) => setSearchTerm(e.target.value)}
-      />
+        {/* CONTENT */}
+        <main className="sd-content">
+          <div className="sd-panel">
+            <input
+              type="text"
+              placeholder="🔍 Search products by name or description..."
+              className="search-bar"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              style={{ width: "100%", padding: "14px 20px", borderRadius: "10px", border: "1px solid #e2e8f0", fontSize: "16px", marginBottom: "30px" }}
+            />
 
       {(shops || []).map((shop) => {
         // Filter products based on search
@@ -154,6 +171,8 @@ const CustomerDashboard = () => {
           </div>
         </div>
       )}
+          </div>
+        </main>
       </div>
     </div>
   );

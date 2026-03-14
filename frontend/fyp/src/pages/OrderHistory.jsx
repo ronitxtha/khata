@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import CustomerSidebar from "../components/CustomerSidebar";
+import "../styles/staffDashboard.css";
 import "../styles/orderHistory.css";
 
 const API_BASE = "http://localhost:8000";
@@ -17,6 +19,7 @@ const OrderHistory = () => {
   const [filter, setFilter] = useState("all");
   const [expandedOrder, setExpandedOrder] = useState(null);
   const [toast, setToast] = useState(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const user = JSON.parse(localStorage.getItem("user"));
 
@@ -86,23 +89,50 @@ const OrderHistory = () => {
 
   if (loading) {
     return (
-      <div className="order-loading-container">
-        <div className="spinner"></div>
-        <p>Loading your orders...</p>
+      <div className="sd-layout">
+        <CustomerSidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} />
+        <div className={`sd-main ${sidebarOpen ? "sd-main--shifted" : ""}`}>
+          <main className="sd-content">
+            <div className="sd-panel">
+              <div className="order-loading-container">
+                <div className="spinner"></div>
+                <p>Loading your orders...</p>
+              </div>
+            </div>
+          </main>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="order-history-wrapper">
+    <div className="sd-layout">
+      <CustomerSidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} />
       {toast && <Toast message={toast.message} type={toast.type} />}
 
-      <div className="order-history-header">
-        <div>
-          <h1>📦 Order History</h1>
-          <p className="order-count">{orders.length} order{orders.length !== 1 ? "s" : ""}</p>
-        </div>
-      </div>
+      <div className={`sd-main ${sidebarOpen ? "sd-main--shifted" : ""}`}>
+        {/* NAVBAR */}
+        <header className="sd-navbar">
+          <div className="sd-navbar__left">
+            <h2>📦 Order History</h2>
+          </div>
+          <div className="sd-navbar__right">
+            <div className="sd-profile-menu">
+              <div className="sd-profile-icon">👤</div>
+              <span className="sd-profile-name">{user?.name || "Customer"}</span>
+            </div>
+          </div>
+        </header>
+
+        <main className="sd-content">
+          <div className="sd-panel">
+            <div className="order-history-header">
+              <div>
+                <p className="order-count" style={{ marginTop: 0 }}>
+                  You have {orders.length} order{orders.length !== 1 ? "s" : ""}
+                </p>
+              </div>
+            </div>
 
       {orders.length === 0 ? (
         <div className="empty-state">
@@ -261,6 +291,9 @@ const OrderHistory = () => {
           </div>
         </>
       )}
+          </div>
+        </main>
+      </div>
     </div>
   );
 };

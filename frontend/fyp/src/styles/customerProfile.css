@@ -6,29 +6,7 @@
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-/* ── ROOT LAYOUT — fills every pixel ───────────────────────────── */
-.cp-layout {
-  display: flex;
-  min-height: 100vh;
-  width: 100%;
-  font-family: 'Inter', 'Segoe UI', sans-serif;
-  background: #0f172a;
-}
 
-/* ── SCROLLABLE CONTENT AREA ────────────────────────────────────── */
-.cp-content {
-  flex: 1;
-  overflow-y: auto;
-  overflow-x: hidden;
-  background: #f0f4ff;
-  min-height: 100vh;
-  scrollbar-width: thin;
-  scrollbar-color: #2563eb #e0e7ff;
-}
-
-.cp-content::-webkit-scrollbar { width: 6px; }
-.cp-content::-webkit-scrollbar-track { background: #e0e7ff; }
-.cp-content::-webkit-scrollbar-thumb { background: #2563eb; border-radius: 99px; }
 
 /* ── HERO BANNER ─────────────────────────────────────────────────── */
 .cp-hero {

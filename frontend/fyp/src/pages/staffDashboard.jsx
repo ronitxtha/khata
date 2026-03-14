@@ -14,6 +14,7 @@ import { Bar } from "react-chartjs-2";
 import QRScanner from "./QRScanner";
 import socket from "../socket";
 import "../styles/staffDashboard.css";
+import "../styles/staffInventory.css";
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
@@ -43,6 +44,11 @@ const StaffDashboard = () => {
   const [closedScannedProduct, setClosedScannedProduct] = useState(false);
   const [reAddQuantity, setReAddQuantity] = useState(1);
   const [isAddingStock, setIsAddingStock] = useState(false);
+  
+  // Edited scanned fields
+  const [editScannedPrice, setEditScannedPrice] = useState("");
+  const [editScannedQuantity, setEditScannedQuantity] = useState("");
+  const [isUpdatingScanned, setIsUpdatingScanned] = useState(false);
 
   // Chart filter
   const [chartFilter, setChartFilter] = useState("This Week");
@@ -197,11 +203,48 @@ const StaffDashboard = () => {
       });
       const product = res.data.product;
       setScannedProduct({ ...product, deleted: !!product.deleted });
+      setEditScannedPrice(product.price || 0);
+      setEditScannedQuantity(product.quantity || 0);
       setClosedScannedProduct(false);
     } catch {
       setScannedProduct(null);
     }
     setScannerOpen(false);
+  };
+
+  const handleUpdateScannedProduct = async () => {
+    setIsUpdatingScanned(true);
+    try {
+      const token = localStorage.getItem("accessToken");
+      const formData = new FormData();
+      formData.append("name", scannedProduct.name);
+      formData.append("price", editScannedPrice);
+      formData.append("quantity", editScannedQuantity);
+      formData.append("category", scannedProduct.category || "Others");
+      formData.append("description", scannedProduct.description || "");
+
+      const res = await axios.put(
+        `${API_BASE}/api/owner/update-product/${scannedProduct._id}`,
+        formData,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      
+      setProducts((prev) => {
+        const exists = prev.find((p) => p._id === scannedProduct._id);
+        if (exists) return prev.map((p) => (p._id === scannedProduct._id ? res.data.product : p));
+        return [...prev, res.data.product];
+      });
+      
+      // Close the card upon success
+      setScannedProduct(null);
+      setClosedScannedProduct(true);
+      
+      showToast("Product updated successfully!");
+    } catch (err) {
+      showToast(err.response?.data?.message || "Failed to update product", "error");
+    } finally {
+      setIsUpdatingScanned(false);
+    }
   };
 
   const handleAddProductAgain = async (product) => {
@@ -716,28 +759,28 @@ const StaffDashboard = () => {
             {/* Quick Actions */}
             <div className="sd-panel sd-quickactions-panel">
               <div className="sd-panel__header">
-                <h3>⚡ Quick Actions</h3>
+                <h3>Quick Actions</h3>
               </div>
               <div className="sd-quickactions">
                 <button
                   className="sd-qa-btn sd-qa-btn--primary"
                   onClick={() => navigate("/staff-inventory")}
                 >
-                  <span className="sd-qa-btn__icon">➕</span>
+                  
                   <span>Add Product</span>
                 </button>
                 <button
                   className="sd-qa-btn sd-qa-btn--secondary"
                   onClick={() => setScannerOpen(true)}
                 >
-                  <span className="sd-qa-btn__icon">📱</span>
+                  
                   <span>Scan Product QR</span>
                 </button>
                 <button
                   className="sd-qa-btn sd-qa-btn--tertiary"
                   onClick={() => navigate("/order-management")}
                 >
-                  <span className="sd-qa-btn__icon">📋</span>
+                  
                   <span>View Orders</span>
                 </button>
               </div>
@@ -781,15 +824,37 @@ const StaffDashboard = () => {
             />
           )}
           <div className="sd-scanned-card__details">
+            <div style={{ display: "flex", gap: "10px", alignItems: "center", marginBottom: "8px" }}>
+              <span style={{ width: "70px", fontWeight: "600" }}>Price:</span>
+              <input 
+                type="number" 
+                value={editScannedPrice} 
+                onChange={(e) => setEditScannedPrice(e.target.value)}
+                style={{ width: "100px", padding: "6px", border: "1px solid #ccc", borderRadius: "5px" }}
+              />
+            </div>
+            <div style={{ display: "flex", gap: "10px", alignItems: "center", marginBottom: "8px" }}>
+              <span style={{ width: "70px", fontWeight: "600" }}>Stock:</span>
+              <input 
+                type="number" 
+                value={editScannedQuantity} 
+                onChange={(e) => setEditScannedQuantity(e.target.value)}
+                style={{ width: "100px", padding: "6px", border: "1px solid #ccc", borderRadius: "5px" }}
+              />
+            </div>
             <p>
-              <span>Price:</span> NPR {scannedProduct.price}
+              <span style={{ fontWeight: "600" }}>Description:</span> {scannedProduct.description}
             </p>
-            <p>
-              <span>Quantity:</span> {scannedProduct.quantity ?? "N/A"}
-            </p>
-            <p>
-              <span>Description:</span> {scannedProduct.description}
-            </p>
+            <div style={{ marginTop: "12px" }}>
+              <button 
+                className="si-btn-submit" 
+                onClick={handleUpdateScannedProduct}
+                disabled={isUpdatingScanned || scannedProduct.deleted}
+                style={{ padding: "8px 16px" }}
+              >
+                {isUpdatingScanned ? "Saving..." : "💾 Update Product"}
+              </button>
+            </div>
           </div>
           {scannedProduct.deleted && (
             <div className="sd-scanned-card__readd">

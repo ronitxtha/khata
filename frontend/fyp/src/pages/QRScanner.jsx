@@ -1,90 +1,110 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useState } from "react";
 import { Html5Qrcode } from "html5-qrcode";
 
 const QRScanner = ({ onScanSuccess, onClose }) => {
-  const scannerRef = useRef(null);
-
-  // Stop scanner safely
-  const stopScanner = async () => {
-    if (!scannerRef.current) return;
-
-    try {
-      const state = scannerRef.current.getState?.();
-      if (state === "SCANNING") {
-        await scannerRef.current.stop();
-        await scannerRef.current.clear();
-      }
-
-      const videoElem = document.querySelector("#qr-reader video");
-      if (videoElem?.srcObject) {
-        videoElem.srcObject.getTracks().forEach((track) => track.stop());
-        videoElem.srcObject = null;
-      }
-    } catch (err) {
-      console.warn("Error stopping scanner:", err);
-    }
-  };
+  const [errorDesc, setErrorDesc] = useState("");
 
   useEffect(() => {
+    let mounted = true;
+    let scanner = null;
+    let timer = null;
+
     const startScanner = async () => {
-      if (!scannerRef.current) {
-        scannerRef.current = new Html5Qrcode("qr-reader");
+      // Clean up previous elements just in case of React StrictMode double render
+      const readerElem = document.getElementById("qr-reader");
+      if (readerElem) {
+        readerElem.innerHTML = "";
       }
 
-      const state = scannerRef.current.getState?.();
-      if (state !== "SCANNING") {
-        try {
-          await scannerRef.current.start(
-            { facingMode: "environment" },
-            { fps: 10, qrbox: 150 },
-            async (decodedText) => {
+      scanner = new Html5Qrcode("qr-reader");
+
+      try {
+        await scanner.start(
+          { facingMode: "environment" },
+          { fps: 10, qrbox: { width: 250, height: 250 } },
+          (decodedText) => {
+            if (mounted) {
+              scanner.pause(true);
               onScanSuccess(decodedText);
-              await stopScanner();
             }
-          );
-        } catch (err) {
+          },
+          (errorMessage) => {
+            // Ignore normal scanning errors (e.g., no qr code found)
+          }
+        );
+
+        if (!mounted) {
+          // If unmounted while waiting for camera to start
+          await scanner.stop();
+          scanner.clear();
+        }
+      } catch (err) {
+        if (mounted) {
           console.error("Error starting scanner:", err);
+          setErrorDesc("Unable to access camera or start scanner. Please ensure camera permissions are granted.");
         }
       }
     };
 
-    startScanner();
+    // Delay start slightly to bypass React 18 Strict Mode double mount
+    timer = setTimeout(() => {
+      startScanner();
+    }, 100);
 
-    return () => stopScanner();
+    return () => {
+      mounted = false;
+      if (timer) clearTimeout(timer);
+      if (scanner) {
+        try {
+          // 2 = Html5QrcodeScannerState.SCANNING
+          if (scanner.getState() === 2) {
+            scanner.stop().then(() => scanner.clear()).catch(console.warn);
+          }
+        } catch (err) {
+          console.warn("Error stopping scanner on unmount:", err);
+        }
+      }
+    };
   }, [onScanSuccess]);
 
-  const handleCancel = async () => {
-    await stopScanner();
+  const handleCancel = () => {
     onClose?.();
   };
 
   return (
-    <div style={{ marginTop: "10px" }}>
-      <div
-        id="qr-reader"
-        style={{
-          width: "250px",
-          height: "200px",
-          border: "1px solid #ccc",
-          borderRadius: "5px",
-          margin: "auto",
-        }}
-      ></div>
-      <button
-        onClick={handleCancel}
-        style={{
-          display: "block",
-          margin: "5px auto",
-          padding: "5px 10px",
-          background: "#f44336",
-          color: "white",
-          border: "none",
-          borderRadius: "3px",
-          cursor: "pointer",
-        }}
-      >
-        Cancel
-      </button>
+    <div className="si-modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) handleCancel(); }}>
+      <div className="si-modal" style={{ maxWidth: "400px" }}>
+        <div className="si-modal__header">
+          <h2>📱 Scan QR Code</h2>
+          <button className="si-modal__close" onClick={handleCancel}>✕</button>
+        </div>
+        
+        {errorDesc && (
+          <div style={{ color: "#ef4444", padding: "10px", margin: "10px", backgroundColor: "#fee2e2", borderRadius: "8px", fontSize: "14px" }}>
+            {errorDesc}
+          </div>
+        )}
+
+        <div style={{ padding: "0 20px" }}>
+          <div
+            id="qr-reader"
+            style={{
+              width: "100%",
+              minHeight: "250px",
+              border: "2px dashed #ccc",
+              borderRadius: "8px",
+              margin: "20px auto",
+              overflow: "hidden",
+            }}
+          ></div>
+        </div>
+
+        <div className="si-form__actions" style={{ padding: "0 20px 20px" }}>
+          <button type="button" className="si-btn-cancel" onClick={handleCancel} style={{ width: "100%" }}>
+            Cancel Scan
+          </button>
+        </div>
+      </div>
     </div>
   );
 };

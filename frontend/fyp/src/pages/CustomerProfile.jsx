@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import CustomerSidebar from "../components/CustomerSidebar";
 import nepalLocations from "../data/nepalLocations.json";
+import "../styles/staffDashboard.css";
 import "../styles/customerProfile.css";
 
 const API_BASE = "http://localhost:8000";
@@ -126,6 +127,7 @@ const CustomerProfile = () => {
   const { toast, show: showToast } = useToast();
   const fileInputRef = useRef(null);
   const [activeTab, setActiveTab] = useState("profile");
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // ── State ────────────────────────────────────────────────────
   const [loading, setLoading] = useState(true);
@@ -285,16 +287,20 @@ const CustomerProfile = () => {
   // ── Loading state ────────────────────────────────────────────
   if (loading) {
     return (
-      <div className="cp-layout">
-        <CustomerSidebar />
-        <div className="cp-content">
-          <div className="cp-loading-screen">
-            <div className="cp-spinner-wrap">
-              <div className="cp-spinner" />
-              <div className="cp-spinner-inner" />
+      <div className="sd-layout">
+        <CustomerSidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} />
+        <div className={`sd-main ${sidebarOpen ? "sd-main--shifted" : ""}`}>
+          <main className="sd-content">
+            <div className="sd-panel">
+              <div className="cp-loading-screen">
+                <div className="cp-spinner-wrap">
+                  <div className="cp-spinner" />
+                  <div className="cp-spinner-inner" />
+                </div>
+                <p className="cp-loading-text">Loading your profile...</p>
+              </div>
             </div>
-            <p className="cp-loading-text">Loading your profile...</p>
-          </div>
+          </main>
         </div>
       </div>
     );
@@ -304,8 +310,8 @@ const CustomerProfile = () => {
   const displayAvatar = imagePreview || avatarSrc;
 
   return (
-    <div className="cp-layout">
-      <CustomerSidebar />
+    <div className="sd-layout">
+      <CustomerSidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} />
 
       {/* Toast */}
       {toast.visible && (
@@ -319,8 +325,31 @@ const CustomerProfile = () => {
         <AddressModal initial={addressModal} onSave={handleSaveAddress} onClose={() => setAddressModal(null)} />
       )}
 
-      <div className="cp-content">
-        {/* ── HERO BANNER ───────────────────────────────────── */}
+      <div className={`sd-main ${sidebarOpen ? "sd-main--shifted" : ""}`}>
+        {/* NAVBAR */}
+        <header className="sd-navbar">
+          <div className="sd-navbar__left">
+            <h2>👤 My Profile</h2>
+          </div>
+          <div className="sd-navbar__right">
+            <div className="sd-profile-menu">
+              {displayAvatar ? (
+                <img 
+                  src={displayAvatar} 
+                  alt="Profile" 
+                  className="sd-profile-icon" 
+                  style={{ width: "36px", height: "36px", borderRadius: "50%", objectFit: "cover" }} 
+                />
+              ) : (
+                <div className="sd-profile-icon">👤</div>
+              )}
+              <span className="sd-profile-name">{customer?.name || "Customer"}</span>
+            </div>
+          </div>
+        </header>
+
+        <main className="sd-content">
+          <div className="sd-panel">
         <div className="cp-hero">
           <div className="cp-hero-inner">
             {/* Avatar */}
@@ -605,7 +634,9 @@ const CustomerProfile = () => {
               </form>
             </div>
           )}
-        </div>
+          </div>
+          </div>
+        </main>
       </div>
     </div>
   );

@@ -1,11 +1,16 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
-import "./sidebar.css";
 
-const CustomerSidebar = () => {
-  const [open, setOpen] = useState(false);
+// Using the shared staffDashboard.css for sidebar styles
+// We assume parent pages will import staffDashboard.css
+
+const CustomerSidebar = ({ isOpen, setIsOpen }) => {
+  const [localOpen, setLocalOpen] = useState(false);
+  const open = isOpen !== undefined ? isOpen : localOpen;
+  const setOpen = setIsOpen || setLocalOpen;
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleLogout = async () => {
     try {
@@ -19,44 +24,52 @@ const CustomerSidebar = () => {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-
-      localStorage.removeItem("accessToken");
-      navigate("/login");
     } catch (err) {
       console.error("Logout failed:", err);
-      // Force logout even if API call fails
+    } finally {
       localStorage.removeItem("accessToken");
       navigate("/login");
     }
   };
 
+  const navLinks = [
+    { label: "Browse Stores", icon: "🏬", path: "/customer-dashboard" },
+    { label: "My Orders", icon: "📦", path: "/orders" },
+    { label: "Shopping Cart", icon: "🛒", path: "/customer-cart" },
+    { label: "My Profile", icon: "👤", path: "/customer-profile" },
+  ];
+
   return (
-    <>
-      {/* Hamburger Icon */}
-      <div
-        className="sidebar-toggle"
-        onMouseEnter={() => setOpen(true)}
-      >
-        ☰
+    <aside
+      className={`sd-sidebar ${open ? "sd-sidebar--open" : ""}`}
+      onMouseEnter={() => setOpen(true)}
+      onMouseLeave={() => setOpen(false)}
+    >
+      <div className="sd-sidebar__brand">
+        <span className="sd-sidebar__logo">🛍️</span>
+        <span className="sd-sidebar__brand-name">Khata</span>
       </div>
 
-      {/* Sidebar */}
-      <div
-        className={`sidebar ${open ? "open" : ""}`}
-        onMouseLeave={() => setOpen(false)}
-      >
-        <h3 className="menu">Menu</h3>
+      <nav className="sd-sidebar__nav">
+        {navLinks.map((link) => (
+          <button
+            key={link.path}
+            className={`sd-sidebar__link ${location.pathname === link.path ? "active" : ""}`}
+            onClick={() => navigate(link.path)}
+          >
+            <span className="sd-sidebar__icon">{link.icon}</span>
+            <span className="sd-sidebar__label">{link.label}</span>
+          </button>
+        ))}
+      </nav>
 
-        <Link to="/customer-dashboard">Browse Stores</Link>
-        <Link to="/orders">My Orders</Link>
-        <Link to="/customer-cart">Shopping Cart</Link>
-        <Link to="/customer-profile">My Profile</Link>
-        
-        <button className="logout-btn" onClick={handleLogout}>
-          🚪 Logout
+      <div className="sd-sidebar__bottom">
+        <button className="sd-sidebar__link sd-sidebar__logout" onClick={handleLogout}>
+          <span className="sd-sidebar__icon">🚪</span>
+          <span className="sd-sidebar__label">Logout</span>
         </button>
       </div>
-    </>
+    </aside>
   );
 };
 

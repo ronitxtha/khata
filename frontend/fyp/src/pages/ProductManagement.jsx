@@ -47,6 +47,10 @@ const ProductManagement = () => {
   const [reAddQuantity, setReAddQuantity] = useState(1);
   const [isAddingStock, setIsAddingStock] = useState(false);
 
+  const [editScannedPrice, setEditScannedPrice] = useState("");
+  const [editScannedQuantity, setEditScannedQuantity] = useState("");
+  const [isUpdatingScanned, setIsUpdatingScanned] = useState(false);
+
   const showToast = (message, type = "success", duration = 3000) => {
     setToast({ message, type, visible: true });
     setTimeout(() => setToast((t) => ({ ...t, visible: false })), duration);
@@ -199,11 +203,48 @@ const ProductManagement = () => {
           deleted: !!res.data.product.deleted,
           imageFile: res.data.product.image || null,
         });
+        setEditScannedPrice(res.data.product.price || 0);
+        setEditScannedQuantity(res.data.product.quantity || 0);
       }
       setScannerOpen(false);
     } catch (err) {
       setScannedProduct({ name: "Product not found", price: "-", description: "-", deleted: true, imageFile: null });
       setScannerOpen(false);
+    }
+  };
+
+  const handleUpdateScannedProduct = async () => {
+    setIsUpdatingScanned(true);
+    try {
+      const token = localStorage.getItem("accessToken");
+      const formData = new FormData();
+      formData.append("name", scannedProduct.name);
+      formData.append("price", editScannedPrice);
+      formData.append("quantity", editScannedQuantity);
+      formData.append("category", scannedProduct.category || "Others");
+      formData.append("description", scannedProduct.description || "");
+
+      const res = await axios.put(
+        `${API_BASE}/api/owner/update-product/${scannedProduct._id}`,
+        formData,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      
+      setProducts((prev) => {
+        const exists = prev.find((p) => p._id === scannedProduct._id);
+        if (exists) return prev.map((p) => (p._id === scannedProduct._id ? res.data.product : p));
+        return [...prev, res.data.product];
+      });
+      
+      // Close the card upon success
+      setScannedProduct(null);
+      setClosedScannedProduct(true);
+      
+      showToast("Product updated successfully!");
+    } catch (err) {
+      showToast(err.response?.data?.message || "Failed to update product", "error");
+    } finally {
+      setIsUpdatingScanned(false);
     }
   };
 
@@ -371,8 +412,36 @@ const ProductManagement = () => {
                   <img src={`${API_BASE}/${scannedProduct.imageFile}`} alt="Product" style={{ width: 80, height: 80, borderRadius: 10, objectFit: "cover" }} />
                 )}
                 <div>
-                  <p style={{ fontSize: 14, color: "#334155" }}><strong>Price:</strong> NPR {scannedProduct.price}</p>
-                  <p style={{ fontSize: 14, color: "#334155" }}><strong>Description:</strong> {scannedProduct.description}</p>
+                  <div style={{ display: "flex", gap: "10px", alignItems: "center", marginBottom: "8px" }}>
+                    <span style={{ fontSize: 14, color: "#334155", width: "50px", fontWeight: "600" }}>Price:</span>
+                    <input 
+                      type="number" 
+                      value={editScannedPrice} 
+                      onChange={(e) => setEditScannedPrice(e.target.value)}
+                      style={{ width: "90px", padding: "6px", border: "1px solid #ccc", borderRadius: "5px" }}
+                    />
+                  </div>
+                  <div style={{ display: "flex", gap: "10px", alignItems: "center", marginBottom: "8px" }}>
+                    <span style={{ fontSize: 14, color: "#334155", width: "50px", fontWeight: "600" }}>Stock:</span>
+                    <input 
+                      type="number" 
+                      value={editScannedQuantity} 
+                      onChange={(e) => setEditScannedQuantity(e.target.value)}
+                      style={{ width: "90px", padding: "6px", border: "1px solid #ccc", borderRadius: "5px" }}
+                    />
+                  </div>
+                  <p style={{ fontSize: 14, color: "#334155", marginBottom: "12px" }}><strong>Description:</strong> {scannedProduct.description}</p>
+                  
+                  {!scannedProduct.deleted && scannedProduct._id && (
+                    <button 
+                      className="si-btn-submit" 
+                      onClick={handleUpdateScannedProduct}
+                      disabled={isUpdatingScanned}
+                      style={{ padding: "8px 16px", fontSize: 13 }}
+                    >
+                      {isUpdatingScanned ? "Saving..." : "💾 Update Product"}
+                    </button>
+                  )}
                   {scannedProduct.deleted && (
                     <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 10 }}>
                       <label style={{ fontSize: 13, fontWeight: 600 }}>Qty to restore:</label>
