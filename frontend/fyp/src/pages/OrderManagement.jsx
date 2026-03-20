@@ -94,7 +94,10 @@ const OrderManagement = () => {
     { label: "Dashboard", icon: "🏠", path: role === "owner" ? "/owner-dashboard" : "/staff-dashboard" },
     { label: "Product Management", icon: "📦", path: role === "owner" ? "/products" : "/staff-inventory" },
     { label: "Orders", icon: "🛒", path: "/order-management" },
-    ...(role === "owner" ? [{ label: "Staff Management", icon: "👥", path: "/add-staff" }] : []),
+    ...(role === "owner" ? [
+      { label: "Staff Management", icon: "👥", path: "/add-staff" },
+      { label: "Supplier Management", icon: "🏭", path: "/supplier-management" }
+    ] : []),
     { label: "Attendance", icon: "📅", path: role === "owner" ? "/attendance" : "/staff-attendance" },
     { label: "Profile", icon: "👤", path: role === "owner" ? "/owner-profile" : "/staff-profile" },
   ];

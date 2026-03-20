@@ -317,8 +317,8 @@
 
 .si-btn:hover { transform: scale(1.1); }
 
-.si-btn--edit   { background: #eff6ff; }
-.si-btn--edit:hover   { background: #dbeafe; }
+.si-btn--edit   { background: #8badda; }
+.si-btn--edit:hover   { background: #0066eb; }
 .si-btn--delete { background: #fff1f2; }
 .si-btn--delete:hover { background: #fee2e2; }
 

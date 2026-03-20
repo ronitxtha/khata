@@ -117,10 +117,10 @@ const AddressModal = ({ initial, onSave, onClose }) => {
 
 // ─── Main Component ───────────────────────────────────────────
 const TABS = [
-  { id: "profile",   label: "Profile",   icon: "👤" },
-  { id: "addresses", label: "Addresses", icon: "📍" },
-  { id: "orders",    label: "Orders",    icon: "📦" },
-  { id: "password",  label: "Security",  icon: "🔒" },
+  { id: "profile",   label: "Profile"},
+  { id: "addresses", label: "Addresses"},
+  { id: "orders",    label: "Orders"},
+  { id: "password",  label: "Security"},
 ];
 
 const CustomerProfile = () => {
@@ -458,12 +458,12 @@ const CustomerProfile = () => {
               <div className="cp-btn-group">
                 {!isEditing ? (
                   <button className="cp-btn cp-btn-primary" onClick={() => { setEditName(customer?.name || ""); setEditPhone(customer?.phone || ""); setIsEditing(true); }}>
-                    ✏️ Edit Profile
+                     Edit Profile
                   </button>
                 ) : (
                   <>
                     <button className="cp-btn cp-btn-success" onClick={handleSaveProfile} disabled={savingProfile}>
-                      {savingProfile ? "Saving..." : "💾 Save Changes"}
+                      {savingProfile ? "Saving..." : " Save Changes"}
                     </button>
                     <button className="cp-btn cp-btn-secondary" onClick={() => setIsEditing(false)} disabled={savingProfile}>
                       ✕ Cancel
@@ -480,12 +480,12 @@ const CustomerProfile = () => {
               <div className="cp-card-header-row">
                 <h2 className="cp-card-title">Delivery Addresses</h2>
                 <button className="cp-btn cp-btn-primary" onClick={() => setAddressModal({})}>
-                  + Add Address
+                  + Add
                 </button>
               </div>
               {addresses.length === 0 ? (
                 <div className="cp-empty-state">
-                  <span>🏠</span>
+                  <span></span>
                   <p>No addresses saved yet</p>
                   <p className="cp-empty-hint">Add an address for faster checkout.</p>
                 </div>
@@ -519,7 +519,7 @@ const CustomerProfile = () => {
               <h2 className="cp-card-title">Order History</h2>
               {orders.length === 0 ? (
                 <div className="cp-empty-state">
-                  <span>📦</span>
+                  <span></span>
                   <p>No orders yet</p>
                   <p className="cp-empty-hint">Your orders will appear here after purchase.</p>
                 </div>
@@ -574,10 +574,10 @@ const CustomerProfile = () => {
                           </button>
                         )}
                         {order.status === "Processing" && (
-                          <button className="cp-btn cp-btn-info">🚚 Track Order</button>
+                          <button className="cp-btn cp-btn-info"> Track Order</button>
                         )}
                         {order.status === "Delivered" && (
-                          <button className="cp-btn cp-btn-success">⭐ Leave Review</button>
+                          <button className="cp-btn cp-btn-success">Review</button>
                         )}
                         {order.status === "Cancelled" && order.cancelReason && (
                           <p className="cp-cancel-reason">Reason: {order.cancelReason}</p>
@@ -615,7 +615,7 @@ const CustomerProfile = () => {
                           const k = key === "currentPassword" ? "current" : key === "newPassword" ? "new" : "confirm";
                           setShowPw((s) => ({ ...s, [k]: !s[k] }));
                         }}>
-                        {showPw[key === "currentPassword" ? "current" : key === "newPassword" ? "new" : "confirm"] ? "🙈" : "👁️"}
+                        {showPw[key === "currentPassword" ? "current" : key === "newPassword" ? "new" : "confirm"] ? "🔒" : "🔓"}
                       </button>
                     </div>
                     {key === "newPassword" && pwForm.newPassword && pwForm.newPassword.length < 6 && (
@@ -628,7 +628,7 @@ const CustomerProfile = () => {
                 ))}
                 <div className="cp-btn-group">
                   <button type="submit" className="cp-btn cp-btn-primary" disabled={savingPw}>
-                    {savingPw ? "Updating..." : "🔑 Update Password"}
+                    {savingPw ? "Updating..." : "Update"}
                   </button>
                 </div>
               </form>

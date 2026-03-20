@@ -101,6 +101,7 @@ const Attendance = () => {
     { label: "Product Management", icon: "📦", path: "/products" },
     { label: "Orders", icon: "🛒", path: "/order-management" },
     { label: "Staff Management", icon: "👥", path: "/add-staff" },
+    { label: "Supplier Management", icon: "🏭", path: "/supplier-management" },
     { label: "Attendance", icon: "📅", path: "/attendance" },
     { label: "Profile", icon: "👤", path: "/owner-profile" },
   ];

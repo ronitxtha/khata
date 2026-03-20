@@ -61,133 +61,94 @@ router.post("/create", async (req, res) => {
       status: "Pending"
     });
 
-    // 4️⃣ Create notification for owner/staff
-    try {
+    // 🚀 Speed Optimization: Send response to user immediately
+    res.status(201).json(order);
+
+    // ─────────────────────────────────────────────────────────────
+    // BACKGROUND TASKS (Runs after response is sent)
+    // ─────────────────────────────────────────────────────────────
+    (async () => {
+      try {
+        // 4️⃣ Create notification for owner/staff
         await Notification.create({
           shopId,
           message: `New order #${order._id.toString().slice(-8).toUpperCase()} received!`,
           type: "new_order"
         });
-    } catch (notifErr) {
-        console.error("Notification creation failed:", notifErr);
-    }
 
-    // 5️⃣ Emit real-time notification
-    const io = req.app.get("io");
-    if (io) {
-      io.emit("newOrder", {
-        shopId: shopId.toString(),
-        orderId: order._id.toString(),
-        message: `New order #${order._id.toString().slice(-8).toUpperCase()} received!`
-      });
-    }
-
-    // 6️⃣ Now reduce stock
-    for (const item of items) {
-      const product = await Product.findById(item.productId);
-      product.quantity -= item.quantity;
-      await product.save();
-console.log(`Product: ${product.name}, Current Qty: ${product.quantity}, Ordered Qty: ${item.quantity}`);
-
-      // Low stock alert logic
-     // Low stock alert logic
-if (product.quantity < 5) {
-  console.log(`⚠️ Low stock triggered for ${product.name}, quantity: ${product.quantity}`);
-
-  // 1. Check/Create internal notification
-  try {
-    const existingNotification = await Notification.findOne({
-      productId: product._id,
-      type: "low_stock",
-      isRead: false
-    });
-
-    if (!existingNotification) {
-      await Notification.create({
-        shopId: product.shopId,
-        productId: product._id,
-        message: `${product.name} is low in stock (${product.quantity} left)`,
-        type: "low_stock"
-      });
-      console.log(`📝 Internal low stock notification created for ${product.name}`);
-    } else {
-      console.log(`📝 Existing notification already exists for ${product.name}`);
-    }
-  } catch (notifErr) {
-    console.error("Notification creation failed:", notifErr);
-  }
-
-  // 2. Emit real-time socket alert
-  if (io) {
-    io.emit("lowStockAlert", {
-      message: `${product.name} is low in stock (${product.quantity} left)`,
-      productId: product._id,
-      quantity: product.quantity
-    });
-    console.log(`📡 Low stock socket alert emitted for ${product.name}`);
-  }
-
-  // 3. Send Email to Shop Owner AND Staff
-  try {
-    if (!product.shopId) {
-      console.warn(`❌ product.shopId missing for ${product.name}, skipping email`);
-    } else {
-      const shop = await Shop.findById(product.shopId);
-      if (!shop) {
-        console.warn(`❌ Shop not found for shopId: ${product.shopId}, skipping email`);
-      } else {
-        const recipients = [];
-
-        // Owner
-        if (shop.ownerId) {
-          const owner = await User.findById(shop.ownerId);
-          if (owner && owner.email) {
-            recipients.push(owner.email);
-            console.log(`👤 Owner email added: ${owner.email}`);
-          } else {
-            console.warn(`❌ Owner email missing for shopId: ${shop._id}`);
-          }
-        }
-
-        // Staff
-        const staffMembers = await User.find({ shopId: product.shopId, role: "staff" });
-        if (staffMembers.length === 0) {
-          console.log(`ℹ️ No staff found for shopId: ${shop._id}`);
-        } else {
-          staffMembers.forEach(staff => {
-            if (staff.email) {
-              recipients.push(staff.email);
-              console.log(`👥 Staff email added: ${staff.email}`);
-            }
+        // 5️⃣ Emit real-time notification
+        const io = req.app.get("io");
+        if (io) {
+          io.emit("newOrder", {
+            shopId: shopId.toString(),
+            orderId: order._id.toString(),
+            message: `New order #${order._id.toString().slice(-8).toUpperCase()} received!`
           });
         }
 
-        if (recipients.length === 0) {
-          console.log(`⚠️ No recipients found for ${product.name}, skipping email`);
-        } else {
-          for (const email of recipients) {
-            try {
-              console.log(`✉️ Sending low stock email to: ${email} for ${product.name}`);
-              await sendEmail({
-                to: email,
-                subject: `Low Stock Alert: ${product.name}`,
-                text: `Your product "${product.name}" is running low on stock.\n\nCurrent Quantity: ${product.quantity}\n\nPlease restock soon.`
+        // 6️⃣ Reduce stock and check low stock alert
+        for (const item of items) {
+          const product = await Product.findById(item.productId);
+          if (!product) continue;
+
+          product.quantity -= item.quantity;
+          await product.save();
+
+          if (product.quantity < 5) {
+            // Internal notification
+            const existingNotification = await Notification.findOne({
+              productId: product._id,
+              type: "low_stock",
+              isRead: false
+            });
+
+            if (!existingNotification) {
+              await Notification.create({
+                shopId: product.shopId,
+                productId: product._id,
+                message: `${product.name} is low in stock (${product.quantity} left)`,
+                type: "low_stock"
               });
-              console.log(`✅ Email sent successfully to ${email}`);
-            } catch (emailErr) {
-              console.error(`❌ Failed to send email to ${email}:`, emailErr);
+            }
+
+            // Socket alert
+            if (io) {
+              io.emit("lowStockAlert", {
+                message: `${product.name} is low in stock (${product.quantity} left)`,
+                productId: product._id,
+                quantity: product.quantity
+              });
+            }
+
+            // Emails
+            const shop = await Shop.findById(product.shopId);
+            if (shop) {
+              const recipients = [];
+              if (shop.ownerId) {
+                const owner = await User.findById(shop.ownerId);
+                if (owner && owner.email) recipients.push(owner.email);
+              }
+              const staffMembers = await User.find({ shopId: product.shopId, role: "staff" });
+              staffMembers.forEach(staff => {
+                if (staff.email) recipients.push(staff.email);
+              });
+
+              for (const email of recipients) {
+                try {
+                  await sendEmail({
+                    to: email,
+                    subject: `Low Stock Alert: ${product.name}`,
+                    text: `Your product "${product.name}" is running low on stock.\n\nCurrent Quantity: ${product.quantity}\n\nPlease restock soon.`
+                  });
+                } catch (e) { console.error("Email error:", e); }
+              }
             }
           }
         }
+      } catch (bgErr) {
+        console.error("Background processing error:", bgErr);
       }
-    }
-  } catch (err) {
-    console.error("Unexpected error in low stock email logic:", err);
-  }
-    }
-  }
-
-  res.status(201).json(order);
+    })();
   } catch (err) {
     console.error("Order creation error:", err);
     res.status(500).json({ message: "Failed to create order" });

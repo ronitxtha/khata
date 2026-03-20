@@ -1,5 +1,8 @@
 import express from "express";
 import { isAuthenticated } from "../middleware/isAuthenticated.js";
+import multer from "multer";
+import fs from "fs";
+import path from "path";
 import {
   addSupplier,
   getSuppliers,
@@ -11,6 +14,19 @@ import {
   getPayments,
   getSupplierStats,
 } from "../controllers/supplierController.js";
+
+// Multer setup for purchase images
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const dir = "uploads/products";
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+    cb(null, dir);
+  },
+  filename: (req, file, cb) => cb(null, Date.now() + "-" + file.originalname),
+});
+const upload = multer({ storage });
 
 const router = express.Router();
 
@@ -27,7 +43,7 @@ router.delete("/:id", deleteSupplier);
 router.get("/stats", getSupplierStats);
 
 // Purchase routes
-router.post("/purchase", recordPurchase);
+router.post("/purchase", upload.single("image"), recordPurchase);
 router.get("/purchases", getPurchases);
 
 // Payment routes

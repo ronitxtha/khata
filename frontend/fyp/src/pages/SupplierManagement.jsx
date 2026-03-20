@@ -51,8 +51,21 @@ const SupplierManagement = () => {
     productName: "",
     quantity: "",
     costPrice: "",
+    sellingPrice: "",
+    description: "",
+    category: "Others",
     purchaseDate: new Date().toISOString().split("T")[0],
   });
+  const [purchaseImage, setPurchaseImage] = useState(null);
+  const [purchaseImagePreview, setPurchaseImagePreview] = useState(null);
+
+  // Product search state
+  const [productSearchTerm, setProductSearchTerm] = useState("");
+  const [showProductResults, setShowProductResults] = useState(false);
+
+  // Supplier search state
+  const [supplierSearchTerm, setSupplierSearchTerm] = useState("");
+  const [showSupplierResults, setShowSupplierResults] = useState(false);
 
   const [paymentForm, setPaymentForm] = useState({
     supplierId: "",
@@ -174,10 +187,40 @@ const SupplierManagement = () => {
   const handleRecordPurchase = async (e) => {
     e.preventDefault();
     try {
-      await axios.post(`${API_BASE}/api/suppliers/purchase`, purchaseForm, authHeaders());
+      const formData = new FormData();
+      Object.keys(purchaseForm).forEach((key) => {
+        formData.append(key, purchaseForm[key]);
+      });
+      if (purchaseImage) {
+        formData.append("image", purchaseImage);
+      }
+
+      await axios.post(`${API_BASE}/api/suppliers/purchase`, formData, {
+        headers: {
+          ...authHeaders().headers,
+          "Content-Type": "multipart/form-data",
+        },
+      });
+
       showToast("Purchase recorded & inventory updated!");
       setShowRecordPurchase(false);
-      setPurchaseForm({ supplierId: "", productId: "", productName: "", quantity: "", costPrice: "", purchaseDate: new Date().toISOString().split("T")[0] });
+      setPurchaseForm({
+        supplierId: "",
+        productId: "",
+        productName: "",
+        quantity: "",
+        costPrice: "",
+        sellingPrice: "",
+        description: "",
+        category: "Others",
+        purchaseDate: new Date().toISOString().split("T")[0],
+      });
+      setPurchaseImage(null);
+      setPurchaseImagePreview(null);
+      setProductSearchTerm("");
+      setShowProductResults(false);
+      setSupplierSearchTerm("");
+      setShowSupplierResults(false);
       fetchAll();
     } catch (err) {
       showToast(err.response?.data?.message || "Failed to record purchase", "error");
@@ -187,11 +230,21 @@ const SupplierManagement = () => {
   // ─── Record Payment ──────────────────────────────────────────────
   const handleRecordPayment = async (e) => {
     e.preventDefault();
+    const { supplierId, amountPaid } = paymentForm;
+    const selected = suppliers.find((s) => s._id === supplierId);
+    
+    if (selected && Number(amountPaid) > selected.totalDue) {
+      showToast(`Amount cannot exceed outstanding due (${selected.totalDue})`, "error");
+      return;
+    }
+
     try {
       await axios.post(`${API_BASE}/api/suppliers/payment`, paymentForm, authHeaders());
       showToast("Payment recorded successfully!");
       setShowRecordPayment(false);
       setPaymentForm({ supplierId: "", amountPaid: "", paymentMethod: "Cash", paymentDate: new Date().toISOString().split("T")[0], note: "" });
+      setSupplierSearchTerm("");
+      setShowSupplierResults(false);
       fetchAll();
     } catch (err) {
       showToast(err.response?.data?.message || "Failed to record payment", "error");
@@ -205,8 +258,43 @@ const SupplierManagement = () => {
       ...f,
       productId,
       productName: product ? product.name : f.productName,
+      sellingPrice: product ? product.price : "",
+      description: product ? product.description : "",
+      category: product ? product.category : "Others",
     }));
+    setShowProductResults(false);
+    setProductSearchTerm(product ? product.name : "");
   };
+
+  const filteredPurchaseProducts = products.filter((p) => {
+    if (!productSearchTerm) return false;
+    const q = productSearchTerm.toLowerCase();
+    return (
+      p.name?.toLowerCase().includes(q) ||
+      p.category?.toLowerCase().includes(q)
+    );
+  });
+
+  // ─── Supplier selection logic ────────────────────────────────────
+  const handleSupplierSelect = (supplierId, formType) => {
+    const supplier = suppliers.find((s) => s._id === supplierId);
+    if (formType === "purchase") {
+      setPurchaseForm((f) => ({ ...f, supplierId }));
+    } else if (formType === "payment") {
+      setPaymentForm((f) => ({ ...f, supplierId }));
+    }
+    setShowSupplierResults(false);
+    setSupplierSearchTerm(supplier ? `${supplier.supplierName} (${supplier.companyName})` : "");
+  };
+
+  const filteredSearchSuppliers = suppliers.filter((s) => {
+    if (!supplierSearchTerm) return false;
+    const q = supplierSearchTerm.toLowerCase();
+    return (
+      s.supplierName?.toLowerCase().includes(q) ||
+      s.companyName?.toLowerCase().includes(q)
+    );
+  });
 
   // ─── Filtered suppliers ──────────────────────────────────────────
   const filteredSuppliers = suppliers.filter((s) => {
@@ -672,21 +760,120 @@ const SupplierManagement = () => {
               <div className="sm-form__grid">
                 <div className="sm-form__group sm-form__group--full">
                   <label>Supplier *</label>
-                  <select required value={purchaseForm.supplierId} onChange={(e) => setPurchaseForm({ ...purchaseForm, supplierId: e.target.value })}>
-                    <option value="">Select supplier...</option>
-                    {suppliers.map((s) => (
-                      <option key={s._id} value={s._id}>{s.supplierName} – {s.companyName}</option>
-                    ))}
-                  </select>
+                  <div className="sm-product-search-container">
+                    <div className="sm-product-search-input-group">
+                      <input 
+                        type="text" 
+                        placeholder="Search supplier name or company..." 
+                        value={supplierSearchTerm}
+                        onChange={(e) => {
+                          setSupplierSearchTerm(e.target.value);
+                          setShowSupplierResults(true);
+                        }}
+                        onFocus={() => setShowSupplierResults(true)}
+                        className="sm-product-search-input"
+                        required={!purchaseForm.supplierId}
+                      />
+                      <button 
+                        type="button" 
+                        className="sm-btn sm-btn--secondary"
+                        onClick={() => setShowSupplierResults(!showSupplierResults)}
+                      >
+                        {showSupplierResults ? "Close" : "Search"}
+                      </button>
+                    </div>
+                    
+                    {showSupplierResults && (
+                      <div className="sm-product-results">
+                        {filteredSearchSuppliers.length > 0 ? (
+                          filteredSearchSuppliers.map((s) => (
+                            <div 
+                              key={s._id} 
+                              className="sm-product-result-item"
+                              onClick={() => handleSupplierSelect(s._id, "purchase")}
+                            >
+                              <div className="sm-product-result-info">
+                                <span className="sm-product-result-name">{s.supplierName}</span>
+                                <span className="sm-product-result-cat">{s.companyName}</span>
+                              </div>
+                              <span className="sm-product-result-qty">Due: {fmt(s.totalDue)}</span>
+                            </div>
+                          ))
+                        ) : supplierSearchTerm.length > 0 ? (
+                          <div className="sm-product-no-results">No suppliers found</div>
+                        ) : (
+                          <div className="sm-product-no-results">Type to search...</div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                  {purchaseForm.supplierId && (
+                    <div className="sm-selected-product">
+                      Selected: <strong>{suppliers.find(s => s._id === purchaseForm.supplierId)?.supplierName}</strong>
+                      <button type="button" onClick={() => {
+                        setPurchaseForm({...purchaseForm, supplierId: ""});
+                        setSupplierSearchTerm("");
+                      }} className="sm-clear-link">Clear</button>
+                    </div>
+                  )}
                 </div>
                 <div className="sm-form__group sm-form__group--full">
                   <label>Link to Inventory Product (Optional)</label>
-                  <select value={purchaseForm.productId} onChange={(e) => handleProductSelect(e.target.value)}>
-                    <option value="">Select product to update stock...</option>
-                    {products.map((p) => (
-                      <option key={p._id} value={p._id}>{p.name} (Qty: {p.quantity})</option>
-                    ))}
-                  </select>
+                  <div className="sm-product-search-container">
+                    <div className="sm-product-search-input-group">
+                      <input 
+                        type="text" 
+                        placeholder="Search product name or category..." 
+                        value={productSearchTerm}
+                        onChange={(e) => {
+                          setProductSearchTerm(e.target.value);
+                          setShowProductResults(true);
+                        }}
+                        onFocus={() => setShowProductResults(true)}
+                        className="sm-product-search-input"
+                      />
+                      <button 
+                        type="button" 
+                        className="sm-btn sm-btn--secondary"
+                        onClick={() => setShowProductResults(!showProductResults)}
+                      >
+                        {showProductResults ? "Close" : "Search"}
+                      </button>
+                    </div>
+                    
+                    {showProductResults && (
+                      <div className="sm-product-results">
+                        {filteredPurchaseProducts.length > 0 ? (
+                          filteredPurchaseProducts.map((p) => (
+                            <div 
+                              key={p._id} 
+                              className="sm-product-result-item"
+                              onClick={() => handleProductSelect(p._id)}
+                            >
+                              <div className="sm-product-result-info">
+                                <span className="sm-product-result-name">{p.name}</span>
+                                <span className="sm-product-result-cat">{p.category}</span>
+                              </div>
+                              <span className="sm-product-result-qty">Qty: {p.quantity}</span>
+                            </div>
+                          ))
+                        ) : productSearchTerm.length > 0 ? (
+                          <div className="sm-product-no-results">No products found</div>
+                        ) : (
+                          <div className="sm-product-no-results">Type to search...</div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                  {purchaseForm.productId && (
+                    <div className="sm-selected-product">
+                      Linked to: <strong>{products.find(p => p._id === purchaseForm.productId)?.name}</strong>
+                      <button type="button" onClick={() => {
+                        setPurchaseForm({...purchaseForm, productId: ""});
+                        setProductSearchTerm("");
+                      }} className="sm-clear-link">Clear</button>
+                    </div>
+                  )}
                 </div>
                 <div className="sm-form__group sm-form__group--full">
                   <label>Product Name *</label>
@@ -710,6 +897,45 @@ const SupplierManagement = () => {
                   <label>Purchase Date</label>
                   <input type="date" value={purchaseForm.purchaseDate} onChange={(e) => setPurchaseForm({ ...purchaseForm, purchaseDate: e.target.value })} />
                 </div>
+                <div className="sm-form__group">
+                  <label>Selling Price (per unit) *</label>
+                  <input required type="number" min="0" step="0.01" value={purchaseForm.sellingPrice} onChange={(e) => setPurchaseForm({ ...purchaseForm, sellingPrice: e.target.value })} placeholder="0.00" />
+                </div>
+                <div className="sm-form__group sm-form__group--full">
+                  <label>Category *</label>
+                  <select required value={purchaseForm.category} onChange={(e) => setPurchaseForm({ ...purchaseForm, category: e.target.value })}>
+                    <option value="Others">Others</option>
+                    <option value="Electronics">Electronics</option>
+                    <option value="Fashion">Fashion</option>
+                    <option value="Beauty & Personal Care">Beauty & Personal Care</option>
+                    <option value="Home & Kitchen">Home & Kitchen</option>
+                    <option value="Books & Stationery">Books & Stationery</option>
+                    <option value="Toys & Games">Toys & Games</option>
+                    <option value="Sports & Fitness">Sports & Fitness</option>
+                    <option value="Automotive">Automotive</option>
+                  </select>
+                </div>
+                <div className="sm-form__group sm-form__group--full">
+                  <label>Description *</label>
+                  <textarea required value={purchaseForm.description} onChange={(e) => setPurchaseForm({ ...purchaseForm, description: e.target.value })} placeholder="Product description" rows="3" style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1.5px solid #e2e8f0', fontFamily: 'inherit' }}></textarea>
+                </div>
+                <div className="sm-form__group sm-form__group--full">
+                  <label>Product Image</label>
+                  <input type="file" accept="image/*" onChange={(e) => {
+                    const file = e.target.files[0];
+                    if (file) {
+                      setPurchaseImage(file);
+                      const reader = new FileReader();
+                      reader.onloadend = () => setPurchaseImagePreview(reader.result);
+                      reader.readAsDataURL(file);
+                    }
+                  }} />
+                  {purchaseImagePreview && (
+                    <div style={{ marginTop: '10px' }}>
+                      <img src={purchaseImagePreview} alt="Preview" style={{ width: '100px', height: '100px', objectFit: 'cover', borderRadius: '8px', border: '2px solid #3b82f6' }} />
+                    </div>
+                  )}
+                </div>
               </div>
               <div className="sm-form__actions">
                 <button type="button" className="sm-btn sm-btn--ghost" onClick={() => setShowRecordPurchase(false)}>Cancel</button>
@@ -732,12 +958,62 @@ const SupplierManagement = () => {
               <div className="sm-form__grid">
                 <div className="sm-form__group sm-form__group--full">
                   <label>Supplier *</label>
-                  <select required value={paymentForm.supplierId} onChange={(e) => setPaymentForm({ ...paymentForm, supplierId: e.target.value })}>
-                    <option value="">Select supplier...</option>
-                    {suppliers.map((s) => (
-                      <option key={s._id} value={s._id}>{s.supplierName} – Due: {fmt(s.totalDue)}</option>
-                    ))}
-                  </select>
+                  <div className="sm-product-search-container">
+                    <div className="sm-product-search-input-group">
+                      <input 
+                        type="text" 
+                        placeholder="Search supplier name or company..." 
+                        value={supplierSearchTerm}
+                        onChange={(e) => {
+                          setSupplierSearchTerm(e.target.value);
+                          setShowSupplierResults(true);
+                        }}
+                        onFocus={() => setShowSupplierResults(true)}
+                        className="sm-product-search-input"
+                        required={!paymentForm.supplierId}
+                      />
+                      <button 
+                        type="button" 
+                        className="sm-btn sm-btn--secondary"
+                        onClick={() => setShowSupplierResults(!showSupplierResults)}
+                      >
+                        {showSupplierResults ? "Close" : "Search"}
+                      </button>
+                    </div>
+                    
+                    {showSupplierResults && (
+                      <div className="sm-product-results">
+                        {filteredSearchSuppliers.length > 0 ? (
+                          filteredSearchSuppliers.map((s) => (
+                            <div 
+                              key={s._id} 
+                              className="sm-product-result-item"
+                              onClick={() => handleSupplierSelect(s._id, "payment")}
+                            >
+                              <div className="sm-product-result-info">
+                                <span className="sm-product-result-name">{s.supplierName}</span>
+                                <span className="sm-product-result-cat">{s.companyName}</span>
+                              </div>
+                              <span className="sm-product-result-qty">Due: {fmt(s.totalDue)}</span>
+                            </div>
+                          ))
+                        ) : supplierSearchTerm.length > 0 ? (
+                          <div className="sm-product-no-results">No suppliers found</div>
+                        ) : (
+                          <div className="sm-product-no-results">Type to search...</div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                  {paymentForm.supplierId && (
+                    <div className="sm-selected-product">
+                      Selected: <strong>{suppliers.find(s => s._id === paymentForm.supplierId)?.supplierName}</strong>
+                      <button type="button" onClick={() => {
+                        setPaymentForm({...paymentForm, supplierId: ""});
+                        setSupplierSearchTerm("");
+                      }} className="sm-clear-link">Clear</button>
+                    </div>
+                  )}
                 </div>
                 <div className="sm-form__group">
                   <label>Amount Paid *</label>

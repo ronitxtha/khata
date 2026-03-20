@@ -2,6 +2,7 @@ import { Supplier } from "../models/supplierModel.js";
 import { Purchase } from "../models/purchaseModel.js";
 import { Payment } from "../models/paymentModel.js";
 import { Product } from "../models/productModel.js";
+import QRCode from "qrcode";
 
 /* ─────────────────────────────
    SUPPLIER CRUD
@@ -115,7 +116,17 @@ export const deleteSupplier = async (req, res) => {
 export const recordPurchase = async (req, res) => {
   try {
     const shopId = req.shopId;
-    const { supplierId, productId, productName, quantity, costPrice, purchaseDate } = req.body;
+    const {
+      supplierId,
+      productId,
+      productName,
+      quantity,
+      costPrice,
+      sellingPrice,
+      description,
+      category,
+      purchaseDate,
+    } = req.body;
 
     if (!supplierId || !productName || !quantity || !costPrice) {
       return res.status(400).json({
@@ -130,12 +141,49 @@ export const recordPurchase = async (req, res) => {
     }
 
     const totalCost = Number(quantity) * Number(costPrice);
+    const imagePath = req.file ? req.file.path : null;
+
+    let targetProduct;
+
+    // Handle Product (New or Existing)
+    if (productId && productId !== "null" && productId !== "") {
+      // Existing Product Update
+      targetProduct = await Product.findOne({ _id: productId, shopId });
+      if (targetProduct) {
+        targetProduct.name = productName;
+        targetProduct.price = Number(sellingPrice) || targetProduct.price;
+        targetProduct.description = description || targetProduct.description;
+        targetProduct.category = category || targetProduct.category;
+        targetProduct.quantity += Number(quantity);
+        if (imagePath) targetProduct.image = imagePath;
+        await targetProduct.save();
+      }
+    } else {
+      // Create New Product
+      targetProduct = new Product({
+        name: productName,
+        price: Number(sellingPrice) || 0,
+        description: description || "",
+        category: category || "Others",
+        quantity: Number(quantity),
+        image: imagePath,
+        shopId,
+      });
+      await targetProduct.save();
+
+      // Generate QR code for new product
+      const qrFileName = `qr-${targetProduct._id}.png`;
+      const qrPath = `uploads/${qrFileName}`;
+      await QRCode.toFile(qrPath, targetProduct._id.toString());
+      targetProduct.qrCode = qrPath;
+      await targetProduct.save();
+    }
 
     // Create purchase record
     const purchase = new Purchase({
       supplierId,
       supplierName: supplier.supplierName,
-      productId: productId || null,
+      productId: targetProduct ? targetProduct._id : null,
       productName,
       quantity: Number(quantity),
       costPrice: Number(costPrice),
@@ -150,16 +198,7 @@ export const recordPurchase = async (req, res) => {
     supplier.totalDue = supplier.totalPurchases - supplier.totalPaid;
     await supplier.save();
 
-    // If productId given, increase inventory
-    if (productId) {
-      const product = await Product.findOne({ _id: productId, shopId });
-      if (product) {
-        product.quantity += Number(quantity);
-        await product.save();
-      }
-    }
-
-    return res.status(201).json({ success: true, purchase, supplier });
+    return res.status(201).json({ success: true, purchase, supplier, product: targetProduct });
   } catch (error) {
     console.error("recordPurchase error:", error);
     return res.status(500).json({ success: false, message: error.message });
@@ -198,6 +237,14 @@ export const recordPayment = async (req, res) => {
     const supplier = await Supplier.findOne({ _id: supplierId, shopId });
     if (!supplier) {
       return res.status(404).json({ success: false, message: "Supplier not found." });
+    }
+
+    // Validation: amountPaid should not exceed totalDue
+    if (Number(amountPaid) > supplier.totalDue) {
+      return res.status(400).json({
+        success: false,
+        message: `Payment amount (${amountPaid}) cannot exceed outstanding due (${supplier.totalDue}).`,
+      });
     }
 
     const payment = new Payment({
