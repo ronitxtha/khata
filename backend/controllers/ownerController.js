@@ -1,9 +1,11 @@
 import { User } from "../models/userModel.js";
+import { Shop } from "../models/shopModel.js";
 import { Product } from "../models/productModel.js";
 import Order from "../models/Order.js";
 import bcrypt from "bcryptjs";
 import fs from "fs";
 import path from "path";
+
 
 // ======================== PROFILE ENDPOINTS ========================
 
@@ -76,11 +78,17 @@ export const updateOwnerProfile = async (req, res) => {
 
     await owner.save();
 
+    // Keep Shop document in sync with the owner's shopName
+    if (shopName && owner.shopId) {
+      await Shop.findByIdAndUpdate(owner.shopId, { name: shopName });
+    }
+
     res.status(200).json({
       success: true,
       message: "Profile updated successfully",
       data: owner,
     });
+
   } catch (error) {
     res.status(500).json({
       success: false,

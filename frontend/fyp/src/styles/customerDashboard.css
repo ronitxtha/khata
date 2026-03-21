@@ -1,3 +1,173 @@
+/* ==================== PAGE BODY LAYOUT ==================== */
+/* Fixed height container — only cd-content scrolls, filter stays put */
+.cd-body {
+  display: flex;
+  align-items: stretch;
+  height: calc(100vh - 68px);
+  overflow: hidden;
+}
+
+/* Main scrollable product area */
+.cd-content {
+  flex: 1;
+  min-width: 0;
+  max-width: 100%;
+  padding: 28px;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* Fixed filter panel on the right — does NOT scroll with page */
+.cd-filter-panel {
+  width: 280px;
+  flex-shrink: 0;
+  background: #ffffff;
+  border-left: 1px solid #e2e8f0;
+  padding: 28px 22px;
+  height: 100%;
+  overflow-y: auto;
+  box-shadow: -2px 0 12px rgba(0, 0, 0, 0.04);
+}
+
+/* ==================== FILTER STYLES ==================== */
+.filter-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1e3a8a;
+  margin-bottom: 24px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.filter-group {
+  margin-bottom: 22px;
+}
+
+.filter-group label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: #64748b;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.filter-input {
+  width: 100%;
+  padding: 11px 13px;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 10px;
+  font-size: 14px;
+  color: #1e293b;
+  background: #f8fafc;
+  transition: all 0.2s ease;
+  outline: none;
+  font-family: "Inter", sans-serif;
+}
+
+.filter-input:focus {
+  border-color: #2563eb;
+  background: white;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.price-inputs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.filter-input-small {
+  width: 100%;
+  padding: 9px 11px;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 13px;
+  outline: none;
+  background: #f8fafc;
+  font-family: "Inter", sans-serif;
+  transition: border-color 0.2s;
+}
+
+.filter-input-small:focus {
+  border-color: #2563eb;
+}
+
+.price-separator {
+  color: #94a3b8;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.clear-filter-btn {
+  width: 100%;
+  padding: 12px;
+  background: #f1f5f9;
+  color: #475569;
+  border: none;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-top: 8px;
+  font-family: "Inter", sans-serif;
+}
+
+.clear-filter-btn:hover {
+  background: #e2e8f0;
+  color: #1e293b;
+}
+
+/* Search bar inside panel */
+.search-bar {
+  width: 100%;
+  padding: 14px 20px;
+  border-radius: 10px;
+  border: 1.5px solid #e2e8f0;
+  font-size: 15px;
+  margin-bottom: 30px;
+  outline: none;
+  transition: border-color 0.2s;
+  font-family: "Inter", sans-serif;
+  background: #f8fafc;
+  color: #1e293b;
+}
+
+.search-bar:focus {
+  border-color: #2563eb;
+  background: white;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+/* Responsive: stack filter below content on small screens */
+@media (max-width: 1024px) {
+  .cd-filter-panel {
+    width: 220px;
+  }
+}
+
+@media (max-width: 768px) {
+  .cd-body {
+    flex-direction: column;
+    height: auto;
+    overflow: visible;
+  }
+  .cd-filter-panel {
+    width: 100%;
+    height: auto;
+    border-left: none;
+    border-bottom: 1px solid #e2e8f0;
+    order: -1;
+    padding: 20px;
+  }
+  .cd-content {
+    overflow-y: visible;
+    padding: 20px;
+  }
+}
 
 
 /* ==================== SHOP CONTAINER ==================== */
