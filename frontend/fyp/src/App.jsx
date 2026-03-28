@@ -24,6 +24,9 @@ import OrderHistory from "./pages/OrderHistory.jsx";
 import OrderManagement from "./pages/OrderManagement.jsx";
 import Attendance from "./pages/attendance.jsx";
 import SupplierManagement from "./pages/SupplierManagement.jsx";
+import EsewaSuccess from "./pages/EsewaSuccess.jsx";
+import EsewaFailure from "./pages/EsewaFailure.jsx";
+import Cart from "./pages/Cart.jsx";
 
 export default function App() {
   return (
@@ -53,9 +56,9 @@ export default function App() {
         <Route path="/order-management" element={<OrderManagement />} />
         <Route path="/attendance" element={<Attendance />} />
         <Route path="/supplier-management" element={<SupplierManagement />} />
-
-
-
+        <Route path="/esewa/success" element={<EsewaSuccess />} />
+        <Route path="/esewa/failure" element={<EsewaFailure />} />
+        <Route path="/cart" element={<Cart />} />
       </Routes>
    
   );

@@ -42,6 +42,17 @@ const OrderSchema = new mongoose.Schema(
       default: "Cash on Delivery"
     },
 
+    paymentStatus: {
+      type: String,
+      enum: ["Pending", "Paid", "Failed"],
+      default: "Pending"
+    },
+
+    transactionUuid: {
+      type: String,
+      default: ""
+    },
+
     cancelReason: {
       type: String,
       default: ""

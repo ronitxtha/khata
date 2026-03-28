@@ -3,10 +3,12 @@ import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import nepalLocations from "../data/nepalLocations.json";
 import "../styles/productDetails.css";
+import { useCart } from "../context/CartContext";
 
 const ProductDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { addToCart, totalQuantity } = useCart();
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -109,7 +111,9 @@ const [exactLocation, setExactLocation] = useState("");
           <button>Search</button>
         </div>
         <div className="pd-cart-btn">
-          <button onClick={() => navigate("/cart")}>Cart</button>
+          <button onClick={() => navigate("/cart")}>
+            Cart {totalQuantity > 0 && `(${totalQuantity})`}
+          </button>
         </div>
       </header>
 
@@ -310,7 +314,15 @@ const [exactLocation, setExactLocation] = useState("");
 </button>
 
 
-            <button className="pd-add-cart">Add to Cart</button>
+            <button 
+              className="pd-add-cart"
+              onClick={() => {
+                addToCart(product);
+                alert("Item added to cart successfully!");
+              }}
+            >
+              Add to Cart
+            </button>
             <button className="pd-wishlist">Add to Wishlist</button>
           </div>
         </div>

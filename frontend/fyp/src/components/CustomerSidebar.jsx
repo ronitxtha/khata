@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
+import { Store, Package, ShoppingCart, User, LogOut, ShoppingBag } from "lucide-react";
 
-// Using the shared staffDashboard.css for sidebar styles
-// We assume parent pages will import staffDashboard.css
+// Using the shared customerLayout.css for sidebar styles
+// We assume parent pages will import customerLayout.css
 
 const CustomerSidebar = ({ isOpen, setIsOpen }) => {
   const [localOpen, setLocalOpen] = useState(false);
@@ -32,41 +33,47 @@ const CustomerSidebar = ({ isOpen, setIsOpen }) => {
     }
   };
 
+  // Mock cart items count logic for demonstration (in a real app, take from context)
+  const cartItemCount = 3;
+
   const navLinks = [
-    { label: "Browse Stores", icon: "🏬", path: "/customer-dashboard" },
-    { label: "My Orders", icon: "📦", path: "/orders" },
-    { label: "Shopping Cart", icon: "🛒", path: "/customer-cart" },
-    { label: "My Profile", icon: "👤", path: "/customer-profile" },
+    { path: "/customer-dashboard", label: "Browse Stores", icon: <Store size={20} /> },
+    { path: "/order-history", label: "My Orders", icon: <Package size={20} /> },
+    { path: "/cart", label: "Shopping Cart", icon: <ShoppingCart size={20} />, badge: cartItemCount },
+    { path: "/customer-profile", label: "My Profile", icon: <User size={20} /> },
   ];
 
   return (
     <aside
-      className={`sd-sidebar ${open ? "sd-sidebar--open" : ""}`}
+      className={`cd-sidebar ${open ? "cd-sidebar--open" : ""}`}
       onMouseEnter={() => setOpen(true)}
       onMouseLeave={() => setOpen(false)}
     >
-      <div className="sd-sidebar__brand">
-        <span className="sd-sidebar__logo">🛍️</span>
-        <span className="sd-sidebar__brand-name">Khata</span>
+      <div className="cd-sidebar__brand">
+        <span className="cd-sidebar__logo"><ShoppingBag size={24} color="#4f46e5" /></span>
+        <span className="cd-sidebar__brand-name">Khata</span>
       </div>
 
-      <nav className="sd-sidebar__nav">
+      <nav className="cd-sidebar__nav">
         {navLinks.map((link) => (
           <button
             key={link.path}
-            className={`sd-sidebar__link ${location.pathname === link.path ? "active" : ""}`}
+            className={`cd-sidebar__link ${location.pathname === link.path ? "active" : ""}`}
             onClick={() => navigate(link.path)}
           >
-            <span className="sd-sidebar__icon">{link.icon}</span>
-            <span className="sd-sidebar__label">{link.label}</span>
+            <span className="cd-sidebar__icon">{link.icon}</span>
+            <span className="cd-sidebar__label">{link.label}</span>
+            {link.badge && (
+              <span className="cd-sidebar__badge">{link.badge}</span>
+            )}
           </button>
         ))}
       </nav>
 
-      <div className="sd-sidebar__bottom">
-        <button className="sd-sidebar__link sd-sidebar__logout" onClick={handleLogout}>
-          <span className="sd-sidebar__icon">🚪</span>
-          <span className="sd-sidebar__label">Logout</span>
+      <div className="cd-sidebar__bottom">
+        <button className="cd-sidebar__link cd-sidebar__logout" onClick={handleLogout}>
+          <span className="cd-sidebar__icon"><LogOut size={20} /></span>
+          <span className="cd-sidebar__label">Logout</span>
         </button>
       </div>
     </aside>

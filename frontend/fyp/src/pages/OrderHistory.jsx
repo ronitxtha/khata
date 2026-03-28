@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import CustomerSidebar from "../components/CustomerSidebar";
-import "../styles/staffDashboard.css";
+import { User, Bell, Search } from "lucide-react";
+import "../styles/customerLayout.css";
 import "../styles/orderHistory.css";
 
 const API_BASE = "http://localhost:8000";
@@ -89,11 +90,11 @@ const OrderHistory = () => {
 
   if (loading) {
     return (
-      <div className="sd-layout">
+      <div className="cd-layout">
         <CustomerSidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} />
-        <div className={`sd-main ${sidebarOpen ? "sd-main--shifted" : ""}`}>
-          <main className="sd-content">
-            <div className="sd-panel">
+        <div className={`cd-main ${sidebarOpen ? "cd-main--shifted" : ""}`}>
+          <main className="cd-content">
+            <div className="cd-panel">
               <div className="order-loading-container">
                 <div className="spinner"></div>
                 <p>Loading your orders...</p>
@@ -106,26 +107,38 @@ const OrderHistory = () => {
   }
 
   return (
-    <div className="sd-layout">
+    <div className="cd-layout">
       <CustomerSidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} />
       {toast && <Toast message={toast.message} type={toast.type} />}
 
-      <div className={`sd-main ${sidebarOpen ? "sd-main--shifted" : ""}`}>
+      <div className={`cd-main ${sidebarOpen ? "cd-main--shifted" : ""}`}>
         {/* NAVBAR */}
-        <header className="sd-navbar">
-          <div className="sd-navbar__left">
-            <h2>📦 Order History</h2>
+        <header className="cd-navbar">
+          <div className="cd-navbar__left">
+            <h2>Order History</h2>
+            <p>Track and manage your past purchases</p>
           </div>
-          <div className="sd-navbar__right">
-            <div className="sd-profile-menu">
-              <div className="sd-profile-icon">👤</div>
-              <span className="sd-profile-name">{user?.name || "Customer"}</span>
+          
+          <div className="cd-global-search">
+            <Search size={18} color="#a3aed1" />
+            <input 
+              type="text" 
+              placeholder="Search products, stores..." 
+            />
+          </div>
+
+          <div className="cd-navbar__right">
+            <button className="cd-icon-btn">
+              <Bell size={20} />
+            </button>
+            <div className="cd-profile-menu">
+              <div className="cd-profile-icon"><User size={20} /></div>
             </div>
           </div>
         </header>
 
-        <main className="sd-content">
-          <div className="sd-panel">
+        <main className="cd-content">
+          <div className="cd-panel">
             <div className="order-history-header">
               <div>
                 <p className="order-count" style={{ marginTop: 0 }}>
