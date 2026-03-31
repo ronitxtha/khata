@@ -96,6 +96,29 @@ router.delete("/delete-staff/:id", isAuthenticated, async (req, res) => {
   }
 });
 
+// ----------------------- Update Staff -----------------------
+router.put("/update-staff/:id", isAuthenticated, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { username, email, phone, address } = req.body;
+
+    const staff = await User.findOne({ _id: id, shopId: req.user.shopId, role: "staff" });
+    if (!staff) return res.status(404).json({ message: "Staff member not found" });
+
+    if (username) staff.username = username;
+    if (email) staff.email = email;
+    if (phone) staff.phone = phone;
+    if (address) staff.address = address;
+
+    await staff.save();
+    res.json({ message: "Staff updated successfully", staff });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
+
 
 router.delete("/delete-product/:id", isAuthenticated, async (req, res) => {
   try {
@@ -206,7 +229,7 @@ router.post("/add-staff", isAuthenticated, async (req, res) => {
 
 router.post("/add-product", isAuthenticated, upload.single("image"), async (req, res) => {
   try {
-    const { name, price, description, category, quantity } = req.body; // include category
+    const { name, price, costPrice, description, category, quantity } = req.body; // include category
     const imagePath = req.file ? req.file.path : null;
 
     // Optional: Validate category against allowed list
@@ -227,6 +250,7 @@ router.post("/add-product", isAuthenticated, upload.single("image"), async (req,
     const product = await Product.create({
       name,
       price,
+      costPrice: Number(costPrice) || 0,
       description,
       image: imagePath,
       shopId: req.user.shopId,
@@ -255,7 +279,7 @@ router.put(
   async (req, res) => {
     try {
       const { id } = req.params;
-      const { name, price, quantity, category, description } = req.body;
+      const { name, price, costPrice, quantity, category, description } = req.body;
 
       const MAIN_CATEGORIES = [
         "Electronics",
@@ -284,6 +308,7 @@ router.put(
 
       product.name = name;
       product.price = price;
+      product.costPrice = Number(costPrice) || 0;
       product.quantity = Number(quantity);
       product.category = finalCategory;
       product.description = description;
@@ -491,7 +516,7 @@ router.get("/sales-report", isAuthenticated, async (req, res) => {
       for (let i = 0; i < 24; i++) {
         // e.g., "12 AM", "1 AM", ...
         const label = i === 0 ? "12 AM" : i < 12 ? `${i} AM` : i === 12 ? "12 PM" : `${i - 12} PM`;
-        dataPoints.push({ name: label, hour: i, sales: 0, items: 0 });
+        dataPoints.push({ name: label, hour: i, sales: 0, items: 0, profit: 0 });
       }
     } else if (timeframe === "month") {
       // Data Points: Last 30 days
@@ -502,7 +527,7 @@ router.get("/sales-report", isAuthenticated, async (req, res) => {
         const d = new Date(startDate);
         d.setDate(d.getDate() + i);
         const label = d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }); // "01 Mar"
-        dataPoints.push({ name: label, timestamp: d.getTime(), sales: 0, items: 0 });
+        dataPoints.push({ name: label, timestamp: d.getTime(), sales: 0, items: 0, profit: 0 });
       }
     } else {
       // Default to "week"
@@ -514,7 +539,7 @@ router.get("/sales-report", isAuthenticated, async (req, res) => {
         const d = new Date(startDate);
         d.setDate(d.getDate() + i);
         const label = d.toLocaleDateString('en-GB', { weekday: 'short' }); // "Mon", "Tue"
-        dataPoints.push({ name: label, timestamp: d.getTime(), sales: 0, items: 0 });
+        dataPoints.push({ name: label, timestamp: d.getTime(), sales: 0, items: 0, profit: 0 });
       }
     }
 
@@ -529,9 +554,16 @@ router.get("/sales-report", isAuthenticated, async (req, res) => {
     recentOrders.forEach(order => {
       const orderDate = new Date(order.createdAt);
       const totalAmount = order.totalAmount || 0;
+      let totalProfit = 0;
       let itemsCount = 0;
+
       if (order.items && order.items.length > 0) {
-        itemsCount = order.items.reduce((sum, item) => sum + (item.quantity || 1), 0);
+        order.items.forEach(item => {
+          itemsCount += (item.quantity || 1);
+          // Profit = (SP - CP) * Qty. If CP is missing, assume 0 for legacy orders.
+          const cp = item.costPrice || 0;
+          totalProfit += ((item.price || 0) - cp) * (item.quantity || 1);
+        });
       }
 
       if (timeframe === "today") {
@@ -540,21 +572,21 @@ router.get("/sales-report", isAuthenticated, async (req, res) => {
         if (point) {
           point.sales += totalAmount;
           point.items += itemsCount;
+          point.profit += totalProfit;
         }
       } else {
-        // "week" or "month" -> group by day
-        // Strip time from orderDate for comparison
         const orderDay = new Date(orderDate.getFullYear(), orderDate.getMonth(), orderDate.getDate()).getTime();
         const point = dataPoints.find(p => p.timestamp === orderDay);
         if (point) {
           point.sales += totalAmount;
           point.items += itemsCount;
+          point.profit += totalProfit;
         }
       }
     });
 
-    // Remove sorting metadata if present (hour or timestamp) before sending to client
-    const cleanData = dataPoints.map(({ name, sales, items }) => ({ name, sales, items }));
+    // Remove sorting metadata and include profit
+    const cleanData = dataPoints.map(({ name, sales, items, profit }) => ({ name, sales, items, profit }));
 
     res.json({
       success: true,

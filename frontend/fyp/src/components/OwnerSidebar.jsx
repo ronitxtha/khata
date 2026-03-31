@@ -3,19 +3,19 @@ import { useNavigate, useLocation } from "react-router-dom";
 import "../styles/staffDashboard.css";
 import "../styles/ownerDashboard.css";
 
-const StaffSidebar = ({ sidebarOpen, setSidebarOpen, staff, handleLogout }) => {
+const OwnerSidebar = ({ sidebarOpen, setSidebarOpen, owner, handleLogout }) => {
   const navigate = useNavigate();
   const location = useLocation();
 
   const navLinks = [
-    { label: "Dashboard", icon: "🏠", path: "/staff-dashboard" },
-    { label: "Inventory", icon: "📦", path: "/staff-inventory" },
-    { label: "Attendance", icon: "📅", path: "/staff-attendance" },
+    { label: "Dashboard", icon: "🏠", path: "/owner-dashboard" },
+    { label: "Product Management", icon: "📦", path: "/products" },
     { label: "Orders", icon: "🛒", path: "/order-management" },
-    { label: "Profile", icon: "👤", path: "/staff-profile" },
+    { label: "Staff Management", icon: "👥", path: "/add-staff" },
+    { label: "Supplier Management", icon: "🏭", path: "/supplier-management" },
+    { label: "Attendance", icon: "📅", path: "/attendance" },
+    { label: "Profile", icon: "👤", path: "/owner-profile" },
   ];
-
-  const API_BASE = "http://localhost:8000";
 
   return (
     <>
@@ -26,7 +26,7 @@ const StaffSidebar = ({ sidebarOpen, setSidebarOpen, staff, handleLogout }) => {
       >
         <div className="sd-sidebar__brand od-brand">
           <div className="od-logo-container">
-            <span className="od-logo-text">KhataStaff</span>
+            <span className="od-logo-text">SmartKhata</span>
           </div>
         </div>
 
@@ -45,14 +45,11 @@ const StaffSidebar = ({ sidebarOpen, setSidebarOpen, staff, handleLogout }) => {
         <div className="sd-sidebar__bottom od-sidebar-footer">
           <div className="od-user-profile">
             <div className="od-user-avatar">
-              <img 
-                src={staff?.profileImage ? `${API_BASE}/${staff.profileImage}` : `https://ui-avatars.com/api/?name=${staff?.username || "Staff"}`} 
-                alt="Profile" 
-              />
+              <img src={owner?.profileImage || `https://ui-avatars.com/api/?name=${owner?.username || "Owner"}`} alt="Profile" />
             </div>
             <div className="od-user-info">
-              <span className="od-user-name">{staff?.username || "Staff"}</span>
-              <span className="od-user-role">STAFF</span>
+              <span className="od-user-name">{owner?.username || "Owner"}</span>
+              <span className="od-user-role">OWNER</span>
             </div>
           </div>
           <button className="od-logout-btn" onClick={handleLogout} title="Logout">
@@ -72,4 +69,4 @@ const StaffSidebar = ({ sidebarOpen, setSidebarOpen, staff, handleLogout }) => {
   );
 };
 
-export default StaffSidebar;
+export default OwnerSidebar;

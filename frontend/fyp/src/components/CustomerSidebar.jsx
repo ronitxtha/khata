@@ -1,15 +1,12 @@
 import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
-import { Store, Package, ShoppingCart, User, LogOut, ShoppingBag } from "lucide-react";
-
-// Using the shared customerLayout.css for sidebar styles
-// We assume parent pages will import customerLayout.css
 
 const CustomerSidebar = ({ isOpen, setIsOpen }) => {
   const [localOpen, setLocalOpen] = useState(false);
   const open = isOpen !== undefined ? isOpen : localOpen;
   const setOpen = setIsOpen || setLocalOpen;
+
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -21,9 +18,7 @@ const CustomerSidebar = ({ isOpen, setIsOpen }) => {
       await axios.post(
         `${API_BASE}/api/customer/logout-click`,
         {},
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
+        { headers: { Authorization: `Bearer ${token}` } }
       );
     } catch (err) {
       console.error("Logout failed:", err);
@@ -33,14 +28,11 @@ const CustomerSidebar = ({ isOpen, setIsOpen }) => {
     }
   };
 
-  // Mock cart items count logic for demonstration (in a real app, take from context)
-  const cartItemCount = 3;
-
   const navLinks = [
-    { path: "/customer-dashboard", label: "Browse Stores", icon: <Store size={20} /> },
-    { path: "/order-history", label: "My Orders", icon: <Package size={20} /> },
-    { path: "/cart", label: "Shopping Cart", icon: <ShoppingCart size={20} />, badge: cartItemCount },
-    { path: "/customer-profile", label: "My Profile", icon: <User size={20} /> },
+    { path: "/customer-dashboard", label: "Browse Stores", icon: "🏪" },
+    { path: "/orders", label: "My Orders", icon: "📦" },
+    { path: "/cart", label: "Shopping Cart", icon: "🛒" },
+    { path: "/customer-profile", label: "My Profile", icon: "👤" },
   ];
 
   return (
@@ -49,30 +41,38 @@ const CustomerSidebar = ({ isOpen, setIsOpen }) => {
       onMouseEnter={() => setOpen(true)}
       onMouseLeave={() => setOpen(false)}
     >
+      {/* Brand */}
       <div className="cd-sidebar__brand">
-        <span className="cd-sidebar__logo"><ShoppingBag size={24} color="#4f46e5" /></span>
+        <span className="cd-sidebar__logo">🛍️</span>
         <span className="cd-sidebar__brand-name">Khata</span>
       </div>
 
+      {/* Navigation */}
       <nav className="cd-sidebar__nav">
-        {navLinks.map((link) => (
-          <button
-            key={link.path}
-            className={`cd-sidebar__link ${location.pathname === link.path ? "active" : ""}`}
-            onClick={() => navigate(link.path)}
-          >
-            <span className="cd-sidebar__icon">{link.icon}</span>
-            <span className="cd-sidebar__label">{link.label}</span>
-            {link.badge && (
-              <span className="cd-sidebar__badge">{link.badge}</span>
-            )}
-          </button>
-        ))}
+        {navLinks.map((link) => {
+          const active = location.pathname === link.path;
+
+          return (
+            <button
+              key={link.path}
+              className={`cd-sidebar__link ${active ? "active" : ""}`}
+              onClick={() => navigate(link.path)}
+            >
+              <span className="cd-sidebar__icon">{link.icon}</span>
+              <span className="cd-sidebar__label">{link.label}</span>
+              {active && <span className="cd-sidebar__active-bar" />}
+            </button>
+          );
+        })}
       </nav>
 
+      {/* Bottom (Logout) */}
       <div className="cd-sidebar__bottom">
-        <button className="cd-sidebar__link cd-sidebar__logout" onClick={handleLogout}>
-          <span className="cd-sidebar__icon"><LogOut size={20} /></span>
+        <button
+          className="cd-sidebar__link cd-sidebar__logout"
+          onClick={handleLogout}
+        >
+          <span className="cd-sidebar__icon">🚪</span>
           <span className="cd-sidebar__label">Logout</span>
         </button>
       </div>

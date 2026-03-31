@@ -1,5 +1,7 @@
 import express from "express";
 import { Product } from "../models/productModel.js";
+import { isAuthenticated } from "../middleware/isAuthenticated.js";
+import { User } from "../models/userModel.js";
 
 const router = express.Router();
 
@@ -30,6 +32,53 @@ router.get("/products/:id", async (req, res) => {
     res.json({ product });
   } catch (err) {
     res.status(500).json({ error: "Server error" });
+  }
+});
+
+// @desc    Create new review
+// @route   POST /api/products/:id/reviews
+// @access  Private
+router.post("/products/:id/reviews", isAuthenticated, async (req, res) => {
+  const { rating, comment } = req.body;
+  console.log("Review request received for product:", req.params.id);
+
+  try {
+    const product = await Product.findById(req.params.id);
+
+    if (product) {
+      const alreadyReviewed = product.reviews.find(
+        (r) => r.user.toString() === req.userId.toString()
+      );
+
+      if (alreadyReviewed) {
+        return res.status(400).json({ message: "Product already reviewed" });
+      }
+
+      const user = await User.findById(req.userId);
+
+      const review = {
+        name: user.username,
+        rating: Number(rating),
+        comment,
+        user: req.userId,
+      };
+
+      product.reviews.push(review);
+
+      product.numReviews = product.reviews.length;
+
+      product.rating =
+        product.reviews.reduce((acc, item) => item.rating + acc, 0) /
+        product.reviews.length;
+
+      await product.save();
+      res.status(201).json({ message: "Review added" });
+    } else {
+      res.status(404).json({ message: "Product not found" });
+    }
+  } catch (err) {
+    console.error("Review error:", err);
+    res.status(500).json({ message: "Server Error" });
   }
 });
 

@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import CustomerSidebar from "../components/CustomerSidebar";
-import { User, Bell, Search } from "lucide-react";
 import "../styles/customerLayout.css";
 import "../styles/orderHistory.css";
 
@@ -119,20 +118,10 @@ const OrderHistory = () => {
             <p>Track and manage your past purchases</p>
           </div>
           
-          <div className="cd-global-search">
-            <Search size={18} color="#a3aed1" />
-            <input 
-              type="text" 
-              placeholder="Search products, stores..." 
-            />
-          </div>
-
           <div className="cd-navbar__right">
-            <button className="cd-icon-btn">
-              <Bell size={20} />
-            </button>
-            <div className="cd-profile-menu">
-              <div className="cd-profile-icon"><User size={20} /></div>
+            <button className="cd-icon-btn">🔔</button>
+            <div className="cd-profile-icon">
+              <span>C</span>
             </div>
           </div>
         </header>

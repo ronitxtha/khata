@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import "../styles/staffDashboard.css";
 import "../styles/staffProfile.css";
+import "../styles/ownerDashboard.css";
+import StaffSidebar from "../components/StaffSidebar";
 
 const API_BASE = "http://localhost:8000";
 
@@ -10,7 +12,6 @@ const getAuthHeaders = () => ({
   Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
 });
 
-// ─── Format Helpers ──────────────────────────────────────────
 const formatTime = (date) => {
   if (!date) return "—";
   return new Date(date).toLocaleTimeString("en-US", {
@@ -98,7 +99,6 @@ const StaffProfile = () => {
     fetchAll();
   }, []);
 
-  // ── Profile Edit ──
   const handleEditClick = () => {
     setEditUsername(staff.username || "");
     setEditPhone(staff.phone || "");
@@ -123,7 +123,7 @@ const StaffProfile = () => {
   };
 
   const uploadSelectedImage = async () => {
-    if (!imageFile) return true; // nothing to upload
+    if (!imageFile) return true;
     try {
       const formData = new FormData();
       formData.append("profileImage", imageFile);
@@ -167,7 +167,6 @@ const StaffProfile = () => {
     }
   };
 
-  // ── Password Change ──
   const handlePasswordChange = async (e) => {
     e.preventDefault();
     const { currentPassword, newPassword, confirmPassword } = pwForm;
@@ -192,8 +191,8 @@ const StaffProfile = () => {
         { currentPassword, newPassword },
         { headers: getAuthHeaders() }
       );
-      setPwForm({ currentPassword: "", newPassword: "", confirmPassword: "" });
       showToast("Password changed successfully!");
+      setPwForm({ currentPassword: "", newPassword: "", confirmPassword: "" });
     } catch (err) {
       showToast(err.response?.data?.message || "Password change failed", "error");
     } finally {
@@ -201,7 +200,6 @@ const StaffProfile = () => {
     }
   };
 
-  // ── Logout ──
   const handleLogout = async () => {
     try {
       await axios.post(`${API_BASE}/api/staff/logout-click`, {}, { headers: getAuthHeaders() });
@@ -210,302 +208,238 @@ const StaffProfile = () => {
     navigate("/login");
   };
 
-  const navLinks = [
-    { label: "Dashboard", icon: "🏠", path: "/staff-dashboard" },
-    { label: "Product Management", icon: "📦", path: "/staff-inventory" },
-    { label: "Orders", icon: "🛒", path: "/order-management" },
-    { label: "Attendance", icon: "📅", path: "/staff-attendance" },
-    { label: "Profile", icon: "👤", path: "/staff-profile" },
-  ];
-
-  const currentAvatarSrc = imagePreview || (staff?.profileImage ? `${API_BASE}/${staff.profileImage}` : null);
-
   return (
     <div className="sd-layout">
-      {/* ========== SIDEBAR ========== */}
-      <aside
-        className={`sd-sidebar ${sidebarOpen ? "sd-sidebar--open" : ""}`}
-        onMouseEnter={() => setSidebarOpen(true)}
-        onMouseLeave={() => setSidebarOpen(false)}
-      >
-        <div className="sd-sidebar__brand">
-          <span className="sd-sidebar__logo">🛍️</span>
-          <span className="sd-sidebar__brand-name">Khata</span>
-        </div>
-        <nav className="sd-sidebar__nav">
-          {navLinks.map((link) => (
-            <button
-              key={link.path}
-              className={`sd-sidebar__link ${window.location.pathname === link.path ? "active" : ""}`}
-              onClick={() => navigate(link.path)}
-            >
-              <span className="sd-sidebar__icon">{link.icon}</span>
-              <span className="sd-sidebar__label">{link.label}</span>
-            </button>
-          ))}
-        </nav>
-        <div className="sd-sidebar__bottom">
-          <button className="sd-sidebar__link sd-sidebar__logout" onClick={handleLogout}>
-            <span className="sd-sidebar__icon">🚪</span>
-            <span className="sd-sidebar__label">Logout</span>
-          </button>
-        </div>
-      </aside>
+      {/* Shared Staff Sidebar */}
+      <StaffSidebar 
+        sidebarOpen={sidebarOpen} 
+        setSidebarOpen={setSidebarOpen} 
+        staff={staff} 
+        handleLogout={handleLogout} 
+      />
 
       {/* ========== MAIN ========== */}
-      <div className={`sd-main ${sidebarOpen ? "sd-main--shifted" : ""}`}>
+      <div className={`sd-main od-main-content ${sidebarOpen ? "sd-main--shifted" : ""}`}>
         {/* ---- NAVBAR ---- */}
         <header className="sd-navbar">
           <div className="sd-navbar__left">
             <button className="sd-navbar__hamburger" onClick={() => setSidebarOpen((v) => !v)}>☰</button>
             <div className="sd-navbar__title">
-              <h1>My Profile</h1>
-              <span className="sd-navbar__subtitle">Manage your personal information</span>
+              <h1>Personal Profile</h1>
+              <span className="sd-navbar__subtitle">Manage your credentials and view performance</span>
             </div>
           </div>
           <div className="sd-navbar__right">
             <div className="sd-avatar">
-              {currentAvatarSrc ? (
-                <img src={currentAvatarSrc} alt="avatar" />
+              {staff?.profileImage ? (
+                <img src={`${API_BASE}/${staff.profileImage}`} alt="avatar" />
               ) : (
                 <span>{(staff?.username || "S")[0].toUpperCase()}</span>
               )}
             </div>
             <div className="sd-navbar__staff-info">
               <span className="sd-navbar__name">{staff?.username || "Staff"}</span>
-              <span className="sd-navbar__role">Staff</span>
+              <span className="sd-navbar__role">Active Staff</span>
             </div>
           </div>
         </header>
 
         {/* ---- CONTENT ---- */}
         <main className="sd-content">
-          {loading ? (
-            <div className="sp-loading">
-              <div className="sp-spinner"></div>
-              <p>Loading profile...</p>
+          
+          {/* Header Section */}
+          <div className="si-header-section">
+            <div className="si-header-info">
+              <h2>Profile Information</h2>
+              <p>Keep your contact info and security credentials up to date.</p>
             </div>
-          ) : (
-            <div className="sp-grid">
-              
-              {/* ==== LEFT COLUMN ==== */}
-              <div className="sp-col">
+          </div>
+
+          {!loading ? (
+            <div className="si-profile-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '24px' }}>
                 
-                {/* 1. PROFILE INFO CARD */}
-                <div className="sd-panel sp-card">
-                  <div className="sd-panel__header">
-                    <h3>👤 Profile Information</h3>
+                {/* 1. IDENTITY CARD */}
+                <div className="si-ledger-table-wrap">
+                  <div style={{ padding: '20px', borderBottom: '1px solid #f1f5f9', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <h3 style={{ fontSize: '15px', fontWeight: 800 }}>👤 Identity Details</h3>
                     {!isEditing && (
-                      <button className="sp-link-btn" onClick={handleEditClick}>
-                        ✏️ Edit
-                      </button>
+                      <button className="si-btn-primary si-btn-primary--dark" style={{ padding: '6px 14px', fontSize: '12px' }} onClick={handleEditClick}>Edit Identity</button>
                     )}
                   </div>
-                  <div className="sp-profile-overview">
-                    <div className="sp-avatar-wrapper">
-                      {currentAvatarSrc ? (
-                        <img src={currentAvatarSrc} alt="Profile" className="sp-avatar-large" />
-                      ) : (
-                        <div className="sp-avatar-placeholder-large">
-                          {(staff?.username || "S")[0].toUpperCase()}
-                        </div>
-                      )}
-
-                      {/* Edit overlay with camera icon */}
-                      {isEditing && (
-                        <div
-                          className="sp-avatar-overlay"
-                          onClick={() => fileInputRef.current?.click()}
-                          title="Change Profile Picture"
-                        >
-                          📷
-                        </div>
-                      )}
-                      
-                      <input
-                        id="sp-file-input"
-                        type="file"
-                        accept="image/*"
-                        ref={fileInputRef}
-                        onChange={handleImageSelect}
-                        hidden
-                      />
+                  
+                  <div style={{ padding: '24px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '24px', marginBottom: '32px' }}>
+                       <div style={{ position: 'relative' }}>
+                          {imagePreview || (staff?.profileImage ? `${API_BASE}/${staff.profileImage}` : null) ? (
+                            <img src={imagePreview || `${API_BASE}/${staff.profileImage}`} alt="Profile" style={{ width: 90, height: 90, borderRadius: '50%', objectFit: 'cover', border: '3px solid #f8fafc' }} />
+                          ) : (
+                            <div style={{ width: 90, height: 90, borderRadius: '50%', background: '#f8fafc', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '36px', fontWeight: 800, color: '#94a3b8' }}>
+                              {(staff?.username || "S")[0].toUpperCase()}
+                            </div>
+                          )}
+                          {isEditing && (
+                            <button 
+                              onClick={() => fileInputRef.current?.click()} 
+                              style={{ position: 'absolute', bottom: '0', right: '0', width: '32px', height: '32px', borderRadius: '50%', background: '#0f172a', border: 'none', color: '#fff', fontSize: '14px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                              title="Update Photo"
+                            >
+                              📷
+                            </button>
+                          )}
+                          <input type="file" ref={fileInputRef} onChange={handleImageSelect} hidden accept="image/*" />
+                       </div>
+                       <div style={{ flex: 1 }}>
+                         <p style={{ fontSize: '12px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', marginBottom: '4px' }}>Employee Role</p>
+                         <span className="si-ledger-tag" style={{ width: 'fit-content', background: '#f8fafc', fontWeight: 700 }}>{staff?.role?.toUpperCase() || "STAFF"}</span>
+                       </div>
                     </div>
 
-                    <div className="sp-info-list">
-                      <div className="sp-info-row">
-                        <label>Full Name</label>
-                        {isEditing ? (
-                          <input type="text" className="sp-input" value={editUsername} onChange={(e) => setEditUsername(e.target.value)} />
+                    {!isEditing ? (
+                       <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                          <div className="si-profile-field">
+                             <span className="si-profile-label">LEGAL NAME</span>
+                             <span className="si-profile-value">{staff?.username || "—"}</span>
+                          </div>
+                          <div className="si-profile-field">
+                             <span className="si-profile-label">ASSIGNED EMAIL</span>
+                             <span className="si-profile-value">{staff?.email || "—"}</span>
+                          </div>
+                          <div className="si-profile-field">
+                             <span className="si-profile-label">CONTACT MOBILE</span>
+                             <span className="si-profile-value">{staff?.phone || "Not provided"}</span>
+                          </div>
+                          <div className="si-profile-field">
+                             <span className="si-profile-label">JOINED ON</span>
+                             <span className="si-profile-value">{formatDate(staff?.createdAt)}</span>
+                          </div>
+                       </div>
+                    ) : (
+                       <div className="si-form">
+                          <div className="si-form__group">
+                             <label>Display Name</label>
+                             <input value={editUsername} onChange={(e) => setEditUsername(e.target.value)} placeholder="Full name" />
+                          </div>
+                          <div className="si-form__group">
+                             <label>Primary Phone</label>
+                             <input value={editPhone} onChange={(e) => setEditPhone(e.target.value)} placeholder="+977-XXXXXXXXXX" />
+                          </div>
+                          <div className="si-form__actions" style={{ marginTop: '20px' }}>
+                             <button className="si-btn-cancel" onClick={handleCancelEdit}>Cancel</button>
+                             <button className="si-btn-submit" onClick={handleSaveProfile} disabled={savingProfile}>
+                               {savingProfile ? "Processing..." : "Commit Changes"}
+                             </button>
+                          </div>
+                       </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* 2. SECURITY & ATTENDANCE */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                    
+                    {/* Security Card */}
+                    <div className="si-ledger-table-wrap">
+                      <div style={{ padding: '20px', borderBottom: '1px solid #f1f5f9' }}>
+                        <h3 style={{ fontSize: '15px', fontWeight: 800 }}>🔐 Security Key</h3>
+                      </div>
+                      <form className="si-form" style={{ padding: '24px' }} onSubmit={handlePasswordChange}>
+                         <div className="si-form__group">
+                            <label>Current Key</label>
+                            <input type="password" value={pwForm.currentPassword} onChange={(e) => setPwForm({...pwForm, currentPassword: e.target.value})} placeholder="••••••••" />
+                         </div>
+                         <div className="si-form__group">
+                            <label>New Secret Key</label>
+                            <input type="password" value={pwForm.newPassword} onChange={(e) => setPwForm({...pwForm, newPassword: e.target.value})} placeholder="Min 6 chars" />
+                         </div>
+                         <div className="si-form__group">
+                            <label>Confirm Secret Key</label>
+                            <input type="password" value={pwForm.confirmPassword} onChange={(e) => setPwForm({...pwForm, confirmPassword: e.target.value})} placeholder="Re-enter key" />
+                         </div>
+                         <button type="submit" className="si-btn-submit" style={{ width: '100%', marginTop: '12px' }} disabled={savingPassword}>
+                            {savingPassword ? "Updating..." : "Update Security Key"}
+                         </button>
+                      </form>
+                    </div>
+
+                    {/* Today's Insights Card */}
+                    <div className="si-ledger-table-wrap">
+                      <div style={{ padding: '20px', borderBottom: '1px solid #f1f5f9' }}>
+                        <h3 style={{ fontSize: '15px', fontWeight: 800 }}>📅 Today's Session</h3>
+                      </div>
+                      <div style={{ padding: '24px' }}>
+                        {attendance ? (
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                             <div style={{ background: '#f8fafc', padding: '16px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+                                <p style={{ fontSize: '11px', fontWeight: 800, color: '#64748b', marginBottom: '4px' }}>SESSION START</p>
+                                <p style={{ fontSize: '16px', fontWeight: 800, color: '#0f172a' }}>{formatTime(attendance.checkInTime)}</p>
+                             </div>
+                             <div style={{ background: '#f8fafc', padding: '16px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+                                <p style={{ fontSize: '11px', fontWeight: 800, color: '#64748b', marginBottom: '4px' }}>SESSION END</p>
+                                <p style={{ fontSize: '16px', fontWeight: 800, color: attendance.isStillWorking ? '#3b82f6' : '#0f172a' }}>
+                                  {attendance.isStillWorking ? "Active Now" : formatTime(attendance.checkOutTime)}
+                                </p>
+                             </div>
+                             <div style={{ gridColumn: 'span 2', background: '#ecfdf5', padding: '16px', borderRadius: '12px', border: '1px solid #10b98120', textAlign: 'center' }}>
+                                <p style={{ fontSize: '11px', fontWeight: 800, color: '#059669', marginBottom: '4px' }}>TOTAL HOURS LOGGED TODAY</p>
+                                <p style={{ fontSize: '24px', fontWeight: 800, color: '#065f46' }}>{attendance.totalHours} <span style={{ fontSize: '14px', fontWeight: 500 }}>hours</span></p>
+                             </div>
+                          </div>
                         ) : (
-                          <span>{staff?.username || "—"}</span>
+                          <div style={{ padding: '40px', textAlign: 'center', background: '#f8fafc', borderRadius: '12px', border: '1px dashed #cbd5e1' }}>
+                             <span style={{ display: 'block', fontSize: '24px', marginBottom: '8px' }}>📋</span>
+                             <p style={{ fontSize: '13px', color: '#64748b', margin: 0 }}>No attendance recorded yet for today.</p>
+                          </div>
                         )}
                       </div>
-                      <div className="sp-info-row">
-                        <label>Phone</label>
-                        {isEditing ? (
-                          <input type="tel" className="sp-input" value={editPhone} onChange={(e) => setEditPhone(e.target.value)} />
-                        ) : (
-                          <span>{staff?.phone || <em className="sp-empty">Not set</em>}</span>
-                        )}
-                      </div>
-                      <div className="sp-info-row">
-                        <label>Email</label>
-                        <span className="sp-readonly">{staff?.email || "—"}</span>
-                      </div>
-                      <div className="sp-info-row">
-                        <label>Role</label>
-                        <span className="sd-badge badge-processing">Staff</span>
-                      </div>
-                      <div className="sp-info-row">
-                        <label>Member Since</label>
-                        <span className="sp-readonly">{formatDate(staff?.createdAt)}</span>
-                      </div>
-
-                      {isEditing && (
-                        <div className="sp-edit-actions">
-                          <button className="sp-btn-cancel" onClick={handleCancelEdit}>Cancel</button>
-                          <button className="sp-btn-save" onClick={handleSaveProfile} disabled={savingProfile}>
-                            {savingProfile ? "Saving..." : "💾 Save Changes"}
-                          </button>
-                        </div>
-                      )}
                     </div>
-                  </div>
+
                 </div>
-
-                {/* 2. SECURITY CARD */}
-                <div className="sd-panel sp-card">
-                  <div className="sd-panel__header">
-                    <h3>🔒 Change Password</h3>
-                  </div>
-                  <form className="sp-form" onSubmit={handlePasswordChange}>
-                    <div className="sp-form-group">
-                      <label>Current Password</label>
-                      <div className="sp-input-eye">
-                        <input
-                          type={showPasswords.current ? "text" : "password"}
-                          className="sp-input"
-                          value={pwForm.currentPassword}
-                          onChange={(e) => setPwForm((p) => ({ ...p, currentPassword: e.target.value }))}
-                        />
-                        <button type="button" onClick={() => setShowPasswords((s) => ({ ...s, current: !s.current }))}>
-                          {showPasswords.current ? "🙈" : "👁️"}
-                        </button>
-                      </div>
-                    </div>
-                    <div className="sp-form-group">
-                      <label>New Password</label>
-                      <div className="sp-input-eye">
-                        <input
-                          type={showPasswords.new ? "text" : "password"}
-                          className="sp-input"
-                          value={pwForm.newPassword}
-                          onChange={(e) => setPwForm((p) => ({ ...p, newPassword: e.target.value }))}
-                        />
-                        <button type="button" onClick={() => setShowPasswords((s) => ({ ...s, new: !s.new }))}>
-                          {showPasswords.new ? "🙈" : "👁️"}
-                        </button>
-                      </div>
-                    </div>
-                    <div className="sp-form-group">
-                      <label>Confirm Password</label>
-                      <div className="sp-input-eye">
-                        <input
-                          type={showPasswords.confirm ? "text" : "password"}
-                          className="sp-input"
-                          value={pwForm.confirmPassword}
-                          onChange={(e) => setPwForm((p) => ({ ...p, confirmPassword: e.target.value }))}
-                        />
-                        <button type="button" onClick={() => setShowPasswords((s) => ({ ...s, confirm: !s.confirm }))}>
-                          {showPasswords.confirm ? "🙈" : "👁️"}
-                        </button>
-                      </div>
-                    </div>
-                    <button type="submit" className="sp-btn-save sp-pw-btn" disabled={savingPassword}>
-                      {savingPassword ? "Updating..." : "Update Password"}
-                    </button>
-                  </form>
-                </div>
-
-              </div>
-
-              {/* ==== RIGHT COLUMN ==== */}
-              <div className="sp-col">
-                
-                {/* 3. ATTENDANCE SUMMARY */}
-                <div className="sd-panel sp-card sp-attendance-card">
-                  <div className="sd-panel__header">
-                    <h3>📅 Today's Attendance</h3>
-                  </div>
-                  {attendance ? (
-                    <div className="sp-att-stats">
-                      <div className="sp-att-stat">
-                        <div className="sp-att-icon">🟢</div>
-                        <div>
-                          <p className="sp-att-label">Login</p>
-                          <p className="sp-att-val">{formatTime(attendance.checkInTime)}</p>
-                        </div>
-                      </div>
-                      <div className="sp-att-stat">
-                        <div className="sp-att-icon">🔴</div>
-                        <div>
-                          <p className="sp-att-label">Logout</p>
-                          <p className="sp-att-val">
-                            {attendance.isStillWorking ? "Still working..." : formatTime(attendance.checkOutTime)}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="sp-att-stat">
-                        <div className="sp-att-icon">⏱️</div>
-                        <div>
-                          <p className="sp-att-label">Hours</p>
-                          <p className="sp-att-val">{attendance.totalHours}h</p>
-                        </div>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="sd-empty sp-att-empty">
-                      <span>📋</span>
-                      <p>No attendance record for today.</p>
-                    </div>
-                  )}
-
-                  {weekData.length > 0 && (
-                    <div className="sp-week-table-wrap">
-                      <h4 className="sp-week-title">Last 7 Days</h4>
-                      <table className="sp-week-table">
-                        <thead>
-                          <tr>
-                            <th>Date</th>
-                            <th>Login</th>
-                            <th>Logout</th>
-                            <th>Hrs</th>
-                            <th>Stat</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {weekData.slice(0, 5).map((rec, idx) => (
-                            <tr key={idx}>
-                              <td>{formatDate(rec.date)}</td>
-                              <td>{formatTime(rec.checkIn)}</td>
-                              <td>{rec.checkOut ? formatTime(rec.checkOut) : "—"}</td>
-                              <td>{rec.totalHours}</td>
-                              <td>
-                                <span className={rec.status === "Present" ? "sp-status-green" : "sp-status-red"}>
-                                  {rec.status === "Present" ? "P" : "A"}
-                                </span>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  )}
-                </div>
-
-              </div>
             </div>
+          ) : (
+            <div style={{ padding: '80px', textAlign: 'center', color: '#64748b' }}>
+              ⏳ Loading profile workspace...
+            </div>
+          )}
+
+          {/* WEEKLY ACTIVITY TABLE */}
+          {!loading && weekData.length > 0 && (
+             <div className="si-ledger-table-wrap" style={{ marginTop: '32px' }}>
+                <div style={{ padding: '20px', borderBottom: '1px solid #f1f5f9' }}>
+                    <h3 style={{ fontSize: '15px', fontWeight: 800 }}>📉 Weekly Performance History</h3>
+                </div>
+                <table className="si-ledger-table">
+                    <thead>
+                        <tr>
+                            <th>Activity Date</th>
+                            <th>Clocked In</th>
+                            <th>Clocked Out</th>
+                            <th>Total Duration</th>
+                            <th>Status Badge</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {weekData.slice(0, 7).map((rec, idx) => (
+                           <tr key={idx}>
+                              <td style={{ fontWeight: 600 }}>{formatDate(rec.date)}</td>
+                              <td>{formatTime(rec.checkIn)}</td>
+                              <td>{rec.checkOut ? formatTime(rec.checkOut) : <span style={{ color: '#94a3b8' }}>—</span>}</td>
+                              <td style={{ fontWeight: 700, color: '#0f172a' }}>{rec.totalHours} hrs</td>
+                              <td>
+                                 <div className="si-status-wrap">
+                                    <span className={`si-dot ${rec.status === "Present" ? "si-dot--green" : "si-dot--red"}`}></span>
+                                    <span className="si-status-text" style={{ fontWeight: 600, color: rec.status === "Present" ? '#059669' : '#dc2626' }}>
+                                      {rec.status === "Present" ? "Present" : "Absent"}
+                                    </span>
+                                 </div>
+                              </td>
+                           </tr>
+                        ))}
+                    </tbody>
+                </table>
+                <div style={{ padding: '16px', textAlign: 'center', background: '#f8fafc' }}>
+                   <button className="si-btn-cancel" style={{ fontSize: '12px' }} onClick={() => navigate("/staff-attendance")}>View Full Attendance Ledger →</button>
+                </div>
+             </div>
           )}
         </main>
       </div>

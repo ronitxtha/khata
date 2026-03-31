@@ -155,6 +155,7 @@ export const recordPurchase = async (req, res) => {
         targetProduct.description = description || targetProduct.description;
         targetProduct.category = category || targetProduct.category;
         targetProduct.quantity += Number(quantity);
+        targetProduct.costPrice = Number(costPrice); // Update CP
         if (imagePath) targetProduct.image = imagePath;
         await targetProduct.save();
       }
@@ -166,6 +167,7 @@ export const recordPurchase = async (req, res) => {
         description: description || "",
         category: category || "Others",
         quantity: Number(quantity),
+        costPrice: Number(costPrice), // Set CP
         image: imagePath,
         shopId,
       });

@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import "../styles/staffDashboard.css";
 import "../styles/staffInventory.css";
+import "../styles/ownerDashboard.css";
+import OwnerSidebar from "../components/OwnerSidebar";
 
 const API_BASE = "http://localhost:8000";
 
@@ -23,9 +25,16 @@ const Attendance = () => {
   };
 
   useEffect(() => {
-    const user = JSON.parse(localStorage.getItem("user") || "{}");
-    setOwner(user);
-    fetchHistory();
+     const fetchData = async () => {
+        try {
+          const user = JSON.parse(localStorage.getItem("user") || "{}");
+          setOwner(user);
+          await fetchHistory();
+        } catch (err) {
+          console.error(err);
+        }
+     };
+     fetchData();
   }, []);
 
   const fetchHistory = async () => {
@@ -54,7 +63,7 @@ const Attendance = () => {
 
   const formatDate = (dateString) => {
     if (!dateString) return "-";
-    return new Date(dateString).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+    return new Date(dateString).toLocaleDateString("en-US", { weekday: 'short', day: "2-digit", month: "short", year: "numeric" });
   };
 
   const formatTime = (timeString) => {
@@ -66,7 +75,7 @@ const Attendance = () => {
     if (!dateString) return false;
     const d = new Date(dateString);
     const today = new Date();
-    return d.getDate() === today.getDate() && d.getMonth() === today.getMonth() && d.getFullYear() === today.getFullYear();
+    return d.toDateString() === today.toDateString();
   };
 
   // Group by staff member, with month filtering
@@ -96,221 +105,178 @@ const Attendance = () => {
   const presentRecords = attendance.filter((a) => a.status === "present").length;
   const absentRecords = attendance.filter((a) => a.status === "absent").length;
 
-  const navLinks = [
-    { label: "Dashboard", icon: "🏠", path: "/owner-dashboard" },
-    { label: "Product Management", icon: "📦", path: "/products" },
-    { label: "Orders", icon: "🛒", path: "/order-management" },
-    { label: "Staff Management", icon: "👥", path: "/add-staff" },
-    { label: "Supplier Management", icon: "🏭", path: "/supplier-management" },
-    { label: "Attendance", icon: "📅", path: "/attendance" },
-    { label: "Profile", icon: "👤", path: "/owner-profile" },
-  ];
-
   return (
     <div className="sd-layout">
-      {/* ========== SIDEBAR ========== */}
-      <aside
-        className={`sd-sidebar ${sidebarOpen ? "sd-sidebar--open" : ""}`}
-        onMouseEnter={() => setSidebarOpen(true)}
-        onMouseLeave={() => setSidebarOpen(false)}
-      >
-        <div className="sd-sidebar__brand">
-          <span className="sd-sidebar__logo">🛍️</span>
-          <span className="sd-sidebar__brand-name">Khata</span>
-        </div>
-        <nav className="sd-sidebar__nav">
-          {navLinks.map((link) => (
-            <button
-              key={link.path}
-              className={`sd-sidebar__link ${window.location.pathname === link.path ? "active" : ""}`}
-              onClick={() => navigate(link.path)}
-            >
-              <span className="sd-sidebar__icon">{link.icon}</span>
-              <span className="sd-sidebar__label">{link.label}</span>
-            </button>
-          ))}
-        </nav>
-        <div className="sd-sidebar__bottom">
-          <button className="sd-sidebar__link sd-sidebar__logout" onClick={handleLogout}>
-            <span className="sd-sidebar__icon">🚪</span>
-            <span className="sd-sidebar__label">Logout</span>
-          </button>
-        </div>
-      </aside>
+      {/* Shared Owner Sidebar */}
+      <OwnerSidebar 
+        sidebarOpen={sidebarOpen} 
+        setSidebarOpen={setSidebarOpen} 
+        owner={owner} 
+        handleLogout={handleLogout} 
+      />
 
       {/* ========== MAIN AREA ========== */}
-      <div className={`sd-main ${sidebarOpen ? "sd-main--shifted" : ""}`}>
+      <div className={`sd-main od-main-content ${sidebarOpen ? "sd-main--shifted" : ""}`}>
         {/* ---- TOP NAVBAR ---- */}
         <header className="sd-navbar">
           <div className="sd-navbar__left">
             <button className="sd-navbar__hamburger" onClick={() => setSidebarOpen((v) => !v)}>☰</button>
             <div className="sd-navbar__title">
               <h1>Attendance History</h1>
-              <span className="sd-navbar__subtitle">View staff login and logout records</span>
+              <span className="sd-navbar__subtitle">Monitor staff check-in/out patterns</span>
             </div>
           </div>
           <div className="sd-navbar__right">
-            <div className="sd-avatar">
-              <span>{(owner?.username || "O")[0].toUpperCase()}</span>
-            </div>
-            <div className="sd-navbar__staff-info">
-              <span className="sd-navbar__name">{owner?.username || "Owner"}</span>
-              <span className="sd-navbar__role">Owner</span>
-            </div>
+              <div className="sd-avatar">
+                <span>{(owner?.username || "O")[0].toUpperCase()}</span>
+              </div>
+              <div className="sd-navbar__staff-info">
+                <span className="sd-navbar__name">{owner?.username || "Owner"}</span>
+                <span className="sd-navbar__role">Owner</span>
+              </div>
           </div>
         </header>
 
         {/* ---- CONTENT ---- */}
         <main className="sd-content">
-
-          {/* Banner */}
-          <div className="sd-welcome si-banner">
-            <div>
-              <h2>📅 Staff Attendance</h2>
-              <p>Review detailed login/logout records for every staff member over the last 3 months.</p>
+          
+          {/* 1. Header Section */}
+          <div className="si-header-section">
+            <div className="si-header-info">
+              <h2>Team Attendance Log</h2>
+              <p>Detailed overview of staff attendance across your company.</p>
             </div>
-            <select
-              className="sd-filter-select"
-              value={filterMonth}
-              onChange={(e) => setFilterMonth(e.target.value)}
-              style={{ alignSelf: "center" }}
-            >
-              <option value="all">Last 3 Months</option>
-              <option value="current">Current Month</option>
-              <option value="last">Last Month</option>
-              <option value="older">Older</option>
-            </select>
-          </div>
-
-          {/* Summary mini-cards */}
-          <div className="si-mini-cards">
-            <div className="si-mini-card si-mini-card--blue">
-              <span className="si-mini-card__icon">👥</span>
-              <div>
-                <div className="si-mini-card__num">{totalStaff}</div>
-                <div className="si-mini-card__label">Staff Members</div>
-              </div>
-            </div>
-            <div className="si-mini-card si-mini-card--green">
-              <span className="si-mini-card__icon">✅</span>
-              <div>
-                <div className="si-mini-card__num">{presentRecords}</div>
-                <div className="si-mini-card__label">Present Days</div>
-              </div>
-            </div>
-            <div className="si-mini-card si-mini-card--red">
-              <span className="si-mini-card__icon">❌</span>
-              <div>
-                <div className="si-mini-card__num">{absentRecords}</div>
-                <div className="si-mini-card__label">Absent Days</div>
-              </div>
-            </div>
-            <div className="si-mini-card si-mini-card--orange">
-              <span className="si-mini-card__icon">📋</span>
-              <div>
-                <div className="si-mini-card__num">{totalRecords}</div>
-                <div className="si-mini-card__label">Total Records</div>
-              </div>
+            <div className="si-header-actions" style={{ display: 'flex', gap: '12px' }}>
+              <select
+                className="si-ledger-select"
+                value={filterMonth}
+                onChange={(e) => setFilterMonth(e.target.value)}
+                style={{ minWidth: '180px' }}
+              >
+                <option value="all">Time Period: Last 3 Months</option>
+                <option value="current">Current Month Only</option>
+                <option value="last">Last Month Only</option>
+                <option value="older">Older Records</option>
+              </select>
             </div>
           </div>
 
-          {/* Content */}
-          {loading ? (
-            <div className="sd-panel" style={{ textAlign: "center", padding: "48px", color: "#94a3b8" }}>
-              ⏳ Loading attendance records...
-            </div>
-          ) : Object.keys(groupedData).length === 0 ? (
-            <div className="sd-panel">
-              <div className="sd-empty">
-                <span>📅</span>
-                <p>No attendance records found for the selected period.</p>
+          {/* 2. Stats Section */}
+          <div className="si-ledger-cards">
+            <div className="si-ledger-card">
+              <span className="si-ledger-card__label">Total Staff</span>
+              <div className="si-ledger-card__content">
+                <span className="si-ledger-card__num">{totalStaff}</span>
               </div>
             </div>
-          ) : (
-            Object.values(groupedData).map((staffData) => {
-              const limit = visibleCounts[staffData.info._id] || 5;
-              const shownRecords = staffData.records.slice(0, limit);
-              const presentDays = staffData.records.filter((r) => r.status === "present").length;
-              const absentDays = staffData.records.filter((r) => r.status === "absent").length;
+            <div className="si-ledger-card">
+              <span className="si-ledger-card__label">Present Days</span>
+              <div className="si-ledger-card__content">
+                <span className="si-ledger-card__num" style={{ color: '#10b981' }}>{presentRecords}</span>
+              </div>
+            </div>
+            <div className="si-ledger-card">
+              <span className="si-ledger-card__label">Absent Days</span>
+              <div className="si-ledger-card__content">
+                <span className="si-ledger-card__num" style={{ color: '#ef4444' }}>{absentRecords}</span>
+              </div>
+            </div>
+            <div className="si-ledger-card">
+              <span className="si-ledger-card__label">Total Days</span>
+              <div className="si-ledger-card__content">
+                <span className="si-ledger-card__num">{totalRecords}</span>
+              </div>
+            </div>
+          </div>
 
-              return (
-                <div key={staffData.info._id} className="sd-panel si-table-panel">
-                  {/* Staff Header */}
-                  <div className="sd-panel__header" style={{ marginBottom: "16px", paddingBottom: "14px", borderBottom: "1px solid #f1f5f9" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
-                      <div className="sd-avatar" style={{ width: 44, height: 44, fontSize: 18 }}>
-                        <span>{(staffData.info.username || "S")[0].toUpperCase()}</span>
-                      </div>
-                      <div>
-                        <h3 style={{ fontSize: 16, fontWeight: 700, color: "#0f172a", marginBottom: 2 }}>
-                          {staffData.info.username}
-                        </h3>
-                        <span style={{ fontSize: 13, color: "#94a3b8" }}>{staffData.info.email}</span>
-                      </div>
-                    </div>
-                    <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
-                      <span className="sd-badge badge-delivered">✅ {presentDays} Present</span>
-                      <span className="sd-badge badge-cancelled">❌ {absentDays} Absent</span>
-                      <span style={{ fontSize: 12, color: "#94a3b8" }}>{staffData.records.length} records</span>
-                    </div>
-                  </div>
+          {/* 3. Grouped History */}
+          <div style={{ marginTop: '24px' }}>
+            {loading ? (
+              <div style={{ padding: '60px', textAlign: 'center', color: '#64748b' }}>⏳ Loading team history...</div>
+            ) : Object.keys(groupedData).length === 0 ? (
+              <div className="sd-panel" style={{ padding: '60px', textAlign: 'center', background: '#f8fafc', border: '1px dashed #cbd5e1' }}>
+                <span>No attendance records found for the selected filter.</span>
+              </div>
+            ) : (
+              Object.values(groupedData).map((staffData) => {
+                const limit = visibleCounts[staffData.info._id] || 5;
+                const shownRecords = staffData.records.slice(0, limit);
+                const presentDays = staffData.records.filter((r) => r.status === "present").length;
+                const absentDays = staffData.records.filter((r) => r.status === "absent").length;
 
-                  {/* Attendance table */}
-                  <div className="si-table-wrap">
-                    <table className="si-table">
+                return (
+                  <div key={staffData.info._id} className="si-ledger-table-wrap" style={{ marginBottom: '32px' }}>
+                    <div style={{ padding: '20px', background: '#fbfcfd', borderBottom: '1px solid #f1f5f9', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                         <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                            <div className="sd-avatar" style={{ width: 44, height: 44 }}>
+                                <span>{(staffData.info.username || "S")[0].toUpperCase()}</span>
+                            </div>
+                            <div>
+                                <h3 style={{ fontSize: '15px', fontWeight: 800 }}>{staffData.info.username}</h3>
+                                <div style={{ fontSize: '12px', color: '#64748b' }}>{staffData.info.email}</div>
+                            </div>
+                         </div>
+                         <div style={{ display: 'flex', gap: '8px' }}>
+                             <span className="si-ledger-tag" style={{ background: '#ecfdf5', color: '#059669', border: '1px solid #10b98120' }}>✅ {presentDays} Present</span>
+                             <span className="si-ledger-tag" style={{ background: '#fef2f2', color: '#dc2626', border: '1px solid #ef444420' }}>❌ {absentDays} Absent</span>
+                         </div>
+                    </div>
+                    <table className="si-ledger-table">
                       <thead>
                         <tr>
                           <th>Date</th>
                           <th>Status</th>
-                          <th>Login</th>
-                          <th>Logout</th>
+                          <th>Clock-In</th>
+                          <th>Clock-Out</th>
                         </tr>
                       </thead>
                       <tbody>
                         {shownRecords.map((record) => (
                           <tr key={record._id}>
-                            <td style={{ fontWeight: 500, color: "#334155" }}>{formatDate(record.date)}</td>
+                            <td style={{ fontWeight: 600 }}>{formatDate(record.date)}</td>
                             <td>
-                              <span className={`sd-badge ${record.status === "present" ? "badge-delivered" : "badge-cancelled"}`}>
-                                {record.status === "present" ? "Present" : "Absent"}
-                              </span>
+                              <div className="si-status-wrap">
+                                <span className={`si-dot ${record.status === "present" ? "si-dot--green" : "si-dot--red"}`}></span>
+                                <span className="si-status-text" style={{ fontWeight: 600, color: record.status === "present" ? '#059669' : '#dc2626' }}>
+                                  {record.status === "present" ? "Present" : "Absent"}
+                                </span>
+                              </div>
                             </td>
-                            <td style={{ color: record.status === "absent" ? "#ef4444" : "#334155" }}>
-                              {record.status === "absent" ? "—" : formatTime(record.checkInTime)}
+                            <td style={{ fontWeight: 500 }}>
+                              {record.status === "absent" ? <span style={{ color: '#94a3b8' }}>—</span> : formatTime(record.checkInTime)}
                             </td>
-                            <td>
+                            <td style={{ fontWeight: 500 }}>
                               {record.status === "absent" ? (
-                                <span style={{ color: "#ef4444" }}>—</span>
+                                <span style={{ color: "#94a3b8" }}>—</span>
                               ) : record.lastLogoutClick ? (
                                 formatTime(record.lastLogoutClick)
                               ) : isToday(record.date) || !record.checkInTime ? (
-                                "—"
+                                <span style={{ color: '#3b82f6', fontStyle: 'italic' }}>On-duty</span>
                               ) : (
-                                <span className="sd-badge badge-cancelled">Not Recorded</span>
+                                <span style={{ color: "#f59e0b", fontStyle: 'italic' }}>Not Recorded</span>
                               )}
                             </td>
                           </tr>
                         ))}
                       </tbody>
                     </table>
+                    
+                    {staffData.records.length > limit && (
+                      <div style={{ padding: '16px', background: '#fbfcfd', textAlign: 'center', borderTop: '1px solid #f1f5f9' }}>
+                        <button
+                          onClick={() => handleShowMore(staffData.info._id)}
+                          className="si-btn-cancel"
+                          style={{ minWidth: '180px' }}
+                        >
+                          Load More ({staffData.records.length - limit} logs remaining)
+                        </button>
+                      </div>
+                    )}
                   </div>
-
-                  {/* Show More */}
-                  {staffData.records.length > limit && (
-                    <div style={{ textAlign: "center", marginTop: "16px" }}>
-                      <button
-                        onClick={() => handleShowMore(staffData.info._id)}
-                        className="si-btn-cancel"
-                        style={{ borderRadius: "20px", padding: "8px 24px" }}
-                      >
-                        Show More ({staffData.records.length - limit} remaining)
-                      </button>
-                    </div>
-                  )}
-                </div>
-              );
-            })
-          )}
+                );
+              })
+            )}
+          </div>
         </main>
       </div>
 

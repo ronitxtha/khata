@@ -2,7 +2,9 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import "../styles/staffDashboard.css";
-import "../styles/staffAttendance.css";
+import "../styles/staffInventory.css";
+import "../styles/ownerDashboard.css";
+import StaffSidebar from "../components/StaffSidebar";
 
 const API_BASE = "http://localhost:8000";
 
@@ -25,7 +27,6 @@ const StaffAttendance = () => {
         setLoading(true);
         const token = localStorage.getItem("accessToken");
         
-        // Fetch staff profile for navbar and attendance data
         const [profileRes, attRes] = await Promise.all([
           axios.get(`${API_BASE}/api/staff/profile`, { headers: { Authorization: `Bearer ${token}` } }),
           axios.get(`${API_BASE}/api/staff/my-attendance`, { headers: { Authorization: `Bearer ${token}` } })
@@ -33,7 +34,6 @@ const StaffAttendance = () => {
 
         setStaff(profileRes.data.staff);
         
-        // Ensure attendance list is sorted by date ascending? Let's sort descending (newest first)
         const sortedAtt = (attRes.data.attendance || []).sort((a, b) => {
           return new Date(b.date || b.checkInTime) - new Date(a.date || a.checkInTime);
         });
@@ -57,14 +57,6 @@ const StaffAttendance = () => {
     navigate("/login");
   };
 
-  const navLinks = [
-    { label: "Dashboard", icon: "🏠", path: "/staff-dashboard" },
-    { label: "Product Management", icon: "📦", path: "/staff-inventory" },
-    { label: "Orders", icon: "🛒", path: "/order-management" },
-    { label: "Attendance", icon: "📅", path: "/staff-attendance" },
-    { label: "Profile", icon: "👤", path: "/staff-profile" },
-  ];
-
   // Calculations for summary cards
   const totalDays = attendanceList.length;
   const completedDays = attendanceList.filter(a => a.lastLogoutClick).length;
@@ -79,185 +71,154 @@ const StaffAttendance = () => {
     }
   });
 
+  const formatDate = (dateString) => {
+    if (!dateString) return "N/A";
+    return new Date(dateString).toLocaleDateString("en-US", { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+  };
+
+  const formatTime = (timeString) => {
+    if (!timeString) return "—";
+    return new Date(timeString).toLocaleTimeString("en-US", { hour: '2-digit', minute: '2-digit' });
+  };
+
   return (
     <div className="sd-layout">
-      {/* ========== SIDEBAR ========== */}
-      <aside
-        className={`sd-sidebar ${sidebarOpen ? "sd-sidebar--open" : ""}`}
-        onMouseEnter={() => setSidebarOpen(true)}
-        onMouseLeave={() => setSidebarOpen(false)}
-      >
-        <div className="sd-sidebar__brand">
-          <span className="sd-sidebar__logo">🛍️</span>
-          <span className="sd-sidebar__brand-name">Khata</span>
-        </div>
-        <nav className="sd-sidebar__nav">
-          {navLinks.map((link) => (
-            <button
-              key={link.path}
-              className={`sd-sidebar__link ${window.location.pathname === link.path ? "active" : ""}`}
-              onClick={() => navigate(link.path)}
-            >
-              <span className="sd-sidebar__icon">{link.icon}</span>
-              <span className="sd-sidebar__label">{link.label}</span>
-            </button>
-          ))}
-        </nav>
-        <div className="sd-sidebar__bottom">
-          <button className="sd-sidebar__link sd-sidebar__logout" onClick={handleLogout}>
-            <span className="sd-sidebar__icon">🚪</span>
-            <span className="sd-sidebar__label">Logout</span>
-          </button>
-        </div>
-      </aside>
+      {/* Shared Staff Sidebar */}
+      <StaffSidebar 
+        sidebarOpen={sidebarOpen} 
+        setSidebarOpen={setSidebarOpen} 
+        staff={staff} 
+        handleLogout={handleLogout} 
+      />
 
       {/* ========== MAIN ========== */}
-      <div className={`sd-main ${sidebarOpen ? "sd-main--shifted" : ""}`}>
+      <div className={`sd-main od-main-content ${sidebarOpen ? "sd-main--shifted" : ""}`}>
         {/* ---- NAVBAR ---- */}
         <header className="sd-navbar">
           <div className="sd-navbar__left">
             <button className="sd-navbar__hamburger" onClick={() => setSidebarOpen((v) => !v)}>☰</button>
             <div className="sd-navbar__title">
-              <h1>Attendance History</h1>
-              <span className="sd-navbar__subtitle">View your past check-ins and hours</span>
+              <h1>Personal Attendance</h1>
+              <span className="sd-navbar__subtitle">Track your performance and working hours</span>
             </div>
           </div>
           <div className="sd-navbar__right">
-            <div className="sd-avatar">
-              {staff?.profileImage ? (
-                <img src={`${API_BASE}/${staff.profileImage}`} alt="avatar" />
-              ) : (
-                <span>{(staff?.username || "S")[0].toUpperCase()}</span>
-              )}
-            </div>
-            <div className="sd-navbar__staff-info">
-              <span className="sd-navbar__name">{staff?.username || "Staff"}</span>
-              <span className="sd-navbar__role">Staff</span>
-            </div>
+              <div className="sd-avatar">
+                {staff?.profileImage ? (
+                  <img src={`${API_BASE}/${staff.profileImage}`} alt="avatar" />
+                ) : (
+                  <span>{(staff?.username || "S")[0].toUpperCase()}</span>
+                )}
+              </div>
+              <div className="sd-navbar__staff-info">
+                <span className="sd-navbar__name">{staff?.username || "Staff"}</span>
+                <span className="sd-navbar__role">Staff</span>
+              </div>
           </div>
         </header>
 
         {/* ---- CONTENT ---- */}
         <main className="sd-content">
-          <div className="sd-welcome sa-banner">
-            <div>
-              <h2>📅 Attendance Overview</h2>
-              <p>Track your working hours and daily logins.</p>
+          
+          {/* Header Section */}
+          <div className="si-header-section">
+            <div className="si-header-info">
+              <h2>Attendance Record</h2>
+              <p>Overview of your monthly logins, total hours, and completion rate.</p>
             </div>
           </div>
 
-          {!loading && (
+          {!loading ? (
             <>
-              {/* Summary mini-cards */}
-              <div className="si-mini-cards sa-mini-cards">
-                <div className="si-mini-card si-mini-card--blue">
-                  <span className="si-mini-card__icon">🗓️</span>
-                  <div>
-                    <div className="si-mini-card__num">{totalDays}</div>
-                    <div className="si-mini-card__label">Total Logins</div>
+              {/* Summary Metrics */}
+              <div className="si-ledger-cards">
+                <div className="si-ledger-card">
+                  <span className="si-ledger-card__label">Total Logins</span>
+                  <div className="si-ledger-card__content">
+                    <span className="si-ledger-card__num">{totalDays}</span>
                   </div>
                 </div>
-                <div className="si-mini-card si-mini-card--green">
-                  <span className="si-mini-card__icon">⏱️</span>
-                  <div>
-                    <div className="si-mini-card__num">{totalHoursNum.toFixed(1)}</div>
-                    <div className="si-mini-card__label">Total Hours</div>
+                <div className="si-ledger-card">
+                  <span className="si-ledger-card__label">Total Hours</span>
+                  <div className="si-ledger-card__content">
+                    <span className="si-ledger-card__num" style={{ color: '#10b981' }}>{totalHoursNum.toFixed(1)} <span style={{fontSize: '14px', fontWeight: 500}}>hrs</span></span>
                   </div>
                 </div>
-                <div className="si-mini-card si-mini-card--orange">
-                  <span className="si-mini-card__icon">✅</span>
-                  <div>
-                    <div className="si-mini-card__num">{completedDays}</div>
-                    <div className="si-mini-card__label">Completed Days</div>
+                <div className="si-ledger-card">
+                  <span className="si-ledger-card__label">Completed Days</span>
+                  <div className="si-ledger-card__content">
+                    <span className="si-ledger-card__num" style={{ color: '#3b82f6' }}>{completedDays}</span>
                   </div>
+                </div>
+                <div className="si-ledger-card">
+                   <span className="si-ledger-card__label">Average (hrs/day)</span>
+                   <div className="si-ledger-card__content">
+                     <span className="si-ledger-card__num">{totalDays > 0 ? (totalHoursNum / totalDays).toFixed(1) : "0.0"}</span>
+                   </div>
                 </div>
               </div>
 
-              {/* Attendance Table Panel */}
-              <div className="sd-panel sa-table-panel">
-                <div className="sd-panel__header">
-                  <h3>📜 Attendance Records</h3>
+              {/* Attendance Table */}
+              <div className="si-ledger-table-wrap" style={{ marginTop: '32px' }}>
+                <div style={{ padding: '20px', background: '#fbfcfd', borderBottom: '1px solid #f1f5f9' }}>
+                    <h3 style={{ fontSize: '15px', fontWeight: 800 }}>Detailed History</h3>
                 </div>
-
-                {attendanceList.length > 0 ? (
-                  <div className="sa-table-wrap">
-                    <table className="sa-table">
-                      <thead>
-                        <tr>
-                          <th>Date</th>
-                          <th>Check-In</th>
-                          <th>Check-Out</th>
-                          <th>Hours</th>
-                          <th>Status</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {attendanceList.map((record) => {
-                          const checkInTime = record.checkInTime ? new Date(record.checkInTime) : null;
-                          const checkOutTime = record.lastLogoutClick ? new Date(record.lastLogoutClick) : null;
-                          
-                          // Check if the record is from today
-                          const isToday = checkInTime && (new Date().toDateString() === checkInTime.toDateString());
-                          
-                          let workingHours = "—";
-                          if (checkInTime && checkOutTime) {
-                            const diff = (checkOutTime - checkInTime) / (1000 * 60 * 60);
-                            workingHours = `${diff.toFixed(2)} hrs`;
-                          }
-                          
-                          let checkOutDisplay = "—";
-                          let statusDisplay = "Missing Checkout";
-                          let badgeClass = "badge-pending";
-
-                          if (checkOutTime) {
-                            checkOutDisplay = checkOutTime.toLocaleTimeString("en-US", { hour: '2-digit', minute: '2-digit' });
-                            statusDisplay = "Completed";
-                            badgeClass = "badge-delivered";
-                          } else if (isToday) {
-                            checkOutDisplay = <span className="sa-active-text">Still working</span>;
-                            statusDisplay = "Active";
-                          } else {
-                            checkOutDisplay = <span className="sa-missing-text">Not recorded</span>;
-                            badgeClass = "badge-out-stock";
-                          }
-
-                          return (
-                            <tr key={record._id}>
-                              <td className="sa-date-cell">
-                                {checkInTime ? checkInTime.toLocaleDateString("en-US", { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' }) : "N/A"}
-                              </td>
-                              <td className="sa-time-cell">
-                                {checkInTime ? checkInTime.toLocaleTimeString("en-US", { hour: '2-digit', minute: '2-digit' }) : "—"}
-                              </td>
-                              <td className="sa-time-cell">
-                                {checkOutDisplay}
-                              </td>
-                              <td className="sa-hours-cell">{workingHours}</td>
-                              <td>
-                                <span className={`sd-badge ${badgeClass}`}>
-                                  {statusDisplay}
-                                </span>
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                  </div>
-                ) : (
-                  <div className="sd-empty">
-                    <span>📋</span>
-                    <p>No attendance records found.</p>
-                  </div>
-                )}
+                <table className="si-ledger-table">
+                  <thead>
+                    <tr>
+                      <th>Date</th>
+                      <th>Check-In</th>
+                      <th>Check-Out</th>
+                      <th>Duration</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {attendanceList.length > 0 ? (
+                      attendanceList.map((record) => {
+                        const checkInTime = record.checkInTime ? new Date(record.checkInTime) : null;
+                        const checkOutTime = record.lastLogoutClick ? new Date(record.lastLogoutClick) : null;
+                        const isToday = checkInTime && (new Date().toDateString() === checkInTime.toDateString());
+                        
+                        let workingHours = "—";
+                        if (checkInTime && checkOutTime) {
+                          const diff = (checkOutTime - checkInTime) / (1000 * 60 * 60);
+                          workingHours = `${diff.toFixed(2)} hrs`;
+                        }
+                        
+                        return (
+                          <tr key={record._id}>
+                            <td style={{ fontWeight: 600 }}>{formatDate(record.date || record.checkInTime)}</td>
+                            <td>{formatTime(record.checkInTime)}</td>
+                            <td>
+                              {checkOutTime ? formatTime(record.lastLogoutClick) : (isToday ? <span style={{ color: '#3b82f6', fontStyle: 'italic' }}>Active session</span> : <span style={{ color: '#f59e0b', fontStyle: 'italic' }}>Not recorded</span>)}
+                            </td>
+                            <td style={{ fontWeight: 600, color: '#0f172a' }}>{workingHours}</td>
+                            <td>
+                                <div className="si-status-wrap">
+                                    <span className={`si-dot ${checkOutTime ? 'si-dot--green' : (isToday ? 'si-dot--blue' : 'si-dot--orange')}`}></span>
+                                    <span className="si-status-text" style={{ fontWeight: 600 }}>
+                                      {checkOutTime ? "Completed" : (isToday ? "In Progress" : "Missing Checkout")}
+                                    </span>
+                                </div>
+                            </td>
+                          </tr>
+                        );
+                      })
+                    ) : (
+                      <tr>
+                        <td colSpan="5" style={{ textAlign: 'center', padding: '60px', color: '#64748b' }}>
+                          No attendance records found yet.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
               </div>
             </>
-          )}
-
-          {loading && (
-            <div className="sa-loading">
-              <div className="sa-spinner"></div>
-              <p>Loading attendance data...</p>
+          ) : (
+            <div style={{ padding: '80px', textAlign: 'center', color: '#64748b' }}>
+              ⏳ Loading your history...
             </div>
           )}
         </main>

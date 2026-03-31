@@ -4,8 +4,7 @@ import { useCart } from "../context/CartContext";
 import CustomerSidebar from "../components/CustomerSidebar";
 import axios from "axios";
 import nepalLocations from "../data/nepalLocations.json";
-import { User, Bell, Search } from "lucide-react";
-import "../styles/customerLayout.css"; // Modern Glassmorphic UI 
+import "../styles/customerLayout.css";
 import "../styles/cart.css";
 
 const API_BASE = "http://localhost:8000";
@@ -94,28 +93,17 @@ const Cart = () => {
             <p>Review and checkout your selected items</p>
           </div>
           
-          <div className="cd-global-search">
-            <Search size={18} color="#a3aed1" />
-            <input 
-              type="text" 
-              placeholder="Search products, stores..." 
-            />
-          </div>
-
           <div className="cd-navbar__right">
-            <button className="cd-icon-btn">
-              <Bell size={20} />
-            </button>
-            <div className="cd-profile-menu">
+            <button className="cd-icon-btn">🔔</button>
+            <div className="cd-profile-icon">
               {avatarSrc ? (
                 <img 
                   src={avatarSrc} 
                   alt="Profile" 
-                  className="cd-profile-icon" 
-                  style={{ width: "44px", height: "44px", borderRadius: "50%", objectFit: "cover" }} 
+                  style={{ width: "40px", height: "40px", borderRadius: "50%", objectFit: "cover" }} 
                 />
               ) : (
-                <div className="cd-profile-icon"><User size={20} /></div>
+                <span>C</span>
               )}
             </div>
           </div>

@@ -4,6 +4,8 @@ import axios from "axios";
 import QRScanner from "./QRScanner";
 import "../styles/staffDashboard.css";
 import "../styles/staffInventory.css";
+import "../styles/ownerDashboard.css";
+import OwnerSidebar from "../components/OwnerSidebar";
 
 const API_BASE = "http://localhost:8000";
 
@@ -18,13 +20,17 @@ const ProductManagement = () => {
   const [products, setProducts] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterCategory, setFilterCategory] = useState("All");
+  const [filterStatus, setFilterStatus] = useState("All");
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 10;
   const [toast, setToast] = useState({ message: "", type: "success", visible: false });
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Add product form
   const [showAddForm, setShowAddForm] = useState(false);
   const [productName, setProductName] = useState("");
-  const [productPrice, setProductPrice] = useState("");
+  const [productPrice, setProductPrice] = useState("");     // Selling Price
+  const [productCostPrice, setProductCostPrice] = useState(""); // Cost Price
   const [productQuantity, setProductQuantity] = useState("");
   const [productCategory, setProductCategory] = useState("");
   const [productDescription, setProductDescription] = useState("");
@@ -33,7 +39,8 @@ const ProductManagement = () => {
   // Edit product form
   const [editingProduct, setEditingProduct] = useState(null);
   const [editName, setEditName] = useState("");
-  const [editPrice, setEditPrice] = useState("");
+  const [editPrice, setEditPrice] = useState("");     // Selling Price
+  const [editCostPrice, setEditCostPrice] = useState(""); // Cost Price
   const [editQuantity, setEditQuantity] = useState("");
   const [editCategory, setEditCategory] = useState("");
   const [editDescription, setEditDescription] = useState("");
@@ -48,6 +55,7 @@ const ProductManagement = () => {
   const [isAddingStock, setIsAddingStock] = useState(false);
 
   const [editScannedPrice, setEditScannedPrice] = useState("");
+  const [editScannedCostPrice, setEditScannedCostPrice] = useState("");
   const [editScannedQuantity, setEditScannedQuantity] = useState("");
   const [isUpdatingScanned, setIsUpdatingScanned] = useState(false);
 
@@ -55,6 +63,11 @@ const ProductManagement = () => {
     setToast({ message, type, visible: true });
     setTimeout(() => setToast((t) => ({ ...t, visible: false })), duration);
   };
+
+  // Reset page on filter change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, filterCategory, filterStatus]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -96,7 +109,8 @@ const ProductManagement = () => {
       const token = localStorage.getItem("accessToken");
       const formData = new FormData();
       formData.append("name", productName);
-      formData.append("price", productPrice);
+      formData.append("price", productPrice); // Selling Price
+      formData.append("costPrice", productCostPrice); // Cost Price
       formData.append("quantity", productQuantity);
       formData.append("description", productDescription);
       formData.append("category", productCategory);
@@ -107,7 +121,7 @@ const ProductManagement = () => {
       });
       setProducts((prev) => [...prev, res.data.product]);
       showToast("Product added successfully!");
-      setProductName(""); setProductPrice(""); setProductQuantity("");
+      setProductName(""); setProductPrice(""); setProductCostPrice(""); setProductQuantity("");
       setProductDescription(""); setProductCategory(""); setProductImage(null);
       setShowAddForm(false);
     } catch (err) {
@@ -121,6 +135,7 @@ const ProductManagement = () => {
     setEditingProduct(product._id);
     setEditName(product.name || "");
     setEditPrice(product.price || "");
+    setEditCostPrice(product.costPrice || "");
     setEditQuantity(product.quantity || "");
     setEditCategory(product.category || "Others");
     setEditDescription(product.description || "");
@@ -135,6 +150,7 @@ const ProductManagement = () => {
       const formData = new FormData();
       formData.append("name", editName);
       formData.append("price", editPrice);
+      formData.append("costPrice", editCostPrice);
       formData.append("quantity", editQuantity);
       formData.append("category", editCategory);
       formData.append("description", editDescription);
@@ -204,6 +220,7 @@ const ProductManagement = () => {
           imageFile: res.data.product.image || null,
         });
         setEditScannedPrice(res.data.product.price || 0);
+        setEditScannedCostPrice(res.data.product.costPrice || 0);
         setEditScannedQuantity(res.data.product.quantity || 0);
       }
       setScannerOpen(false);
@@ -220,6 +237,7 @@ const ProductManagement = () => {
       const formData = new FormData();
       formData.append("name", scannedProduct.name);
       formData.append("price", editScannedPrice);
+      formData.append("costPrice", editScannedCostPrice);
       formData.append("quantity", editScannedQuantity);
       formData.append("category", scannedProduct.category || "Others");
       formData.append("description", scannedProduct.description || "");
@@ -277,11 +295,23 @@ const ProductManagement = () => {
       p.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       p.category?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchCategory = filterCategory === "All" || p.category === filterCategory;
-    return matchSearch && matchCategory;
+    
+    const isOutOfStock = (p.quantity || 0) === 0;
+    const isLowStock = (p.quantity || 0) > 0 && (p.quantity || 0) < 5;
+    const currentStatus = isOutOfStock ? "Out of Stock" : isLowStock ? "Low Stock" : "In Stock";
+    const matchStatus = filterStatus === "All" || currentStatus === filterStatus;
+
+    return matchSearch && matchCategory && matchStatus;
   });
 
   const lowStockCount = products.filter((p) => p.quantity > 0 && p.quantity < 5).length;
   const outOfStockCount = products.filter((p) => p.quantity === 0).length;
+
+  // Pagination Logic
+  const totalPages = Math.ceil(filteredProducts.length / ITEMS_PER_PAGE);
+  const indexOfLastItem = currentPage * ITEMS_PER_PAGE;
+  const indexOfFirstItem = indexOfLastItem - ITEMS_PER_PAGE;
+  const currentItems = filteredProducts.slice(indexOfFirstItem, indexOfLastItem);
 
   const navLinks = [
     { label: "Dashboard", icon: "🏠", path: "/owner-dashboard" },
@@ -295,38 +325,16 @@ const ProductManagement = () => {
 
   return (
     <div className="sd-layout">
-      {/* ========== SIDEBAR ========== */}
-      <aside
-        className={`sd-sidebar ${sidebarOpen ? "sd-sidebar--open" : ""}`}
-        onMouseEnter={() => setSidebarOpen(true)}
-        onMouseLeave={() => setSidebarOpen(false)}
-      >
-        <div className="sd-sidebar__brand">
-          <span className="sd-sidebar__logo">🛍️</span>
-          <span className="sd-sidebar__brand-name">Khata</span>
-        </div>
-        <nav className="sd-sidebar__nav">
-          {navLinks.map((link) => (
-            <button
-              key={link.path}
-              className={`sd-sidebar__link ${window.location.pathname === link.path ? "active" : ""}`}
-              onClick={() => navigate(link.path)}
-            >
-              <span className="sd-sidebar__icon">{link.icon}</span>
-              <span className="sd-sidebar__label">{link.label}</span>
-            </button>
-          ))}
-        </nav>
-        <div className="sd-sidebar__bottom">
-          <button className="sd-sidebar__link sd-sidebar__logout" onClick={handleLogout}>
-            <span className="sd-sidebar__icon">🚪</span>
-            <span className="sd-sidebar__label">Logout</span>
-          </button>
-        </div>
-      </aside>
+      {/* Shared Owner Sidebar */}
+      <OwnerSidebar 
+        sidebarOpen={sidebarOpen} 
+        setSidebarOpen={setSidebarOpen} 
+        owner={owner} 
+        handleLogout={handleLogout} 
+      />
 
       {/* ========== MAIN AREA ========== */}
-      <div className={`sd-main ${sidebarOpen ? "sd-main--shifted" : ""}`}>
+      <div className={`sd-main od-main-content ${sidebarOpen ? "sd-main--shifted" : ""}`}>
         {/* ---- TOP NAVBAR ---- */}
         <header className="sd-navbar">
           <div className="sd-navbar__left">
@@ -349,252 +357,179 @@ const ProductManagement = () => {
 
         {/* ---- CONTENT ---- */}
         <main className="sd-content">
-
-          {/* Page Header Banner */}
-          <div className="sd-welcome si-banner">
-            <div>
-              <h2>📦 Products Overview</h2>
-              <p>Browse, add, edit or remove products. Scan QR codes to restock.</p>
+          
+          {/* 1. Header Section */}
+          <div className="si-header-section">
+            <div className="si-header-info">
+              <h2>Inventory</h2>
+              <p>Manage and update your product catalog for you SmartKhata.</p>
             </div>
-            <div style={{ display: "flex", gap: "10px", flexShrink: 0 }}>
-              <button className="sd-btn-scan" onClick={() => setScannerOpen(true)}>
-                📱 Scan QR
+            <div className="si-header-actions">
+              <button className="si-btn-primary si-btn-primary--light" onClick={() => setScannerOpen(true)}>
+                <span></span> Scan QR
               </button>
-              <button className="sd-btn-scan si-add-btn" onClick={() => setShowAddForm(true)}>
-                ➕ Add Product
+              <button className="si-btn-primary si-btn-primary--dark" onClick={() => setShowAddForm(true)}>
+                <span>+</span> Add Product
               </button>
             </div>
           </div>
 
-          {/* Summary mini-cards */}
-          <div className="si-mini-cards">
-            <div className="si-mini-card si-mini-card--blue">
-              <span className="si-mini-card__icon">📦</span>
-              <div>
-                <div className="si-mini-card__num">{products.length}</div>
-                <div className="si-mini-card__label">Total Products</div>
+          {/* 2. Stats Section */}
+          <div className="si-ledger-cards">
+            <div className="si-ledger-card">
+              <span className="si-ledger-card__label">Total Products</span>
+              <div className="si-ledger-card__content">
+                <span className="si-ledger-card__num">{products.length.toLocaleString()}</span>
               </div>
             </div>
-            <div className="si-mini-card si-mini-card--green">
-              <span className="si-mini-card__icon">✅</span>
-              <div>
-                <div className="si-mini-card__num">{products.filter((p) => p.quantity > 4).length}</div>
-                <div className="si-mini-card__label">In Stock</div>
+            <div className="si-ledger-card">
+              <span className="si-ledger-card__label">In Stock</span>
+              <div className="si-ledger-card__content">
+                <span className="si-ledger-card__num">{products.filter(p => !p.deleted && p.quantity > 5).length.toLocaleString()}</span>
               </div>
             </div>
-            <div className="si-mini-card si-mini-card--orange">
-              <span className="si-mini-card__icon">⚠️</span>
-              <div>
-                <div className="si-mini-card__num">{lowStockCount}</div>
-                <div className="si-mini-card__label">Low Stock</div>
+            <div className="si-ledger-card">
+              <span className="si-ledger-card__label">Low Stock</span>
+              <div className="si-ledger-card__content">
+                <span className="si-ledger-card__num">{lowStockCount}</span>
               </div>
             </div>
-            <div className="si-mini-card si-mini-card--red">
-              <span className="si-mini-card__icon">❌</span>
-              <div>
-                <div className="si-mini-card__num">{outOfStockCount}</div>
-                <div className="si-mini-card__label">Out of Stock</div>
+            <div className="si-ledger-card">
+              <span className="si-ledger-card__label">Out of Stock</span>
+              <div className="si-ledger-card__content">
+                <span className="si-ledger-card__num">{outOfStockCount}</span>
               </div>
             </div>
           </div>
 
-          {/* Scanned product banner */}
-          {scannedProduct && !closedScannedProduct && (
-            <div className="sd-panel" style={{ border: "1.5px solid #3b82f6" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
-                <h3 style={{ fontSize: "16px", fontWeight: 700 }}>
-                  🔍 {scannedProduct.name}
-                  {scannedProduct.deleted && <span className="sd-badge badge-cancelled" style={{ marginLeft: "10px" }}>Deleted</span>}
-                </h3>
-                <button className="si-btn si-btn--delete" onClick={() => { setScannedProduct(null); setClosedScannedProduct(false); }}>✕</button>
-              </div>
-              <div style={{ display: "flex", gap: "16px", alignItems: "flex-start" }}>
-                {scannedProduct.imageFile && (
-                  <img src={`${API_BASE}/${scannedProduct.imageFile}`} alt="Product" style={{ width: 80, height: 80, borderRadius: 10, objectFit: "cover" }} />
-                )}
-                <div>
-                  <div style={{ display: "flex", gap: "10px", alignItems: "center", marginBottom: "8px" }}>
-                    <span style={{ fontSize: 14, color: "#334155", width: "50px", fontWeight: "600" }}>Price:</span>
-                    <input 
-                      type="number" 
-                      value={editScannedPrice} 
-                      onChange={(e) => setEditScannedPrice(e.target.value)}
-                      style={{ width: "90px", padding: "6px", border: "1px solid #ccc", borderRadius: "5px" }}
-                    />
-                  </div>
-                  <div style={{ display: "flex", gap: "10px", alignItems: "center", marginBottom: "8px" }}>
-                    <span style={{ fontSize: 14, color: "#334155", width: "50px", fontWeight: "600" }}>Stock:</span>
-                    <input 
-                      type="number" 
-                      value={editScannedQuantity} 
-                      onChange={(e) => setEditScannedQuantity(e.target.value)}
-                      style={{ width: "90px", padding: "6px", border: "1px solid #ccc", borderRadius: "5px" }}
-                    />
-                  </div>
-                  <p style={{ fontSize: 14, color: "#334155", marginBottom: "12px" }}><strong>Description:</strong> {scannedProduct.description}</p>
-                  
-                  {!scannedProduct.deleted && scannedProduct._id && (
-                    <button 
-                      className="si-btn-submit" 
-                      onClick={handleUpdateScannedProduct}
-                      disabled={isUpdatingScanned}
-                      style={{ padding: "8px 16px", fontSize: 13 }}
-                    >
-                      {isUpdatingScanned ? "Saving..." : "💾 Update Product"}
-                    </button>
-                  )}
-                  {scannedProduct.deleted && (
-                    <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 10 }}>
-                      <label style={{ fontSize: 13, fontWeight: 600 }}>Qty to restore:</label>
-                      <input
-                        type="number" min="1" value={reAddQuantity}
-                        onChange={(e) => setReAddQuantity(Number(e.target.value))}
-                        disabled={isAddingStock}
-                        style={{ width: 70, padding: "6px 10px", border: "1.5px solid #e2e8f0", borderRadius: 8, fontSize: 14 }}
-                      />
-                      <button className="si-btn-submit" style={{ padding: "8px 16px", fontSize: 13 }}
-                        onClick={() => handleAddProductAgain(scannedProduct)} disabled={isAddingStock}>
-                        {isAddingStock ? "Adding..." : "➕ Restore Stock"}
-                      </button>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Search & Filter Bar */}
-          <div className="sd-panel si-search-panel">
-            <div className="si-search-row">
-              <div className="si-search-input-wrap">
-                <svg className="si-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
-                </svg>
-                <input
-                  type="text"
-                  placeholder="Search by name or category..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="si-search-input"
-                />
-                {searchTerm && (
-                  <button className="si-search-clear" onClick={() => setSearchTerm("")}>✕</button>
-                )}
-              </div>
-              <select
-                className="sd-filter-select si-cat-filter"
+          {/* 3. Filter & Utilities Row */}
+          <div className="si-filter-row">
+            <div className="si-filters-left">
+              <select 
+                className="si-ledger-select"
                 value={filterCategory}
                 onChange={(e) => setFilterCategory(e.target.value)}
               >
                 <option value="All">All Categories</option>
-                {CATEGORY_LIST.map((c) => <option key={c}>{c}</option>)}
+                {CATEGORY_LIST.map(c => <option key={c}>{c}</option>)}
               </select>
-              <span className="si-result-count">
-                {filteredProducts.length} product{filteredProducts.length !== 1 ? "s" : ""}
-              </span>
+              <select 
+                className="si-ledger-select"
+                value={filterStatus}
+                onChange={(e) => setFilterStatus(e.target.value)}
+              >
+                <option value="All">Status: All</option>
+                <option value="In Stock">In Stock</option>
+                <option value="Low Stock">Low Stock</option>
+                <option value="Out of Stock">Out of Stock</option>
+              </select>
             </div>
           </div>
 
-          {/* Product Table Panel */}
-          <div className="sd-panel si-table-panel">
-            <div className="sd-panel__header">
-              <h3>📋 Products</h3>
-            </div>
-
-            {filteredProducts.length > 0 ? (
-              <div className="si-table-wrap">
-                <table className="si-table">
-                  <thead>
-                    <tr>
-                      <th>Product</th>
-                      <th>Category</th>
-                      <th>Price (NPR)</th>
-                      <th>Qty</th>
-                      <th>Status</th>
-                      <th>Description</th>
-                      <th>QR Code</th>
-                      <th>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredProducts.map((p) => (
+          {/* 4. The Ledger Table */}
+          <div className="si-ledger-table-wrap">
+            <table className="si-ledger-table">
+              <thead>
+                <tr>
+                  <th style={{ width: '40%' }}>Product</th>
+                  <th>Category</th>
+                  <th>Price (NPR)</th>
+                  <th>Inventory</th>
+                  <th>Status</th>
+                  <th style={{ textAlign: 'right' }}>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {currentItems.length > 0 ? (
+                  currentItems.map((p) => {
+                    const isOutOfStock = (p.quantity || 0) === 0;
+                    const isLowStock = (p.quantity || 0) > 0 && (p.quantity || 0) < 5;
+                    
+                    return (
                       <tr key={p._id}>
-                        <td className="si-product-cell">
-                          {p.image ? (
-                            <img src={`${API_BASE}/${p.image}`} alt={p.name} className="si-product-thumb" />
-                          ) : (
-                            <div className="si-product-thumb-placeholder">📷</div>
-                          )}
-                          <span className="si-product-name">{p.name || "Unnamed"}</span>
-                        </td>
                         <td>
-                          <span className="si-category-tag">{p.category || "Others"}</span>
-                        </td>
-                        <td className="si-price-cell">NPR {(p.price ?? 0).toLocaleString()}</td>
-                        <td>
-                          <span className={`si-qty ${p.quantity === 0 ? "zero" : p.quantity < 5 ? "low" : "ok"}`}>
-                            {p.quantity ?? 0}
-                          </span>
-                        </td>
-                        <td>
-                          <span className={`sd-badge ${p.quantity > 0 ? "badge-delivered" : "badge-cancelled"}`}>
-                            {p.quantity > 0 ? "In Stock" : "Out of Stock"}
-                          </span>
-                        </td>
-                        <td className="si-desc-cell">
-                          {p.description?.substring(0, 55)}{p.description?.length > 55 ? "..." : ""}
-                        </td>
-                        <td>
-                          <button
-                            className="si-btn si-btn--edit"
-                            onClick={() => setQrVisible((prev) => ({ ...prev, [p._id]: !prev[p._id] }))}
-                            title="Show/Hide QR"
-                            style={{ fontSize: 13, width: "auto", padding: "6px 10px" }}
-                          >
-                            {qrVisible[p._id] ? "Hide" : "QR"}
-                          </button>
-                          {qrVisible[p._id] && p.qrCode && (
-                            <div style={{ marginTop: 6 }}>
-                              <img src={`${API_BASE}/${p.qrCode}`} alt="QR" style={{ width: 60, height: 60, display: "block" }} />
-                              <button
-                                onClick={() => downloadQR(p._id)}
-                                style={{ fontSize: 11, color: "#3b82f6", background: "none", border: "none", cursor: "pointer", marginTop: 2 }}
-                              >
-                                ⬇ Download
-                              </button>
+                          <div className="si-ledger-product">
+                            {p.image ? (
+                              <img src={`${API_BASE}/${p.image}`} alt={p.name} className="si-ledger-img" />
+                            ) : (
+                              <div className="si-ledger-img" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>📷</div>
+                            )}
+                            <div className="si-ledger-product-info">
+                              <span className="si-ledger-name">{p.name || "Unnamed"}</span>
+                              <span className="si-ledger-desc">{p.description}</span>
                             </div>
-                          )}
+                          </div>
                         </td>
                         <td>
-                          <div className="si-actions">
-                            <button
-                              className="si-btn si-btn--edit"
-                              onClick={() => handleEditClick(p)}
-                              title="Edit"
-                            >
-                              ✏️
-                            </button>
-                            <button
-                              className="si-btn si-btn--delete"
-                              onClick={() => handleDeleteProduct(p._id)}
-                              title="Delete"
-                            >
-                              🗑️
-                            </button>
+                          <span className="si-ledger-tag">{p.category || "Others"}</span>
+                        </td>
+                        <td>
+                          <div style={{ fontWeight: 700, color: '#0f172a' }}>
+                            Rs. {(p.price ?? 0).toLocaleString()}
+                          </div>
+                        </td>
+                        <td style={{ color: '#0f172a', fontWeight: 500 }}>
+                          {p.quantity ?? 0} units
+                        </td>
+                        <td>
+                          <div className="si-status-wrap">
+                            <span className={`si-dot ${isOutOfStock ? 'si-dot--red' : isLowStock ? 'si-dot--orange' : 'si-dot--green'}`}></span>
+                            <span className="si-status-text">
+                              {isOutOfStock ? "Out of Stock" : isLowStock ? "Low Stock" : "In Stock"}
+                            </span>
+                          </div>
+                        </td>
+                        <td style={{ textAlign: 'right' }}>
+                          <div className="si-actions" style={{ justifyContent: 'flex-end' }}>
+                            <button className="si-btn si-btn--edit" onClick={() => handleEditClick(p)} title="Edit">Edit</button>
+                            <button className="si-btn si-btn--delete" onClick={() => handleDeleteProduct(p._id)} title="Delete">Delete</button>
                           </div>
                         </td>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            ) : (
-              <div className="sd-empty">
-                <span>📦</span>
-                <p>{searchTerm || filterCategory !== "All" ? "No products match your search." : "No products yet."}</p>
-              </div>
-            )}
+                    );
+                  })
+                ) : (
+                  <tr>
+                    <td colSpan="6" style={{ textAlign: 'center', padding: '40px', color: '#64748b' }}>
+                      No products found.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
           </div>
+
+          {/* 5. Pagination */}
+          {totalPages > 1 && (
+            <div className="si-pagination">
+              <button 
+                className="si-page-btn" 
+                disabled={currentPage === 1}
+                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+              >
+                Previous
+              </button>
+              
+              {[...Array(totalPages)].map((_, i) => (
+                <button 
+                  key={i + 1} 
+                  className={`si-page-btn ${currentPage === i + 1 ? "active" : ""}`}
+                  onClick={() => setCurrentPage(i + 1)}
+                >
+                  {i + 1}
+                </button>
+              ))}
+
+              <button 
+                className="si-page-btn" 
+                disabled={currentPage === totalPages}
+                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+              >
+                Next
+              </button>
+            </div>
+          )}
+
         </main>
       </div>
 
@@ -614,8 +549,13 @@ const ProductManagement = () => {
                     onChange={(e) => setProductName(e.target.value)} required />
                 </div>
                 <div className="si-form__group">
-                  <label>Price (NPR) *</label>
-                  <input type="number" placeholder="0.00" value={productPrice}
+                  <label>Cost Price *</label>
+                  <input type="number" placeholder="Cost Price" value={productCostPrice}
+                    onChange={(e) => setProductCostPrice(e.target.value)} required />
+                </div>
+                <div className="si-form__group">
+                  <label>Selling Price *</label>
+                  <input type="number" placeholder="Selling Price" value={productPrice}
                     onChange={(e) => setProductPrice(e.target.value)} required />
                 </div>
                 <div className="si-form__group">
@@ -675,7 +615,12 @@ const ProductManagement = () => {
                     placeholder="Product Name" required />
                 </div>
                 <div className="si-form__group">
-                  <label>Price (NPR) *</label>
+                  <label>Cost Price *</label>
+                  <input type="number" value={editCostPrice} onChange={(e) => setEditCostPrice(e.target.value)}
+                    placeholder="0.00" required />
+                </div>
+                <div className="si-form__group">
+                  <label>Selling Price *</label>
                   <input type="number" value={editPrice} onChange={(e) => setEditPrice(e.target.value)}
                     placeholder="0.00" required />
                 </div>

@@ -41,6 +41,7 @@ router.post("/create", async (req, res) => {
         product: product._id,
         name: product.name,
         price: product.price,
+        costPrice: product.costPrice || 0,
         quantity: item.quantity,
         image: product.image
       });
@@ -247,6 +248,7 @@ router.post("/initiate-esewa", async (req, res) => {
         product: product._id,
         name: product.name,
         price: product.price,
+        costPrice: product.costPrice || 0,
         quantity: item.quantity,
         image: product.image
       });

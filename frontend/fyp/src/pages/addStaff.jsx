@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import "../styles/staffDashboard.css";
-import "../styles/staffInventory.css";
+
+import "../styles/staffManagement.css";
+import OwnerSidebar from "../components/OwnerSidebar";
 
 const API_BASE = "http://localhost:8000";
 
@@ -21,6 +22,25 @@ const AddStaff = () => {
   const [staffEmail, setStaffEmail] = useState("");
   const [staffPhone, setStaffPhone] = useState("");
   const [staffAddress, setStaffAddress] = useState("");
+  
+  // Edit staff form
+  const [showEditForm, setShowEditForm] = useState(false);
+  const [editStaffId, setEditStaffId] = useState(null);
+  const [editStaffName, setEditStaffName] = useState("");
+  const [editStaffEmail, setEditStaffEmail] = useState("");
+  const [editStaffPhone, setEditStaffPhone] = useState("");
+  const [editStaffAddress, setEditStaffAddress] = useState("");
+
+  // Success Modal state
+
+  const [createdStaffInfo, setCreatedStaffInfo] = useState(null);
+
+  // Notifications state
+  const [notifications, setNotifications] = useState(() => {
+    const saved = localStorage.getItem("owner_notifications");
+    return saved ? JSON.parse(saved) : [];
+  });
+  const [showNotifications, setShowNotifications] = useState(false);
 
   const showToast = (message, type = "success", duration = 3000) => {
     setToast({ message, type, visible: true });
@@ -74,11 +94,21 @@ const AddStaff = () => {
       );
 
       setStaffList([...staffList, res.data.staff]);
+      
+      // Store info for success modal
+      setCreatedStaffInfo({
+        name: staffName,
+        email: staffEmail,
+        password: password
+      });
+
+      // Clear form
       setStaffName(""); setStaffEmail(""); setStaffPhone(""); setStaffAddress("");
       setShowAddForm(false);
-      showToast(`Staff added! Auto-password: ${password}`);
+      
+      showToast("Staff added successfully!");
     } catch (err) {
-      showToast("Failed to add staff", "error");
+      showToast(err.response?.data?.message || "Failed to add staff", "error");
     }
   };
 
@@ -96,54 +126,59 @@ const AddStaff = () => {
     }
   };
 
-  const navLinks = [
-    { label: "Dashboard", icon: "🏠", path: "/owner-dashboard" },
-    { label: "Product Management", icon: "📦", path: "/products" },
-    { label: "Orders", icon: "🛒", path: "/order-management" },
-    { label: "Staff Management", icon: "👥", path: "/add-staff" },
-    { label: "Supplier Management", icon: "🏭", path: "/supplier-management" },
-    { label: "Attendance", icon: "📅", path: "/attendance" },
-    { label: "Profile", icon: "👤", path: "/owner-profile" },
-  ];
+  const openEditModal = (staff) => {
+    setEditStaffId(staff._id);
+    setEditStaffName(staff.username);
+    setEditStaffEmail(staff.email);
+    setEditStaffPhone(staff.phone);
+    setEditStaffAddress(staff.address || "");
+    setShowEditForm(true);
+  };
+
+  const handleEditStaff = async (e) => {
+    e.preventDefault();
+    if (!isValidPhone(editStaffPhone)) {
+      showToast("Phone number must be exactly 10 digits", "error");
+      return;
+    }
+    try {
+      const token = localStorage.getItem("accessToken");
+      const res = await axios.put(
+        `${API_BASE}/api/owner/update-staff/${editStaffId}`,
+        { 
+          username: editStaffName, 
+          email: editStaffEmail, 
+          phone: editStaffPhone, 
+          address: editStaffAddress 
+        },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      setStaffList(staffList.map(s => s._id === editStaffId ? res.data.staff : s));
+      setShowEditForm(false);
+      showToast("Staff updated successfully!");
+    } catch (err) {
+      showToast(err.response?.data?.message || "Failed to update staff", "error");
+    }
+  };
+
 
   const presentCount = attendanceList.filter((a) => !a.lastLogoutClick).length;
-  const absentCount = staffList.length - attendanceList.length;
+  const loggedOutCount = attendanceList.filter((a) => a.lastLogoutClick).length;
+  const absentCount = Math.max(0, staffList.length - attendanceList.length);
 
   return (
     <div className="sd-layout">
-      {/* ========== SIDEBAR ========== */}
-      <aside
-        className={`sd-sidebar ${sidebarOpen ? "sd-sidebar--open" : ""}`}
-        onMouseEnter={() => setSidebarOpen(true)}
-        onMouseLeave={() => setSidebarOpen(false)}
-      >
-        <div className="sd-sidebar__brand">
-          <span className="sd-sidebar__logo">🛍️</span>
-          <span className="sd-sidebar__brand-name">Khata</span>
-        </div>
-        <nav className="sd-sidebar__nav">
-          {navLinks.map((link) => (
-            <button
-              key={link.path}
-              className={`sd-sidebar__link ${window.location.pathname === link.path ? "active" : ""}`}
-              onClick={() => navigate(link.path)}
-            >
-              <span className="sd-sidebar__icon">{link.icon}</span>
-              <span className="sd-sidebar__label">{link.label}</span>
-            </button>
-          ))}
-        </nav>
-        <div className="sd-sidebar__bottom">
-          <button className="sd-sidebar__link sd-sidebar__logout" onClick={handleLogout}>
-            <span className="sd-sidebar__icon">🚪</span>
-            <span className="sd-sidebar__label">Logout</span>
-          </button>
-        </div>
-      </aside>
+      {/* Shared Owner Sidebar */}
+      <OwnerSidebar 
+        sidebarOpen={sidebarOpen} 
+        setSidebarOpen={setSidebarOpen} 
+        owner={owner} 
+        handleLogout={handleLogout} 
+      />
 
-      {/* ========== MAIN AREA ========== */}
-      <div className={`sd-main ${sidebarOpen ? "sd-main--shifted" : ""}`}>
-        {/* ---- TOP NAVBAR ---- */}
+      {/* ========== GLOBAL NAVBAR ========== */}
+      <div className={`sd-main od-main-content ${sidebarOpen ? "sd-main--shifted" : ""}`}>
         <header className="sd-navbar">
           <div className="sd-navbar__left">
             <button className="sd-navbar__hamburger" onClick={() => setSidebarOpen((v) => !v)}>☰</button>
@@ -152,192 +187,214 @@ const AddStaff = () => {
               <span className="sd-navbar__subtitle">Add, manage, and track your team</span>
             </div>
           </div>
+          
           <div className="sd-navbar__right">
-            <div className="sd-avatar">
+             {/* Notifications */}
+             <div className="od-notif-wrapper">
+              <button 
+                className="od-nav-icon-btn"
+                onClick={() => setShowNotifications(!showNotifications)}
+              >
+                🔔
+                {notifications.some(n => !n.read) && <span className="sd-navbar__badge"></span>}
+              </button>
+
+              {showNotifications && (
+                <div className="od-notif-dropdown">
+                  <div className="od-notif-header">
+                    <h3>Notifications</h3>
+                    <button
+                      onClick={() => {
+                        setNotifications([]);
+                        localStorage.setItem("owner_notifications", JSON.stringify([]));
+                        showToast("Notifications cleared");
+                      }}
+                      className="od-notif-clear"
+                    >
+                      Clear All
+                    </button>
+                  </div>
+                  {notifications.length === 0 ? (
+                    <div className="od-notif-empty"><span>📭</span><p>No new notifications</p></div>
+                  ) : (
+                    <div className="od-notif-list">
+                      {notifications.map((n) => (
+                        <div key={n.id} className={`od-notif-item ${!n.read ? "unread" : ""}`}>
+                          {n.message}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            <div className="sd-avatar" onClick={() => navigate("/owner-profile")}>
               <span>{(owner?.username || "O")[0].toUpperCase()}</span>
             </div>
-            <div className="sd-navbar__staff-info">
+            <div className="sd-navbar__staff-info" onClick={() => navigate("/owner-profile")}>
               <span className="sd-navbar__name">{owner?.username || "Owner"}</span>
               <span className="sd-navbar__role">Owner</span>
             </div>
           </div>
         </header>
 
-        {/* ---- CONTENT ---- */}
+        {/* ---- CONTENT AREA ---- */}
         <main className="sd-content">
-
-          {/* Banner */}
-          <div className="sd-welcome si-banner">
-            <div>
-              <h2>👥 Your Team</h2>
-              <p>Manage staff accounts and monitor today's attendance at a glance.</p>
+          
+          {/* 1. Page Header (White Bar style) */}
+          <div className="sm-page-header">
+            <div className="sm-header-title-group">
+              <h1>Staff Management</h1>
+              <p className="sm-header-subtitle">
+                Welcome back, Admin. Here is an overview of your team's status today.
+              </p>
             </div>
-            <button className="sd-btn-scan si-add-btn" onClick={() => setShowAddForm(true)}>
-              ➕ Add Staff
-            </button>
-          </div>
-
-          {/* Mini stat cards */}
-          <div className="si-mini-cards">
-            <div className="si-mini-card si-mini-card--blue">
-              <span className="si-mini-card__icon">👥</span>
-              <div>
-                <div className="si-mini-card__num">{staffList.length}</div>
-                <div className="si-mini-card__label">Total Staff</div>
-              </div>
-            </div>
-            <div className="si-mini-card si-mini-card--green">
-              <span className="si-mini-card__icon">🟢</span>
-              <div>
-                <div className="si-mini-card__num">{presentCount}</div>
-                <div className="si-mini-card__label">Present Today</div>
-              </div>
-            </div>
-            <div className="si-mini-card si-mini-card--orange">
-              <span className="si-mini-card__icon">🔴</span>
-              <div>
-                <div className="si-mini-card__num">{absentCount < 0 ? 0 : absentCount}</div>
-                <div className="si-mini-card__label">Absent Today</div>
-              </div>
-            </div>
-            <div className="si-mini-card si-mini-card--red">
-              <span className="si-mini-card__icon">✔️</span>
-              <div>
-                <div className="si-mini-card__num">{attendanceList.filter((a) => a.lastLogoutClick).length}</div>
-                <div className="si-mini-card__label">Logged Out</div>
-              </div>
+            <div className="sm-header-actions">
+              <button className="sm-btn-primary" onClick={() => setShowAddForm(true)}>
+               Add Staff
+              </button>
             </div>
           </div>
 
-          {/* Staff List Table */}
-          <div className="sd-panel si-table-panel">
-            <div className="sd-panel__header">
-              <h3>👤 Staff List ({staffList.length})</h3>
+          {/* 2. Summary Stats Grid */}
+          <div className="sm-stats-grid">
+            <div className="sm-stat-card">
+              <div className="sm-stat-label">Total Staff <span>👥</span></div>
+              <div className="sm-stat-num">{staffList.length}</div>
             </div>
+            <div className="sm-stat-card">
+              <div className="sm-stat-label">Present Today <span>👤</span></div>
+              <div className="sm-stat-num">{presentCount}</div>
+            </div>
+            <div className="sm-stat-card">
+              <div className="sm-stat-label">Absent Today <span>🚫</span></div>
+              <div className="sm-stat-num">{absentCount}</div>
+            </div>
+            <div className="sm-stat-card">
+              <div className="sm-stat-label">Logged Out <span>🚪</span></div>
+              <div className="sm-stat-num">{loggedOutCount}</div>
+            </div>
+          </div>
 
-            {staffList.length > 0 ? (
-              <div className="si-table-wrap">
-                <table className="si-table">
+          {/* 3. Active Team Directory */}
+          <div className="sm-section-header">
+            <h3>Active Team Directory</h3>
+            <span className="sm-view-all">View All Staff →</span>
+          </div>
+
+          <div className="sm-table-wrap">
+            <table className="sm-table">
+              <thead>
+                <tr>
+                  <th>Staff Member</th>
+                  <th>Contact Details</th>
+                  <th>Location</th>
+                  <th>Current Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {staffList.length === 0 ? (
+                  <tr><td colSpan="5" style={{ textAlign: "center", padding: "40px", color: "#94a3b8" }}>No staff members found.</td></tr>
+                ) : (
+                  staffList.map((staff) => {
+                    const attendance = attendanceList.find(a => a.staffId?._id === staff._id || a.staffId === staff._id);
+                    const isPresent = !!attendance && !attendance.lastLogoutClick;
+                    const isLoggedOut = !!attendance && !!attendance.lastLogoutClick;
+                    
+                    const initials = (staff.username || "S").split(" ").map(n => n[0]).join("").toUpperCase();
+
+                    return (
+                      <tr key={staff._id}>
+                        <td>
+                          <div className="sm-user-cell">
+                            <div className={`sm-avatar-circle sm-avatar--${initials.slice(0, 2)}`}>
+                              {initials.slice(0, 2)}
+                            </div>
+                            <div className="sm-user-info">
+                              <span className="sm-user-name">{staff.username}</span>
+                            </div>
+
+                          </div>
+                        </td>
+                        <td>
+                          <div className="sm-contact-cell">
+                            <span className="sm-contact-email">{staff.email}</span>
+                            <span className="sm-contact-phone">{staff.phone}</span>
+                          </div>
+                        </td>
+                        <td>
+                          <div className="sm-location-cell">{staff.address || "N/A"}</div>
+                        </td>
+                        <td>
+                          {isPresent ? (
+                            <span className="sm-status-badge sm-status--present">Present</span>
+                          ) : isLoggedOut ? (
+                            <span className="sm-status-badge sm-status--away">Logged Out</span>
+                          ) : (
+                            <span className="sm-status-badge sm-status--absent">Absent</span>
+                          )}
+                        </td>
+                        <td>
+                          <div className="sm-action-btns">
+                            <button className="sm-action-btn sm-btn-edit" onClick={() => openEditModal(staff)}> Edit </button>
+                            <button className="sm-action-btn sm-btn-delete" onClick={() => handleDeleteStaff(staff._id)}> Delete </button>
+                          </div>
+                        </td>
+
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {/* 4. Bottom Grid: Log + Spotlight */}
+          <div className="sm-bottom-grid">
+            <div className="sm-log-section">
+               <div className="sm-section-header">
+                <h3>Today's Attendance Log</h3>
+                <span className="sm-view-all">Real-time Tracking</span>
+              </div>
+              <div className="sm-table-wrap">
+                <table className="sm-table">
                   <thead>
                     <tr>
-                      <th>Name</th>
-                      <th>Email</th>
-                      <th>Phone</th>
-                      <th>Address</th>
-                      <th>Today's Status</th>
-                      <th>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {staffList.map((staff) => {
-                      const attendance = attendanceList.find((a) => a.staffId?._id === staff._id || a.staffId === staff._id);
-                      const isPresent = !!attendance && !attendance.lastLogoutClick;
-                      const isLoggedOut = !!attendance && !!attendance.lastLogoutClick;
-                      return (
-                        <tr key={staff._id}>
-                          <td>
-                            <div className="si-product-cell">
-                              <div className="si-product-thumb-placeholder" style={{ fontSize: 18 }}>
-                                {(staff.username || "S")[0].toUpperCase()}
-                              </div>
-                              <span className="si-product-name">{staff.username || "N/A"}</span>
-                            </div>
-                          </td>
-                          <td style={{ color: "#475569", fontSize: 13 }}>{staff.email || "N/A"}</td>
-                          <td style={{ color: "#475569", fontSize: 13 }}>{staff.phone || "N/A"}</td>
-                          <td className="si-desc-cell">{staff.address || "N/A"}</td>
-                          <td>
-                            {isPresent ? (
-                              <span className="sd-badge badge-delivered">🟢 Present</span>
-                            ) : isLoggedOut ? (
-                              <span className="sd-badge badge-processing">✔️ Logged out</span>
-                            ) : (
-                              <span className="sd-badge badge-cancelled">🔴 Absent</span>
-                            )}
-                          </td>
-                          <td>
-                            <div className="si-actions">
-                              <button
-                                className="si-btn si-btn--delete"
-                                onClick={() => handleDeleteStaff(staff._id)}
-                                title="Remove staff"
-                              >
-                                🗑️
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            ) : (
-              <div className="sd-empty">
-                <span>👤</span>
-                <p>No staff members added yet.</p>
-              </div>
-            )}
-          </div>
-
-          {/* Today's Attendance */}
-          <div className="sd-panel si-table-panel">
-            <div className="sd-panel__header">
-              <h3>📅 Today's Attendance ({attendanceList.length} checked in)</h3>
-            </div>
-
-            {attendanceList.length === 0 ? (
-              <div className="sd-empty">
-                <span>📅</span>
-                <p>No attendance recorded today.</p>
-              </div>
-            ) : (
-              <div className="si-table-wrap">
-                <table className="si-table">
-                  <thead>
-                    <tr>
-                      <th>Staff</th>
-                      <th>Email</th>
-                      <th>Login Time</th>
-                      <th>Logout Time</th>
+                      <th>Staff Name</th>
+                      <th>Login</th>
+                      <th>Logout</th>
                       <th>Status</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {attendanceList.map((a) => {
-                      const isWorking = !a.lastLogoutClick;
-                      return (
+                    {attendanceList.length === 0 ? (
+                      <tr><td colSpan="4" style={{ textAlign: "center", padding: "30px", color: "#94a3b8" }}>No check-ins yet today.</td></tr>
+                    ) : (
+                      attendanceList.map(a => (
                         <tr key={a._id}>
-                          <td>
-                            <div className="si-product-cell">
-                              <div className="si-product-thumb-placeholder" style={{ fontSize: 18 }}>
-                                {(a.staffId?.username || "S")[0].toUpperCase()}
-                              </div>
-                              <span className="si-product-name">{a.staffId?.username || "Unknown"}</span>
-                            </div>
+                          <td className="sm-user-name">{a.staffId?.username || "Unknown"}</td>
+                          <td style={{ color: "#475569", fontSize: 13 }}>
+                            {a.checkInTime ? new Date(a.checkInTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "—"}
                           </td>
-                          <td style={{ color: "#475569", fontSize: 13 }}>{a.staffId?.email || "N/A"}</td>
-                          <td style={{ color: "#334155", fontSize: 13 }}>
-                            {a.checkInTime ? new Date(a.checkInTime).toLocaleTimeString() : "—"}
+                          <td style={{ color: "#475569", fontSize: 13 }}>
+                            {a.lastLogoutClick ? new Date(a.lastLogoutClick).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "—"}
                           </td>
-                          <td style={{ color: "#334155", fontSize: 13 }}>
-                            {a.lastLogoutClick ? new Date(a.lastLogoutClick).toLocaleTimeString() : "—"}
-                          </td>
-                          <td>
-                            {isWorking ? (
-                              <span className="sd-badge badge-delivered">🟢 Working</span>
-                            ) : (
-                              <span className="sd-badge badge-processing">✔️ Done</span>
-                            )}
+                          <td className="sm-log-status">
+                            <span className={`sm-dot ${!a.lastLogoutClick ? "sm-dot--green" : "sm-dot--gray"}`}></span>
+                            {!a.lastLogoutClick ? "On Duty" : "Shift Ended"}
                           </td>
                         </tr>
-                      );
-                    })}
+                      ))
+                    )}
                   </tbody>
                 </table>
               </div>
-            )}
+            </div>
           </div>
+
+
         </main>
       </div>
 
@@ -346,7 +403,7 @@ const AddStaff = () => {
         <div className="si-modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) setShowAddForm(false); }}>
           <div className="si-modal">
             <div className="si-modal__header">
-              <h2>➕ Add New Staff</h2>
+              <h2> Add New Staff</h2>
               <button className="si-modal__close" onClick={() => setShowAddForm(false)}>✕</button>
             </div>
             <form onSubmit={handleAddStaff} className="si-form">
@@ -394,7 +451,110 @@ const AddStaff = () => {
         </div>
       )}
 
+      {/* ========== SUCCESS MODAL (Show Password) ========== */}
+      {createdStaffInfo && (
+        <div className="si-modal-overlay">
+          <div className="si-modal" style={{ maxWidth: "400px", textAlign: "center" }}>
+            <div className="si-modal__header" style={{ justifyContent: "center" }}>
+              <h2 style={{ color: "#10b981" }}>✅ Staff Added!</h2>
+            </div>
+            
+            <div style={{ padding: "20px 0" }}>
+              <p style={{ color: "#64748b", marginBottom: "15px" }}>
+                Staff account for <strong>{createdStaffInfo.name}</strong> has been created.
+              </p>
+              
+              <div style={{ 
+                background: "#f8fafc", 
+                padding: "20px", 
+                borderRadius: "12px", 
+                border: "2px dashed #e2e8f0",
+                marginBottom: "20px"
+              }}>
+                <span style={{ fontSize: "14px", color: "#94a3b8", display: "block", marginBottom: "8px" }}>
+                  AUTO-GENERATED PASSWORD
+                </span>
+                <span style={{ 
+                  fontSize: "24px", 
+                  fontWeight: "700", 
+                  letterSpacing: "2px", 
+                  color: "#1e293b",
+                  fontFamily: "monospace" 
+                }}>
+                  {createdStaffInfo.password}
+                </span>
+              </div>
+
+              <p style={{ fontSize: "12px", color: "#ef4444", fontWeight: "500" }}>
+                ⚠️ Please copy this password now. It will not be shown again.
+              </p>
+            </div>
+
+            <div className="si-form__actions" style={{ justifyContent: "center", marginTop: "10px" }}>
+              <button 
+                className="si-btn-submit" 
+                style={{ width: "100%", padding: "12px" }}
+                onClick={() => setCreatedStaffInfo(null)}
+              >
+                Close & Got it
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========== EDIT STAFF MODAL ========== */}
+      {showEditForm && (
+        <div className="si-modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) setShowEditForm(false); }}>
+          <div className="si-modal">
+            <div className="si-modal__header">
+              <h2> Edit Staff Details</h2>
+              <button className="si-modal__close" onClick={() => setShowEditForm(false)}>✕</button>
+            </div>
+            <form onSubmit={handleEditStaff} className="si-form">
+              <div className="si-form__grid">
+                <div className="si-form__group">
+                  <label>Full Name *</label>
+                  <input
+                    type="text" placeholder="Staff Name"
+                    value={editStaffName} onChange={(e) => setEditStaffName(e.target.value)} required
+                  />
+                </div>
+                <div className="si-form__group">
+                  <label>Email *</label>
+                  <input
+                    type="email" placeholder="staff@example.com"
+                    value={editStaffEmail} onChange={(e) => setEditStaffEmail(e.target.value)} required
+                  />
+                </div>
+                <div className="si-form__group">
+                  <label>Phone (10 digits) *</label>
+                  <input
+                    type="text" placeholder="98XXXXXXXX"
+                    value={editStaffPhone}
+                    onChange={(e) => setEditStaffPhone(e.target.value.replace(/\D/g, ""))}
+                    maxLength={10} required
+                  />
+                </div>
+                <div className="si-form__group">
+                  <label>Address *</label>
+                  <input
+                    type="text" placeholder="City, District"
+                    value={editStaffAddress} onChange={(e) => setEditStaffAddress(e.target.value)} required
+                  />
+                </div>
+              </div>
+              <div className="si-form__actions">
+                <button type="button" className="si-btn-cancel" onClick={() => setShowEditForm(false)}>Cancel</button>
+                <button type="submit" className="si-btn-submit">Update Staff</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       {/* TOAST */}
+
       {toast.visible && (
         <div className={`sd-toast sd-toast--${toast.type}`}>{toast.message}</div>
       )}

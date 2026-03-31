@@ -5,6 +5,7 @@ import Order from "../models/Order.js";
 import bcrypt from "bcryptjs";
 import fs from "fs";
 import path from "path";
+import mongoose from "mongoose";
 
 
 // ======================== PROFILE ENDPOINTS ========================
@@ -280,7 +281,7 @@ export const uploadShopLogo = async (req, res) => {
  */
 export const getOwnerStatistics = async (req, res) => {
   try {
-    const shopId = req.user.shopId;
+    const shopId = new mongoose.Types.ObjectId(req.shopId);
 
     // Total Products
     const totalProducts = await Product.countDocuments({
@@ -293,10 +294,48 @@ export const getOwnerStatistics = async (req, res) => {
       shopId: shopId,
     });
 
-    // Low Stock Products (quantity < 5)
+    // Total Sales Amount
+    const totalSalesData = await Order.aggregate([
+      { $match: { shopId: shopId, status: { $ne: "Cancelled" } } },
+      { $group: { _id: null, total: { $sum: "$totalAmount" } } }
+    ]);
+    const totalSalesAmount = totalSalesData.length > 0 ? totalSalesData[0].total : 0;
+
+    // Out of Stock Products (quantity <= 0)
+    const outOfStockProducts = await Product.countDocuments({
+      shopId: shopId,
+      quantity: { $lte: 0 },
+      deleted: false,
+    });
+
+    // Pending Orders
+    const pendingOrdersCount = await Order.countDocuments({
+      shopId: shopId,
+      status: "Pending"
+    });
+
+    // Total Staff
+    const totalStaffCount = await User.countDocuments({
+      shopId: shopId,
+      role: "staff"
+    });
+
+    // Online Staff (Checked in today, not checked out)
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const endOfToday = new Date();
+    endOfToday.setHours(23, 59, 59, 999);
+
+    const onlineStaffCount = await import("../models/Attendance.js").then(m => m.default.countDocuments({
+      shopId,
+      checkInTime: { $gte: today, $lte: endOfToday },
+      checkOutTime: { $exists: false }
+    }));
+
+    // Low Stock Products (0 < quantity < 5)
     const lowStockProducts = await Product.countDocuments({
       shopId: shopId,
-      quantity: { $lt: 5 },
+      quantity: { $gt: 0, $lt: 5 },
       deleted: false,
     });
 
@@ -315,6 +354,11 @@ export const getOwnerStatistics = async (req, res) => {
       data: {
         totalProducts,
         totalOrders,
+        totalSalesAmount,
+        outOfStockProducts,
+        pendingOrdersCount,
+        totalStaffCount,
+        onlineStaffCount,
         lowStockProducts,
         lowStockDetails,
       },

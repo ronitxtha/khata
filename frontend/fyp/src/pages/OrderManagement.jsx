@@ -3,7 +3,9 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import socket from "../socket";
 import "../styles/staffDashboard.css";
+import "../styles/ownerDashboard.css";
 import "../styles/orderManagement.css";
+import OwnerSidebar from "../components/OwnerSidebar";
 
 const API_BASE = "http://localhost:8000";
 
@@ -17,6 +19,13 @@ const OrderManagement = () => {
   const [toast, setToast] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [expandedOrder, setExpandedOrder] = useState(null);
+  
+  // Notifications state (sync with dashboard logic)
+  const [notifications, setNotifications] = useState(() => {
+    const saved = localStorage.getItem("owner_notifications");
+    return saved ? JSON.parse(saved) : [];
+  });
+  const [showNotifications, setShowNotifications] = useState(false);
 
   const user = JSON.parse(localStorage.getItem("user"));
   const role = user?.role || "staff";
@@ -90,279 +99,280 @@ const OrderManagement = () => {
     navigate("/login");
   };
 
-  const navLinks = [
-    { label: "Dashboard", icon: "🏠", path: role === "owner" ? "/owner-dashboard" : "/staff-dashboard" },
-    { label: "Product Management", icon: "📦", path: role === "owner" ? "/products" : "/staff-inventory" },
-    { label: "Orders", icon: "🛒", path: "/order-management" },
-    ...(role === "owner" ? [
-      { label: "Staff Management", icon: "👥", path: "/add-staff" },
-      { label: "Supplier Management", icon: "🏭", path: "/supplier-management" }
-    ] : []),
-    { label: "Attendance", icon: "📅", path: role === "owner" ? "/attendance" : "/staff-attendance" },
-    { label: "Profile", icon: "👤", path: role === "owner" ? "/owner-profile" : "/staff-profile" },
-  ];
-
-  const statusClass = (status) => {
-    if (status === "Pending") return "badge-pending";
-    if (status === "Processing") return "badge-processing";
-    if (status === "Delivered") return "badge-delivered";
-    if (status === "Cancelled") return "badge-cancelled";
-    return "";
-  };
-
   return (
     <div className="sd-layout">
-      {/* ========== SIDEBAR ========== */}
-      <aside
-        className={`sd-sidebar ${sidebarOpen ? "sd-sidebar--open" : ""}`}
-        onMouseEnter={() => setSidebarOpen(true)}
-        onMouseLeave={() => setSidebarOpen(false)}
-      >
-        <div className="sd-sidebar__brand">
-          <span className="sd-sidebar__logo">🛍️</span>
-          <span className="sd-sidebar__brand-name">Khata</span>
-        </div>
-        <nav className="sd-sidebar__nav">
-          {navLinks.map((link) => (
-            <button
-              key={link.path}
-              className={`sd-sidebar__link ${window.location.pathname === link.path ? "active" : ""}`}
-              onClick={() => navigate(link.path)}
-            >
-              <span className="sd-sidebar__icon">{link.icon}</span>
-              <span className="sd-sidebar__label">{link.label}</span>
-            </button>
-          ))}
-        </nav>
-        <div className="sd-sidebar__bottom">
-          <button className="sd-sidebar__link sd-sidebar__logout" onClick={handleLogout}>
-            <span className="sd-sidebar__icon">🚪</span>
-            <span className="sd-sidebar__label">Logout</span>
-          </button>
-        </div>
-      </aside>
+      {/* Shared Owner Sidebar */}
+      <OwnerSidebar 
+        sidebarOpen={sidebarOpen} 
+        setSidebarOpen={setSidebarOpen} 
+        owner={user} 
+        handleLogout={handleLogout} 
+      />
 
-      {/* ========== MAIN ========== */}
-      <div className={`sd-main ${sidebarOpen ? "sd-main--shifted" : ""}`}>
-        {/* ---- NAVBAR ---- */}
+      {/* ========== GLOBAL NAVBAR ========== */}
+      <div className={`sd-main od-main-content ${sidebarOpen ? "sd-main--shifted" : ""}`}>
         <header className="sd-navbar">
           <div className="sd-navbar__left">
             <button className="sd-navbar__hamburger" onClick={() => setSidebarOpen((v) => !v)}>☰</button>
             <div className="sd-navbar__title">
               <h1>Order Management</h1>
-              <span className="sd-navbar__subtitle">Track and update shop orders</span>
+              <span className="sd-navbar__subtitle">View and manage shop orders</span>
             </div>
           </div>
+          
           <div className="sd-navbar__right">
-            <div className="sd-avatar">
-              <span>{role === "owner" ? "O" : "S"}</span>
+            {/* Notifications */}
+            <div className="od-notif-wrapper" style={{ marginRight: '16px' }}>
+              <button 
+                className="od-nav-icon-btn"
+                onClick={() => setShowNotifications(!showNotifications)}
+              >
+                🔔
+                {notifications.some(n => !n.read) && <span className="sd-navbar__badge"></span>}
+              </button>
+
+              {showNotifications && (
+                <div className="od-notif-dropdown">
+                  <div className="od-notif-header">
+                    <h3>Notifications</h3>
+                    <button
+                      onClick={() => {
+                        setNotifications([]);
+                        localStorage.setItem("owner_notifications", JSON.stringify([]));
+                        showToast("Notifications cleared");
+                      }}
+                      className="od-notif-clear"
+                    >
+                      Clear All
+                    </button>
+                  </div>
+                  {notifications.length === 0 ? (
+                    <div className="od-notif-empty"><span>📭</span><p>No new notifications</p></div>
+                  ) : (
+                    <div className="od-notif-list">
+                      {notifications.map((n, i) => (
+                        <div key={i} className={`od-notif-item ${n.read ? 'read' : ''}`}>
+                          <p>{n.message}</p>
+                          <span>{new Date(n.time).toLocaleTimeString()}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
-            <div className="sd-navbar__staff-info">
-              <span className="sd-navbar__name">{user?.username || "Staff"}</span>
-              <span className="sd-navbar__role">{role === "owner" ? "Owner" : "Staff"}</span>
+
+            <div className="sd-avatar" onClick={() => navigate("/owner-profile")}>
+              <span>{(user?.username || "O")[0].toUpperCase()}</span>
+            </div>
+            <div className="sd-navbar__staff-info" onClick={() => navigate("/owner-profile")}>
+              <span className="sd-navbar__name">{user?.username || "Owner"}</span>
+              <span className="sd-navbar__role">Owner</span>
             </div>
           </div>
         </header>
 
         {/* ---- CONTENT ---- */}
         <main className="sd-content">
-          {/* Banner */}
-          <div className="sd-welcome om-banner">
-            <div>
-              <h2>🧾 Shop Orders</h2>
-              <p>{orders.length} total order{orders.length !== 1 ? "s" : ""} for your shop</p>
+          
+          {/* Page Header (White Bar style like Inventory) */}
+          <div className="om-page-header">
+            <div className="om-header-title-group">
+              <h1>Order Ledger</h1>
+              <p className="om-header-subtitle">
+                Manage and update your order history for SmartKhata.
+              </p>
+            </div>
+            <div className="om-ledger-header-actions">
+              <button className="om-ledger-btn-secondary">📄 Export Report</button>
+              <button className="om-ledger-btn-primary">+ Manual Entry</button>
+            </div>
+          </div>
+          
+          {/* 1. Summary Analytics Cards */}
+          <div className="om-ledger-cards">
+            <div className="om-ledger-card">
+              <span className="om-ledger-card__label">Total Orders</span>
+              <span className="om-ledger-card__num">{orders.length.toLocaleString()}</span>
+              <span className="om-ledger-trend om-trend--high">~12%</span>
+            </div>
+            <div className="om-ledger-card">
+              <span className="om-ledger-card__label">Pending</span>
+              <span className="om-ledger-card__num">{countByStatus("Pending")}</span>
+              <span className="om-ledger-trend om-trend--high">! High</span>
+            </div>
+            <div className="om-ledger-card">
+              <span className="om-ledger-card__label">Processing</span>
+              <span className="om-ledger-card__num">{countByStatus("Processing")}</span>
+              <div className="om-trend--progress">
+                <div className="om-trend--bar" style={{ width: orders.length > 0 ? (countByStatus("Processing")/orders.length*100)+'%' : '0%' }}></div>
+              </div>
+            </div>
+            <div className="om-ledger-card">
+              <span className="om-ledger-card__label">Delivered</span>
+              <span className="om-ledger-card__num">{countByStatus("Delivered")}</span>
+              <span className="om-ledger-trend om-trend--check">✔ Verified</span>
+            </div>
+            <div className="om-ledger-card">
+              <span className="om-ledger-card__label">Cancelled</span>
+              <span className="om-ledger-card__num">{countByStatus("Cancelled")}</span>
+              <span className="om-ledger-trend om-trend--high" style={{ color: '#94a3b8', background: '#f1f5f9' }}>4.8%</span>
             </div>
           </div>
 
-          {/* Summary mini-cards */}
-          <div className="si-mini-cards">
-            <div className="si-mini-card si-mini-card--blue">
-              <span className="si-mini-card__icon">📋</span>
-              <div>
-                <div className="si-mini-card__num">{orders.length}</div>
-                <div className="si-mini-card__label">Total Orders</div>
-              </div>
-            </div>
-            <div className="si-mini-card si-mini-card--orange">
-              <span className="si-mini-card__icon">⏳</span>
-              <div>
-                <div className="si-mini-card__num">{countByStatus("Pending")}</div>
-                <div className="si-mini-card__label">Pending</div>
-              </div>
-            </div>
-            <div className="si-mini-card si-mini-card--purple" style={{"--accent":"#8b5cf6"}}>
-              <span className="si-mini-card__icon">⚙️</span>
-              <div>
-                <div className="si-mini-card__num">{countByStatus("Processing")}</div>
-                <div className="si-mini-card__label">Processing</div>
-              </div>
-            </div>
-            <div className="si-mini-card si-mini-card--green">
-              <span className="si-mini-card__icon">✅</span>
-              <div>
-                <div className="si-mini-card__num">{countByStatus("Delivered")}</div>
-                <div className="si-mini-card__label">Delivered</div>
-              </div>
-            </div>
-            <div className="si-mini-card si-mini-card--red">
-              <span className="si-mini-card__icon">✕</span>
-              <div>
-                <div className="si-mini-card__num">{countByStatus("Cancelled")}</div>
-                <div className="si-mini-card__label">Cancelled</div>
-              </div>
-            </div>
-          </div>
-
-          {/* Filter Tab Bar */}
-          <div className="sd-panel om-filter-panel">
-            <div className="om-filter-bar">
-              {STATUS_FILTERS.map((f) => (
-                <button
+          {/* 2. Filter & Actions Row */}
+          <div className="om-ledger-filters">
+            <div className="om-tab-bar">
+              {STATUS_FILTERS.map(f => (
+                <button 
                   key={f}
-                  className={`om-filter-btn ${filter === f ? "om-filter-btn--active" : ""}`}
+                  className={`om-tab-btn ${filter === f ? "om-tab-btn--active" : ""}`}
                   onClick={() => setFilter(f)}
                 >
-                  {f}
-                  <span className="om-filter-count">
-                    {f === "All" ? orders.length : countByStatus(f)}
-                  </span>
+                  {f} <span className="om-tab-count">{f === "All" ? orders.length : countByStatus(f)}</span>
                 </button>
               ))}
             </div>
+            <div className="om-ledger-header-actions">
+              <button className="om-ledger-btn-secondary">⚙ Advanced Filters</button>
+              <button className="om-ledger-btn-secondary">📅 Last 30 Days</button>
+            </div>
           </div>
 
-          {/* Orders Table Panel */}
-          <div className="sd-panel om-table-panel">
-            <div className="sd-panel__header">
-              <h3>
-                {filter === "All" ? "All Orders" : `${filter} Orders`}
-                <span className="om-result-count"> ({filteredOrders.length})</span>
-              </h3>
+          {/* 3. The Order Ledger */}
+          <div className="om-ledger-table">
+            <div className="om-ledger-table-head">
+              <span>Order ID</span>
+              <span>Customer</span>
+              <span>Date</span>
+              <span>Amount</span>
+              <span>Status</span>
+              <span></span>
             </div>
 
             {loading ? (
               <div className="om-loading">
                 <div className="om-spinner"></div>
-                <p>Loading orders...</p>
+                <p>Syncing orders...</p>
               </div>
             ) : filteredOrders.length === 0 ? (
-              <div className="sd-empty">
-                <span>📋</span>
+               <div className="sd-empty" style={{ padding: '60px', textAlign: 'center' }}>
+                <span style={{ fontSize: '40px' }}>📦</span>
                 <p>No {filter !== "All" ? filter.toLowerCase() : ""} orders found.</p>
               </div>
             ) : (
-              <div className="om-orders-list">
-                {filteredOrders.map((order) => (
-                  <div key={order._id} className="om-order-card">
-                    {/* Order card header */}
-                    <div
-                      className="om-order-card__header"
-                      onClick={() =>
-                        setExpandedOrder(expandedOrder === order._id ? null : order._id)
-                      }
-                    >
-                      <div className="om-order-card__left">
-                        <div className="om-order-id">
-                          #{order._id.slice(-8).toUpperCase()}
-                        </div>
-                        <div className="om-order-meta">
-                          <span className="om-order-customer">
-                            👤 {order.user?.username || "Guest"}
-                            {order.user?.email ? ` · ${order.user.email}` : ""}
-                          </span>
-                          <span className="om-order-date">
-                            {new Date(order.createdAt).toLocaleDateString("en-US", {
-                              month: "short",
-                              day: "numeric",
-                              year: "numeric",
-                            })}
-                          </span>
-                        </div>
+              filteredOrders.map(order => (
+                <div key={order._id} className={`om-order-row ${expandedOrder === order._id ? "om-order-row--expanded" : ""}`}>
+                  {/* Row Summary */}
+                  <div className="om-order-summary" onClick={() => setExpandedOrder(expandedOrder === order._id ? null : order._id)}>
+                    <span className="om-order-id">#KH-{order._id.slice(-4).toUpperCase()}</span>
+                    
+                    <div className="om-customer-cell">
+                      <div className="om-customer-avatar">
+                        {order.user?.username ? order.user.username[0].toUpperCase() : "G"}
                       </div>
-                      <div className="om-order-card__right">
-                        <span className="om-order-total">
-                          NPR {order.totalAmount?.toLocaleString()}
-                        </span>
-                        <span className={`sd-badge ${statusClass(order.status)}`}>
-                          {order.status}
-                        </span>
-                        <span className="om-expand-icon">
-                          {expandedOrder === order._id ? "▲" : "▼"}
-                        </span>
+                      <div className="om-customer-info">
+                        <span className="om-customer-name">{order.user?.username || "Guest Customer"}</span>
+                        <span className="om-customer-email">{order.user?.email || "No email available"}</span>
                       </div>
                     </div>
 
-                    {/* Expanded items + actions */}
-                    {expandedOrder === order._id && (
-                      <div className="om-order-card__body">
-                        {/* Items */}
-                        <div className="om-items-grid">
+                    <span className="om-date-cell">
+                      {new Date(order.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                    </span>
+
+                    <span className="om-amount-cell">Rs. {order.totalAmount?.toLocaleString()}</span>
+
+                    <span className={`om-status-tag om-status--${order.status?.toLowerCase()}`}>
+                      {order.status}
+                    </span>
+
+                    <span className={`om-expand-arrow ${expandedOrder === order._id ? "om-expand-arrow--up" : ""}`}>
+                      ▼
+                    </span>
+                  </div>
+
+                  {/* Expanded Details */}
+                  {expandedOrder === order._id && (
+                    <div className="om-order-details">
+                      <div className="om-details-main">
+                        <h4 className="om-section-label">Items Ordered</h4>
+                        <div className="om-items-list">
                           {order.items.map((item, idx) => (
-                            <div key={idx} className="om-item">
-                              <img
-                                src={`${API_BASE}/${item.image}`}
-                                alt={item.name}
-                                className="om-item__img"
-                                onError={(e) => { e.target.style.display = "none"; }}
+                            <div key={idx} className="om-item-card">
+                              <img 
+                                src={`${API_BASE}/${item.image}`} 
+                                alt={item.name} 
+                                className="om-item-img" 
+                                onError={(e) => { e.target.src = "https://placehold.co/60x60?text=Item"; }}
                               />
-                              <div className="om-item__info">
-                                <span className="om-item__name">{item.name}</span>
-                                <span className="om-item__price">
-                                  NPR {item.price?.toLocaleString()} × {item.quantity}
-                                </span>
-                                <span className="om-item__subtotal">
-                                  = NPR {(item.price * item.quantity)?.toLocaleString()}
-                                </span>
+                              <div className="om-item-main">
+                                <span className="om-item-name">{item.name}</span>
+                                <span className="om-item-sku">SKU: {item._id?.slice(-8).toUpperCase()}</span>
+                              </div>
+                              <div className="om-item-pricing">
+                                <span className="om-item-price">Rs. {item.price?.toLocaleString()}</span>
+                                <span className="om-item-qty">Qty: {item.quantity}</span>
                               </div>
                             </div>
                           ))}
                         </div>
+                      </div>
 
-                        {/* Footer: total + actions */}
-                        <div className="om-order-card__footer">
-                          <div className="om-order-total-row">
-                            <span>Order Total</span>
-                            <span className="om-order-total-val">
-                              NPR {order.totalAmount?.toLocaleString()}
-                            </span>
-                          </div>
-                          <div className="om-action-row">
-                            {order.status === "Pending" && (
-                              <button
-                                className="om-action-btn om-action-btn--accept"
-                                onClick={() => updateOrderStatus(order._id, "Processing")}
-                              >
-                                ✅ Accept & Process
-                              </button>
-                            )}
-                            {order.status === "Processing" && (
-                              <button
-                                className="om-action-btn om-action-btn--deliver"
-                                onClick={() => updateOrderStatus(order._id, "Delivered")}
-                              >
-                                🚚 Mark as Delivered
-                              </button>
-                            )}
-                            {(order.status === "Pending" || order.status === "Processing") && (
-                              <button
-                                className="om-action-btn om-action-btn--cancel"
-                                onClick={() => updateOrderStatus(order._id, "Cancelled")}
-                              >
-                                ✕ Cancel Order
-                              </button>
-                            )}
-                            {(order.status === "Delivered" || order.status === "Cancelled") && (
-                              <span className="om-final-label">Final Status — No Further Actions</span>
-                            )}
-                          </div>
+                      <div className="om-details-sidebar">
+                        <div className="om-shipping-section">
+                           <h4 className="om-section-label">Shipping To</h4>
+                           <div className="om-shipping-box">
+                             <span className="om-shipping-title">Delivery Location</span>
+                             <p className="om-shipping-addr">
+                               Order placed via {order.paymentMethod || "Direct Payment"}<br/>
+                               {order.user?.phone || "No phone provided"}<br/>
+                               Kathmandu, Nepal
+                             </p>
+                           </div>
+                        </div>
+
+                        <div className="om-status-actions">
+                           <h4 className="om-section-label">Update Status</h4>
+                           <div className="om-actions-stack">
+                              {/* Action Buttons based on status */}
+                              {order.status === "Pending" && (
+                                <button className="om-btn-main" onClick={() => updateOrderStatus(order._id, "Processing")}>
+                                  Accept Order
+                                </button>
+                              )}
+                              {order.status === "Processing" && (
+                                <button className="om-btn-main" onClick={() => updateOrderStatus(order._id, "Delivered")}>
+                                   Mark as Delivered
+                                </button>
+                              )}
+                              
+                              <div className="om-actions-row-mini">
+                                {(order.status === "Pending" || order.status === "Processing") && (
+                                   <button className="om-btn-outline om-btn-outline--cancel" onClick={() => updateOrderStatus(order._id, "Cancelled")}>
+                                      Cancel Order
+                                   </button>
+                                )}
+                                {order.status === "Pending" && (
+                                   <button className="om-btn-outline om-btn-outline--accept" onClick={() => updateOrderStatus(order._id, "Processing")}>
+                                      Quick Process
+                                   </button>
+                                )}
+                              </div>
+
+                              {(order.status === "Delivered" || order.status === "Cancelled") && (
+                                <div className="om-final-label">This order is {order.status.toLowerCase()}</div>
+                              )}
+                           </div>
                         </div>
                       </div>
-                    )}
-                  </div>
-                ))}
-              </div>
+                    </div>
+                  )}
+                </div>
+              ))
             )}
           </div>
+
         </main>
       </div>
 

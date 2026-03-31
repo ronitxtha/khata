@@ -1,0 +1,258 @@
+/* ============================================================
+   Staff Management – Modern UI
+   ============================================================ */
+
+:root {
+  --sm-bg: #f8fafc;
+  --sm-primary: #0f172a;
+  --sm-accent: #2563eb;
+  --sm-border: #e2e8f0;
+  --sm-text-main: #1e293b;
+  --sm-text-muted: #64748b;
+}
+
+/* ---- PAGE HEADER AREA (White Bar) ---- */
+.sm-page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 24px;
+  padding: 24px 40px;
+  
+  border-bottom: 1px solid var(--sm-border);
+  margin: -32px -32px 32px -32px;
+}
+
+.sm-header-title-group h1 {
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--sm-primary);
+  margin-bottom: 6px;
+}
+
+.sm-header-subtitle {
+  font-size: 14px;
+  color: var(--sm-text-muted);
+}
+
+.sm-header-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.sm-btn-primary {
+  padding: 10px 18px;
+  background: var(--sm-primary);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ---- SUMMARY CARDS ---- */
+.sm-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.sm-stat-card {
+  background: #fff;
+  padding: 20px;
+  border-radius: 12px;
+  border: 1px solid var(--sm-border);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.sm-stat-card:hover { 
+  transform: translateY(-2px); 
+  box-shadow: 0 10px 20px rgba(0,0,0,0.04);
+}
+
+.sm-stat-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--sm-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.sm-stat-num {
+  font-size: 32px;
+  font-weight: 800;
+  color: var(--sm-primary);
+}
+
+.sm-stat-trend {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.sm-trend--up    { color: #10b981; }
+.sm-trend--review { background: #fee2e2; color: #ef4444; }
+.sm-trend--muted  { color: #94a3b8; }
+
+/* ---- DIRECTORY TABLE ---- */
+.sm-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  margin-top: 32px;
+}
+
+.sm-section-header h3 {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--sm-primary);
+}
+
+.sm-view-all {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--sm-accent);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+}
+
+.sm-table-wrap {
+  background: #fff;
+  border: 1px solid var(--sm-border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.sm-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.sm-table th {
+  text-align: left;
+  padding: 14px 24px;
+  background: #f8fafc;
+  color: #94a3b8;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid var(--sm-border);
+}
+
+.sm-table td {
+  padding: 20px 45px;
+  border-bottom: 1px solid #f1f5f9;
+  vertical-align: middle;
+}
+
+.sm-user-cell { display: flex; align-items: center; gap: 14px; }
+.sm-avatar-circle { width: 40px; height: 40px; border-radius: 50%; background: #f1f5f9; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; color: var(--sm-accent); }
+.sm-avatar--RM { background: #dbeafe; color: #1e40af; }
+.sm-avatar--SK { background: #f3e8ff; color: #7e22ce; }
+.sm-avatar--AS { background: #fef9c3; color: #a16207; }
+
+.sm-user-info { display: flex; flex-direction: column; }
+.sm-user-name { font-size: 14px; font-weight: 700; color: var(--sm-primary); }
+.sm-user-role { font-size: 12px; color: var(--sm-text-muted); }
+
+.sm-contact-cell { display: flex; flex-direction: column; gap: 2px; }
+.sm-contact-email { font-size: 13px; color: var(--sm-text-main); }
+.sm-contact-phone { font-size: 11px; color: var(--sm-text-muted); }
+
+.sm-location-cell { font-size: 13px; color: var(--sm-text-main); }
+
+.sm-status-badge {
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.sm-status--present    { background: #f0fdf4; color: #16a34a; }
+.sm-status--away       { background: #f1f5f9; color: #64748b; }
+.sm-status--absent     { background: #fff1f2; color: #ef4444; }
+
+.sm-action-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #94a3b8;
+  transition: color 0.2s;
+}
+
+
+/* ---- BOTTOM GRID (Log + Spotlight) ---- */
+.sm-bottom-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 24px;
+  margin-top: 32px;
+}
+
+
+.sm-log-status { 
+  display: flex; 
+  align-items: center; 
+  gap: 6px; 
+  font-size: 13px; 
+  font-weight: 600;
+}
+
+.sm-dot { width: 6px; height: 6px; border-radius: 50%; }
+.sm-dot--green { background: #10b981; }
+.sm-dot--gray { background: #94a3b8; }
+
+.sm-action-btns {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.sm-action-btn {
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 70px;
+}
+
+.sm-btn-edit {
+  background-color: #3b82f6; /* Blue */
+}
+
+.sm-btn-delete {
+  background-color: #ef4444; /* Red */
+}
+
+
+
+/* Mobile Adaptations */
+@media (max-width: 1024px) {
+  .sm-stats-grid { grid-template-columns: repeat(2, 1fr); }
+  .sm-bottom-grid { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 768px) {
+  .sm-page-header { flex-direction: column; align-items: stretch; gap: 16px; }
+  .sm-table th:nth-child(3), .sm-table td:nth-child(3) { display: none; }
+}

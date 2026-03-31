@@ -2,11 +2,16 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import "../styles/supplierManagement.css";
+import "../styles/staffDashboard.css";
+import "../styles/ownerDashboard.css";
+import "../styles/staffInventory.css";
+import OwnerSidebar from "../components/OwnerSidebar";
 
 const API_BASE = "http://localhost:8000";
 
 const SupplierManagement = () => {
   const navigate = useNavigate();
+  const [owner, setOwner] = useState({});
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Data states
@@ -75,16 +80,6 @@ const SupplierManagement = () => {
     note: "",
   });
 
-  const navLinks = [
-    { label: "Dashboard", icon: "🏠", path: "/owner-dashboard" },
-    { label: "Product Management", icon: "📦", path: "/products" },
-    { label: "Orders", icon: "🛒", path: "/order-management" },
-    { label: "Staff Management", icon: "👥", path: "/add-staff" },
-    { label: "Supplier Management", icon: "🏭", path: "/supplier-management" },
-    { label: "Attendance", icon: "📅", path: "/attendance" },
-    { label: "Profile", icon: "👤", path: "/owner-profile" },
-  ];
-
   // ─── Auth header ────────────────────────────────────────────────
   const authHeaders = () => ({
     headers: { Authorization: `Bearer ${localStorage.getItem("accessToken")}` },
@@ -100,6 +95,10 @@ const SupplierManagement = () => {
   const fetchAll = async () => {
     setLoading(true);
     try {
+      const token = localStorage.getItem("accessToken");
+      const user = JSON.parse(localStorage.getItem("user") || "{}");
+      setOwner(user);
+
       const [sRes, purRes, payRes, statsRes, prodRes] = await Promise.all([
         axios.get(`${API_BASE}/api/suppliers`, authHeaders()),
         axios.get(`${API_BASE}/api/suppliers/purchases`, authHeaders()),
@@ -315,102 +314,95 @@ const SupplierManagement = () => {
   return (
     <div className="sd-layout">
       {/* ───────── SIDEBAR ───────── */}
-      <aside
-        className={`sd-sidebar ${sidebarOpen ? "sd-sidebar--open" : ""}`}
-        onMouseEnter={() => setSidebarOpen(true)}
-        onMouseLeave={() => setSidebarOpen(false)}
-      >
-        <div className="sd-sidebar__brand">
-          <span className="sd-sidebar__logo">🛍️</span>
-          <span className="sd-sidebar__brand-name">Khata</span>
-        </div>
-        <nav className="sd-sidebar__nav">
-          {navLinks.map((link) => (
-            <button
-              key={link.path}
-              className={`sd-sidebar__link ${window.location.pathname === link.path ? "active" : ""}`}
-              onClick={() => navigate(link.path)}
-            >
-              <span className="sd-sidebar__icon">{link.icon}</span>
-              <span className="sd-sidebar__label">{link.label}</span>
-            </button>
-          ))}
-        </nav>
-        <div className="sd-sidebar__bottom">
-          <button className="sd-sidebar__link sd-sidebar__logout" onClick={handleLogout}>
-            <span className="sd-sidebar__icon">🚪</span>
-            <span className="sd-sidebar__label">Logout</span>
-          </button>
-        </div>
-      </aside>
+      <OwnerSidebar 
+        sidebarOpen={sidebarOpen} 
+        setSidebarOpen={setSidebarOpen} 
+        owner={owner} 
+        handleLogout={handleLogout} 
+      />
 
       {/* ───────── MAIN ───────── */}
-      <div className={`sd-main ${sidebarOpen ? "sd-main--shifted" : ""}`}>
+      <div className={`sd-main od-main-content ${sidebarOpen ? "sd-main--shifted" : ""}`}>
         {/* Navbar */}
         <header className="sd-navbar">
           <div className="sd-navbar__left">
             <button className="sd-navbar__hamburger" onClick={() => setSidebarOpen((v) => !v)}>☰</button>
             <div className="sd-navbar__title">
               <h1>Supplier Management</h1>
-              <span className="sd-navbar__subtitle">
-                {new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}
-              </span>
+              <span className="sd-navbar__subtitle">Oversee your supply chain and payments</span>
             </div>
           </div>
           <div className="sd-navbar__right">
-            <button className="sm-btn sm-btn--primary" onClick={() => setShowAddSupplier(true)}>
-              + Add Supplier
-            </button>
+              <div className="sd-avatar">
+                <span>{(owner?.username || "O")[0].toUpperCase()}</span>
+              </div>
+              <div className="sd-navbar__staff-info">
+                <span className="sd-navbar__name">{owner?.username || "Owner"}</span>
+                <span className="sd-navbar__role">Owner</span>
+              </div>
           </div>
         </header>
 
         {/* Content */}
         <main className="sd-content">
-          {/* ── SUMMARY CARDS ── */}
-          <div className="sd-cards">
-            <div className="sd-card sd-card--blue">
-              <div className="sd-card__icon">🏭</div>
-              <div className="sd-card__body">
-                <span className="sd-card__num">{stats.totalSuppliers || 0}</span>
-                <span className="sd-card__label">Total Suppliers</span>
+          
+          {/* 1. Header Section */}
+          <div className="si-header-section">
+            <div className="si-header-info">
+              <h2>Partners & Logistics</h2>
+              <p>Manage supplier relationships, track purchases, and monitor outstanding dues.</p>
+            </div>
+            <div className="si-header-actions">
+              <button className="si-btn-primary si-btn-primary--light" onClick={() => setShowRecordPayment(true)}>
+                <span>💳</span> Record Payment
+              </button>
+              <button className="si-btn-primary si-btn-primary--dark" onClick={() => setShowAddSupplier(true)}>
+                <span>+</span> Add Supplier
+              </button>
+            </div>
+          </div>
+
+          {/* 2. Summary Stats Cards */}
+          <div className="si-ledger-cards">
+            <div className="si-ledger-card">
+              <span className="si-ledger-card__label">Total Suppliers</span>
+              <div className="si-ledger-card__content">
+                <span className="si-ledger-card__num">{stats.totalSuppliers || 0}</span>
               </div>
             </div>
-            <div className="sd-card sd-card--green">
-              <div className="sd-card__icon">🛒</div>
-              <div className="sd-card__body">
-                <span className="sd-card__num sm-card-amount">{fmt(stats.totalPurchases)}</span>
-                <span className="sd-card__label">Total Purchases</span>
+            <div className="si-ledger-card">
+              <span className="si-ledger-card__label">Total Purchases</span>
+              <div className="si-ledger-card__content">
+                <span className="si-ledger-card__num sm-card-amount">{fmt(stats.totalPurchases)}</span>
               </div>
             </div>
-            <div className="sd-card sd-card--purple">
-              <div className="sd-card__icon">💰</div>
-              <div className="sd-card__body">
-                <span className="sd-card__num sm-card-amount">{fmt(stats.totalAmountPaid)}</span>
-                <span className="sd-card__label">Total Amount Paid</span>
+            <div className="si-ledger-card">
+              <span className="si-ledger-card__label">Amount Paid</span>
+              <div className="si-ledger-card__content">
+                <span className="si-ledger-card__num sm-card-amount">{fmt(stats.totalAmountPaid)}</span>
               </div>
             </div>
-            <div className="sd-card sd-card--orange">
-              <div className="sd-card__icon">⚠️</div>
-              <div className="sd-card__body">
-                <span className="sd-card__num sm-card-amount">{fmt(stats.totalOutstandingDue)}</span>
-                <span className="sd-card__label">Outstanding Due</span>
+            <div className="si-ledger-card si-ledger-card--danger">
+              <span className="si-ledger-card__label">Outstanding Due</span>
+              <div className="si-ledger-card__content">
+                <span className="si-ledger-card__num sm-card-amount" style={{ color: '#ef4444' }}>{fmt(stats.totalOutstandingDue)}</span>
               </div>
             </div>
           </div>
 
-          {/* ── OUTSTANDING ALERT ── */}
+          {/* 3. Outstanding Alert Card */}
           {outstandingSuppliers.length > 0 && (
             <div className="sm-alert-card">
               <div className="sm-alert-card__header">
-                <span className="sm-alert-card__icon">⚠️</span>
-                <h3>Outstanding Balances ({outstandingSuppliers.length} supplier{outstandingSuppliers.length > 1 ? "s" : ""})</h3>
+                <span className="sm-alert-card__icon">🚨</span>
+                <h3>Payment Action Required ({outstandingSuppliers.length} Pending)</h3>
               </div>
               <div className="sm-alert-items">
                 {outstandingSuppliers.map((s) => (
                   <div key={s._id} className="sm-alert-item">
                     <div>
-                      <p className="sm-alert-item__name">{s.supplierName}</p>
-                      <p className="sm-alert-item__company">{s.companyName}</p>
+                      <span className="sm-alert-item__name">{s.supplierName}</span>
+                      <span className="sm-alert-item__company">{s.companyName}</span>
                     </div>
                     <span className="sm-alert-item__due">{fmt(s.totalDue)}</span>
                   </div>
@@ -419,7 +411,7 @@ const SupplierManagement = () => {
             </div>
           )}
 
-          {/* ── TABS ── */}
+          {/* 4. Filter & Tabs Row */}
           <div className="sm-tabs">
             {["suppliers", "purchases", "payments"].map((tab) => (
               <button
@@ -427,176 +419,164 @@ const SupplierManagement = () => {
                 className={`sm-tab-btn ${activeTab === tab ? "active" : ""}`}
                 onClick={() => setActiveTab(tab)}
               >
-                {tab === "suppliers" && "🏭 Suppliers"}
-                {tab === "purchases" && "📋 Purchase Records"}
-                {tab === "payments" && "💳 Payment History"}
+                {tab === "suppliers" && "Suppliers"}
+                {tab === "purchases" && "Purchases"}
+                {tab === "payments" && "Payments"}
               </button>
             ))}
           </div>
 
-          {/* ───────── TAB: SUPPLIERS ───────── */}
+          {/* 5. Main Panels */}
           {activeTab === "suppliers" && (
-            <div className="sd-panel">
-              <div className="sd-panel__header">
-                <h3>Supplier List</h3>
+            <div className="si-ledger-table-wrap">
+              <div style={{ padding: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #f1f5f9' }}>
+                <h3 style={{ fontSize: '16px', fontWeight: 700 }}>Supplier Directory</h3>
                 <div className="sm-search-wrap">
                   <input
                     className="sm-search"
-                    placeholder="🔍 Search suppliers..."
+                    placeholder="Search by name, company, or phone..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                   />
+                  <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }}>🔍</span>
                 </div>
               </div>
-              {loading ? (
-                <div className="sm-loading">Loading...</div>
-              ) : filteredSuppliers.length === 0 ? (
-                <div className="sm-empty-state">
-                  <span>🏭</span>
-                  <p>No suppliers found. Add your first supplier!</p>
-                </div>
-              ) : (
-                <div className="sm-table-wrap">
-                  <table className="sm-table">
-                    <thead>
-                      <tr>
-                        <th>Supplier Name</th>
-                        <th>Company</th>
-                        <th>Phone</th>
-                        <th>Products Supplied</th>
-                        <th>Total Purchases</th>
-                        <th>Amount Paid</th>
-                        <th>Amount Due</th>
-                        <th>Actions</th>
+              <table className="si-ledger-table">
+                <thead>
+                  <tr>
+                    <th>Supplier / Company</th>
+                    <th>Contact</th>
+                    <th>Products</th>
+                    <th>Financials</th>
+                    <th>Due Status</th>
+                    <th style={{ textAlign: 'right' }}>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredSuppliers.length === 0 ? (
+                    <tr><td colSpan="6" style={{ textAlign: 'center', padding: '40px' }}>No suppliers found.</td></tr>
+                  ) : (
+                    filteredSuppliers.map((s) => (
+                      <tr key={s._id}>
+                        <td>
+                          <div className="si-ledger-product-info">
+                            <span className="si-ledger-name">{s.supplierName}</span>
+                            <span className="si-ledger-desc">{s.companyName}</span>
+                          </div>
+                        </td>
+                        <td>
+                          <div style={{ fontSize: '13px' }}>
+                            <div style={{ fontWeight: 600 }}>{s.phone}</div>
+                            <div style={{ color: '#64748b' }}>{s.email || "No email"}</div>
+                          </div>
+                        </td>
+                        <td>
+                          <span className="si-ledger-tag">{s.productsSupplied || "Others"}</span>
+                        </td>
+                        <td>
+                          <div style={{ fontSize: '12px' }}>
+                            <div style={{ color: '#64748b' }}>Purchases: {fmt(s.totalPurchases)}</div>
+                            <div style={{ color: '#10b981', fontWeight: 600 }}>Paid: {fmt(s.totalPaid)}</div>
+                          </div>
+                        </td>
+                        <td>
+                          <span className={`sm-due-badge ${s.totalDue > 0 ? "sm-due-badge--danger" : "sm-due-badge--ok"}`}>
+                            {fmt(s.totalDue)}
+                          </span>
+                        </td>
+                        <td style={{ textAlign: 'right' }}>
+                          <div className="sm-actions" style={{ justifyContent: 'flex-end' }}>
+                            <button className="sm-action-btn" onClick={() => { setSelectedSupplier(s); setShowViewSupplier(true); }} title="View Details">👁</button>
+                            <button className="sm-action-btn" onClick={() => openEditSupplier(s)} title="Edit">✏️</button>
+                            <button className="sm-action-btn sm-action-btn--delete" onClick={() => handleDeleteSupplier(s._id)} title="Delete">🗑</button>
+                          </div>
+                        </td>
                       </tr>
-                    </thead>
-                    <tbody>
-                      {filteredSuppliers.map((s) => (
-                        <tr key={s._id}>
-                          <td className="sm-table__name">{s.supplierName}</td>
-                          <td>{s.companyName}</td>
-                          <td>{s.phone}</td>
-                          <td className="sm-table__products">{s.productsSupplied || "—"}</td>
-                          <td>{fmt(s.totalPurchases)}</td>
-                          <td className="sm-table__paid">{fmt(s.totalPaid)}</td>
-                          <td>
-                            <span className={`sm-due-badge ${s.totalDue > 0 ? "sm-due-badge--danger" : "sm-due-badge--ok"}`}>
-                              {fmt(s.totalDue)}
-                            </span>
-                          </td>
-                          <td>
-                            <div className="sm-actions">
-                              <button
-                                className="sm-action-btn sm-action-btn--view"
-                                onClick={() => { setSelectedSupplier(s); setShowViewSupplier(true); }}
-                                title="View"
-                              >👁</button>
-                              <button
-                                className="sm-action-btn sm-action-btn--edit"
-                                onClick={() => openEditSupplier(s)}
-                                title="Edit"
-                              >✏️</button>
-                              <button
-                                className="sm-action-btn sm-action-btn--delete"
-                                onClick={() => handleDeleteSupplier(s._id)}
-                                title="Delete"
-                              >🗑</button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
+                    ))
+                  )}
+                </tbody>
+              </table>
             </div>
           )}
 
-          {/* ───────── TAB: PURCHASES ───────── */}
           {activeTab === "purchases" && (
-            <div className="sd-panel">
-              <div className="sd-panel__header">
-                <h3>Purchase Records</h3>
-                <button className="sm-btn sm-btn--primary" onClick={() => setShowRecordPurchase(true)}>
+            <div className="si-ledger-table-wrap">
+              <div style={{ padding: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #f1f5f9' }}>
+                <h3 style={{ fontSize: '16px', fontWeight: 700 }}>Recent Purchases</h3>
+                <button className="si-btn-primary si-btn-primary--dark" style={{ padding: '8px 16px', fontSize: '12px' }} onClick={() => setShowRecordPurchase(true)}>
                   + Record Purchase
                 </button>
               </div>
-              {purchases.length === 0 ? (
-                <div className="sm-empty-state">
-                  <span>📋</span>
-                  <p>No purchases recorded yet.</p>
-                </div>
-              ) : (
-                <div className="sm-table-wrap">
-                  <table className="sm-table">
-                    <thead>
-                      <tr>
-                        <th>Supplier Name</th>
-                        <th>Product Name</th>
-                        <th>Quantity</th>
-                        <th>Cost Price</th>
-                        <th>Total Cost</th>
-                        <th>Purchase Date</th>
+              <table className="si-ledger-table">
+                <thead>
+                  <tr>
+                    <th>Product</th>
+                    <th>Supplier</th>
+                    <th>Quantity</th>
+                    <th>Price Details</th>
+                    <th>Purchase Date</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {purchases.length === 0 ? (
+                    <tr><td colSpan="5" style={{ textAlign: 'center', padding: '40px' }}>No purchases recorded.</td></tr>
+                  ) : (
+                    purchases.map((p) => (
+                      <tr key={p._id}>
+                        <td className="sm-table__name">{p.productName}</td>
+                        <td style={{ color: '#64748b' }}>{p.supplierName}</td>
+                        <td style={{ fontWeight: 600 }}>{p.quantity} units</td>
+                        <td>
+                          <div style={{ fontSize: '12px' }}>
+                            <div>CP: {fmt(p.costPrice)}</div>
+                            <div className="sm-table__total">Total: {fmt(p.totalCost)}</div>
+                          </div>
+                        </td>
+                        <td>{new Date(p.purchaseDate).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })}</td>
                       </tr>
-                    </thead>
-                    <tbody>
-                      {purchases.map((p) => (
-                        <tr key={p._id}>
-                          <td className="sm-table__name">{p.supplierName}</td>
-                          <td>{p.productName}</td>
-                          <td>{p.quantity}</td>
-                          <td>{fmt(p.costPrice)}</td>
-                          <td className="sm-table__total">{fmt(p.totalCost)}</td>
-                          <td>{new Date(p.purchaseDate).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
+                    ))
+                  )}
+                </tbody>
+              </table>
             </div>
           )}
 
-          {/* ───────── TAB: PAYMENTS ───────── */}
           {activeTab === "payments" && (
-            <div className="sd-panel">
-              <div className="sd-panel__header">
-                <h3>Payment History</h3>
-                <button className="sm-btn sm-btn--primary" onClick={() => setShowRecordPayment(true)}>
+            <div className="si-ledger-table-wrap">
+               <div style={{ padding: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #f1f5f9' }}>
+                <h3 style={{ fontSize: '16px', fontWeight: 700 }}>Payment History</h3>
+                <button className="si-btn-primary si-btn-primary--dark" style={{ padding: '8px 16px', fontSize: '12px' }} onClick={() => setShowRecordPayment(true)}>
                   + Record Payment
                 </button>
               </div>
-              {payments.length === 0 ? (
-                <div className="sm-empty-state">
-                  <span>💳</span>
-                  <p>No payments recorded yet.</p>
-                </div>
-              ) : (
-                <div className="sm-table-wrap">
-                  <table className="sm-table">
-                    <thead>
-                      <tr>
-                        <th>Supplier Name</th>
-                        <th>Amount Paid</th>
-                        <th>Payment Method</th>
-                        <th>Payment Date</th>
+              <table className="si-ledger-table">
+                <thead>
+                  <tr>
+                    <th>Supplier</th>
+                    <th>Amount Paid</th>
+                    <th>Method</th>
+                    <th>Date</th>
+                    <th>Notes</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {payments.length === 0 ? (
+                    <tr><td colSpan="5" style={{ textAlign: 'center', padding: '40px' }}>No payments recorded.</td></tr>
+                  ) : (
+                    payments.map((p) => (
+                      <tr key={p._id}>
+                        <td className="sm-table__name">{p.supplierName}</td>
+                        <td className="sm-table__paid">{fmt(p.amountPaid)}</td>
+                        <td>
+                          <span className="sm-method-badge">{p.paymentMethod}</span>
+                        </td>
+                        <td>{new Date(p.paymentDate).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })}</td>
+                        <td style={{ color: '#94a3b8', fontSize: '12px' }}>{p.note || "—"}</td>
                       </tr>
-                    </thead>
-                    <tbody>
-                      {payments.map((p) => (
-                        <tr key={p._id}>
-                          <td className="sm-table__name">{p.supplierName}</td>
-                          <td className="sm-table__paid">{fmt(p.amountPaid)}</td>
-                          <td>
-                            <span className="sm-method-badge">{p.paymentMethod}</span>
-                          </td>
-                          <td>{new Date(p.paymentDate).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
+                    ))
+                  )}
+                </tbody>
+              </table>
             </div>
           )}
         </main>
@@ -606,42 +586,42 @@ const SupplierManagement = () => {
 
       {/* Add Supplier Modal */}
       {showAddSupplier && (
-        <div className="sm-modal-overlay" onClick={() => setShowAddSupplier(false)}>
-          <div className="sm-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="sm-modal__header">
-              <h2>Add New Supplier</h2>
-              <button className="sm-modal__close" onClick={() => setShowAddSupplier(false)}>✕</button>
+        <div className="si-modal-overlay" onClick={() => setShowAddSupplier(false)}>
+          <div className="si-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="si-modal__header">
+              <h2>➕ Add New Supplier</h2>
+              <button className="si-modal__close" onClick={() => setShowAddSupplier(false)}>✕</button>
             </div>
-            <form className="sm-form" onSubmit={handleAddSupplier}>
-              <div className="sm-form__grid">
-                <div className="sm-form__group">
+            <form className="si-form" onSubmit={handleAddSupplier}>
+              <div className="si-form__grid">
+                <div className="si-form__group">
                   <label>Supplier Name *</label>
                   <input required value={supplierForm.supplierName} onChange={(e) => setSupplierForm({ ...supplierForm, supplierName: e.target.value })} placeholder="Full name" />
                 </div>
-                <div className="sm-form__group">
+                <div className="si-form__group">
                   <label>Company Name *</label>
                   <input required value={supplierForm.companyName} onChange={(e) => setSupplierForm({ ...supplierForm, companyName: e.target.value })} placeholder="Company name" />
                 </div>
-                <div className="sm-form__group">
+                <div className="si-form__group">
                   <label>Phone Number *</label>
                   <input required value={supplierForm.phone} onChange={(e) => setSupplierForm({ ...supplierForm, phone: e.target.value })} placeholder="+977-XXXXXXXXXX" />
                 </div>
-                <div className="sm-form__group">
+                <div className="si-form__group">
                   <label>Email</label>
                   <input type="email" value={supplierForm.email} onChange={(e) => setSupplierForm({ ...supplierForm, email: e.target.value })} placeholder="supplier@email.com" />
                 </div>
-                <div className="sm-form__group sm-form__group--full">
-                  <label>Address</label>
-                  <input value={supplierForm.address} onChange={(e) => setSupplierForm({ ...supplierForm, address: e.target.value })} placeholder="Full address" />
-                </div>
-                <div className="sm-form__group">
-                  <label>Products Supplied</label>
-                  <input value={supplierForm.productsSupplied} onChange={(e) => setSupplierForm({ ...supplierForm, productsSupplied: e.target.value })} placeholder="e.g. Electronics, Clothing" />
-                </div>
               </div>
-              <div className="sm-form__actions">
-                <button type="button" className="sm-btn sm-btn--ghost" onClick={() => setShowAddSupplier(false)}>Cancel</button>
-                <button type="submit" className="sm-btn sm-btn--primary">Add Supplier</button>
+              <div className="si-form__group" style={{ marginTop: '16px' }}>
+                <label>Address</label>
+                <input value={supplierForm.address} onChange={(e) => setSupplierForm({ ...supplierForm, address: e.target.value })} placeholder="Full address" />
+              </div>
+              <div className="si-form__group" style={{ marginTop: '16px' }}>
+                <label>Products Supplied</label>
+                <input value={supplierForm.productsSupplied} onChange={(e) => setSupplierForm({ ...supplierForm, productsSupplied: e.target.value })} placeholder="e.g. Electronics, Clothing" />
+              </div>
+              <div className="si-form__actions">
+                <button type="button" className="si-btn-cancel" onClick={() => setShowAddSupplier(false)}>Cancel</button>
+                <button type="submit" className="si-btn-submit">Add Supplier</button>
               </div>
             </form>
           </div>
@@ -650,42 +630,42 @@ const SupplierManagement = () => {
 
       {/* Edit Supplier Modal */}
       {showEditSupplier && (
-        <div className="sm-modal-overlay" onClick={() => setShowEditSupplier(false)}>
-          <div className="sm-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="sm-modal__header">
-              <h2>Edit Supplier</h2>
-              <button className="sm-modal__close" onClick={() => setShowEditSupplier(false)}>✕</button>
+        <div className="si-modal-overlay" onClick={() => setShowEditSupplier(false)}>
+          <div className="si-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="si-modal__header">
+              <h2>✏️ Edit Supplier</h2>
+              <button className="si-modal__close" onClick={() => setShowEditSupplier(false)}>✕</button>
             </div>
-            <form className="sm-form" onSubmit={handleEditSupplier}>
-              <div className="sm-form__grid">
-                <div className="sm-form__group">
+            <form className="si-form" onSubmit={handleEditSupplier}>
+              <div className="si-form__grid">
+                <div className="si-form__group">
                   <label>Supplier Name *</label>
                   <input required value={supplierForm.supplierName} onChange={(e) => setSupplierForm({ ...supplierForm, supplierName: e.target.value })} />
                 </div>
-                <div className="sm-form__group">
+                <div className="si-form__group">
                   <label>Company Name *</label>
                   <input required value={supplierForm.companyName} onChange={(e) => setSupplierForm({ ...supplierForm, companyName: e.target.value })} />
                 </div>
-                <div className="sm-form__group">
+                <div className="si-form__group">
                   <label>Phone Number *</label>
                   <input required value={supplierForm.phone} onChange={(e) => setSupplierForm({ ...supplierForm, phone: e.target.value })} />
                 </div>
-                <div className="sm-form__group">
+                <div className="si-form__group">
                   <label>Email</label>
                   <input type="email" value={supplierForm.email} onChange={(e) => setSupplierForm({ ...supplierForm, email: e.target.value })} />
                 </div>
-                <div className="sm-form__group sm-form__group--full">
-                  <label>Address</label>
-                  <input value={supplierForm.address} onChange={(e) => setSupplierForm({ ...supplierForm, address: e.target.value })} />
-                </div>
-                <div className="sm-form__group">
-                  <label>Products Supplied</label>
-                  <input value={supplierForm.productsSupplied} onChange={(e) => setSupplierForm({ ...supplierForm, productsSupplied: e.target.value })} />
-                </div>
               </div>
-              <div className="sm-form__actions">
-                <button type="button" className="sm-btn sm-btn--ghost" onClick={() => setShowEditSupplier(false)}>Cancel</button>
-                <button type="submit" className="sm-btn sm-btn--primary">Save Changes</button>
+              <div className="si-form__group" style={{ marginTop: '16px' }}>
+                <label>Address</label>
+                <input value={supplierForm.address} onChange={(e) => setSupplierForm({ ...supplierForm, address: e.target.value })} />
+              </div>
+              <div className="si-form__group" style={{ marginTop: '16px' }}>
+                <label>Products Supplied</label>
+                <input value={supplierForm.productsSupplied} onChange={(e) => setSupplierForm({ ...supplierForm, productsSupplied: e.target.value })} />
+              </div>
+              <div className="si-form__actions">
+                <button type="button" className="si-btn-cancel" onClick={() => setShowEditSupplier(false)}>Cancel</button>
+                <button type="submit" className="si-btn-submit">Save Changes</button>
               </div>
             </form>
           </div>
@@ -694,55 +674,49 @@ const SupplierManagement = () => {
 
       {/* View Supplier Modal */}
       {showViewSupplier && selectedSupplier && (
-        <div className="sm-modal-overlay" onClick={() => setShowViewSupplier(false)}>
-          <div className="sm-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="sm-modal__header">
-              <h2>Supplier Details</h2>
-              <button className="sm-modal__close" onClick={() => setShowViewSupplier(false)}>✕</button>
+        <div className="si-modal-overlay" onClick={() => setShowViewSupplier(false)}>
+          <div className="si-modal" style={{ maxWidth: '500px' }} onClick={(e) => e.stopPropagation()}>
+            <div className="si-modal__header">
+              <h2>🏢 Supplier Profile</h2>
+              <button className="si-modal__close" onClick={() => setShowViewSupplier(false)}>✕</button>
             </div>
-            <div className="sm-view-grid">
-              <div className="sm-view-item">
-                <label>Supplier Name</label>
-                <p>{selectedSupplier.supplierName}</p>
+            <div style={{ padding: '24px' }}>
+              <div className="sm-view-grid">
+                <div className="sm-view-item">
+                  <label>Supplier Name</label>
+                  <p>{selectedSupplier.supplierName}</p>
+                </div>
+                <div className="sm-view-item">
+                  <label>Company</label>
+                  <p>{selectedSupplier.companyName}</p>
+                </div>
+                <div className="sm-view-item">
+                  <label>Phone</label>
+                  <p>{selectedSupplier.phone}</p>
+                </div>
+                <div className="sm-view-item">
+                  <label>Email</label>
+                  <p>{selectedSupplier.email || "—"}</p>
+                </div>
+                <div className="sm-view-item" style={{ gridColumn: 'span 2' }}>
+                  <label>Address</label>
+                  <p>{selectedSupplier.address || "—"}</p>
+                </div>
+                <div className="sm-view-item">
+                  <label>Total Purchases</label>
+                  <p>{fmt(selectedSupplier.totalPurchases)}</p>
+                </div>
+                <div className="sm-view-item">
+                  <label>Outstanding Due</label>
+                  <p className={selectedSupplier.totalDue > 0 ? "sm-view-item__value--red" : "sm-view-item__value--green"} style={{ fontWeight: 800 }}>
+                    {fmt(selectedSupplier.totalDue)}
+                  </p>
+                </div>
               </div>
-              <div className="sm-view-item">
-                <label>Company</label>
-                <p>{selectedSupplier.companyName}</p>
+              <div className="si-form__actions" style={{ marginTop: '24px' }}>
+                <button className="si-btn-cancel" style={{ width: '100%' }} onClick={() => setShowViewSupplier(false)}>Close</button>
+                <button className="si-btn-submit" style={{ width: '100%' }} onClick={() => { setShowViewSupplier(false); openEditSupplier(selectedSupplier); }}>Edit Details</button>
               </div>
-              <div className="sm-view-item">
-                <label>Phone</label>
-                <p>{selectedSupplier.phone}</p>
-              </div>
-              <div className="sm-view-item">
-                <label>Email</label>
-                <p>{selectedSupplier.email || "—"}</p>
-              </div>
-              <div className="sm-view-item sm-view-item--full">
-                <label>Address</label>
-                <p>{selectedSupplier.address || "—"}</p>
-              </div>
-              <div className="sm-view-item">
-                <label>Products Supplied</label>
-                <p>{selectedSupplier.productsSupplied || "—"}</p>
-              </div>
-              <div className="sm-view-item">
-                <label>Total Purchases</label>
-                <p className="sm-view-item__value">{fmt(selectedSupplier.totalPurchases)}</p>
-              </div>
-              <div className="sm-view-item">
-                <label>Amount Paid</label>
-                <p className="sm-view-item__value sm-view-item__value--green">{fmt(selectedSupplier.totalPaid)}</p>
-              </div>
-              <div className="sm-view-item">
-                <label>Outstanding Due</label>
-                <p className={`sm-view-item__value ${selectedSupplier.totalDue > 0 ? "sm-view-item__value--red" : "sm-view-item__value--green"}`}>
-                  {fmt(selectedSupplier.totalDue)}
-                </p>
-              </div>
-            </div>
-            <div className="sm-form__actions">
-              <button className="sm-btn sm-btn--ghost" onClick={() => setShowViewSupplier(false)}>Close</button>
-              <button className="sm-btn sm-btn--primary" onClick={() => { setShowViewSupplier(false); openEditSupplier(selectedSupplier); }}>Edit</button>
             </div>
           </div>
         </div>
@@ -750,196 +724,157 @@ const SupplierManagement = () => {
 
       {/* Record Purchase Modal */}
       {showRecordPurchase && (
-        <div className="sm-modal-overlay" onClick={() => setShowRecordPurchase(false)}>
-          <div className="sm-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="sm-modal__header">
-              <h2>📋 Record Purchase</h2>
-              <button className="sm-modal__close" onClick={() => setShowRecordPurchase(false)}>✕</button>
+        <div className="si-modal-overlay" onClick={() => setShowRecordPurchase(false)}>
+          <div className="si-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="si-modal__header">
+              <h2>📦 Record Purchase</h2>
+              <button className="si-modal__close" onClick={() => setShowRecordPurchase(false)}>✕</button>
             </div>
-            <form className="sm-form" onSubmit={handleRecordPurchase}>
-              <div className="sm-form__grid">
-                <div className="sm-form__group sm-form__group--full">
-                  <label>Supplier *</label>
-                  <div className="sm-product-search-container">
-                    <div className="sm-product-search-input-group">
-                      <input 
-                        type="text" 
-                        placeholder="Search supplier name or company..." 
-                        value={supplierSearchTerm}
-                        onChange={(e) => {
-                          setSupplierSearchTerm(e.target.value);
-                          setShowSupplierResults(true);
-                        }}
-                        onFocus={() => setShowSupplierResults(true)}
-                        className="sm-product-search-input"
-                        required={!purchaseForm.supplierId}
-                      />
-                      <button 
-                        type="button" 
-                        className="sm-btn sm-btn--secondary"
-                        onClick={() => setShowSupplierResults(!showSupplierResults)}
-                      >
-                        {showSupplierResults ? "Close" : "Search"}
-                      </button>
-                    </div>
-                    
-                    {showSupplierResults && (
-                      <div className="sm-product-results">
-                        {filteredSearchSuppliers.length > 0 ? (
-                          filteredSearchSuppliers.map((s) => (
-                            <div 
-                              key={s._id} 
-                              className="sm-product-result-item"
-                              onClick={() => handleSupplierSelect(s._id, "purchase")}
-                            >
-                              <div className="sm-product-result-info">
+            <form className="si-form" onSubmit={handleRecordPurchase}>
+              <div className="sm-product-search-container" style={{ marginBottom: '16px' }}>
+                  <label style={{ fontSize: '12px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', marginBottom: '8px', display: 'block' }}>Search Supplier *</label>
+                  <div className="sm-product-search-input-group">
+                    <input 
+                      type="text" 
+                      placeholder="Type supplier name or company..." 
+                      value={supplierSearchTerm}
+                      onChange={(e) => {
+                        setSupplierSearchTerm(e.target.value);
+                        setShowSupplierResults(true);
+                      }}
+                      onFocus={() => setShowSupplierResults(true)}
+                      className="si-ledger-select"
+                      style={{ flex: 1, width: '100%' }}
+                      required={!purchaseForm.supplierId}
+                    />
+                  </div>
+                  
+                  {showSupplierResults && (
+                    <div className="sm-product-results">
+                      {filteredSearchSuppliers.length > 0 ? (
+                        filteredSearchSuppliers.map((s) => (
+                          <div 
+                            key={s._id} 
+                            className="sm-product-result-item"
+                            onClick={() => handleSupplierSelect(s._id, "purchase")}
+                          >
+                            <div>
                                 <span className="sm-product-result-name">{s.supplierName}</span>
                                 <span className="sm-product-result-cat">{s.companyName}</span>
-                              </div>
-                              <span className="sm-product-result-qty">Due: {fmt(s.totalDue)}</span>
                             </div>
-                          ))
-                        ) : supplierSearchTerm.length > 0 ? (
-                          <div className="sm-product-no-results">No suppliers found</div>
-                        ) : (
-                          <div className="sm-product-no-results">Type to search...</div>
-                        )}
-                      </div>
-                    )}
-                  </div>
+                            <span style={{ fontWeight: 700, fontSize: '11px', color: s.totalDue > 0 ? '#ef4444' : '#10b981' }}>Due: {fmt(s.totalDue)}</span>
+                          </div>
+                        ))
+                      ) : (
+                        <div style={{ padding: '12px', textAlign: 'center', color: '#94a3b8', fontSize: '13px' }}>No suppliers found</div>
+                      )}
+                    </div>
+                  )}
                   {purchaseForm.supplierId && (
                     <div className="sm-selected-product">
-                      Selected: <strong>{suppliers.find(s => s._id === purchaseForm.supplierId)?.supplierName}</strong>
-                      <button type="button" onClick={() => {
+                      <span>Landed from: <strong>{suppliers.find(s => s._id === purchaseForm.supplierId)?.supplierName}</strong></span>
+                      <span className="sm-clear-link" onClick={() => {
                         setPurchaseForm({...purchaseForm, supplierId: ""});
                         setSupplierSearchTerm("");
-                      }} className="sm-clear-link">Clear</button>
+                      }}>Clear</span>
                     </div>
                   )}
                 </div>
-                <div className="sm-form__group sm-form__group--full">
-                  <label>Link to Inventory Product (Optional)</label>
-                  <div className="sm-product-search-container">
-                    <div className="sm-product-search-input-group">
-                      <input 
-                        type="text" 
-                        placeholder="Search product name or category..." 
-                        value={productSearchTerm}
-                        onChange={(e) => {
-                          setProductSearchTerm(e.target.value);
-                          setShowProductResults(true);
-                        }}
-                        onFocus={() => setShowProductResults(true)}
-                        className="sm-product-search-input"
-                      />
-                      <button 
-                        type="button" 
-                        className="sm-btn sm-btn--secondary"
-                        onClick={() => setShowProductResults(!showProductResults)}
-                      >
-                        {showProductResults ? "Close" : "Search"}
-                      </button>
-                    </div>
-                    
-                    {showProductResults && (
-                      <div className="sm-product-results">
-                        {filteredPurchaseProducts.length > 0 ? (
-                          filteredPurchaseProducts.map((p) => (
-                            <div 
-                              key={p._id} 
-                              className="sm-product-result-item"
-                              onClick={() => handleProductSelect(p._id)}
-                            >
-                              <div className="sm-product-result-info">
+
+                <div className="sm-product-search-container" style={{ marginBottom: '20px' }}>
+                  <label style={{ fontSize: '12px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', marginBottom: '8px', display: 'block' }}>Link to Product (Optional)</label>
+                  <div className="sm-product-search-input-group">
+                    <input 
+                      type="text" 
+                      placeholder="Search existing inventory..." 
+                      value={productSearchTerm}
+                      onChange={(e) => {
+                        setProductSearchTerm(e.target.value);
+                        setShowProductResults(true);
+                      }}
+                      onFocus={() => setShowProductResults(true)}
+                      className="si-ledger-select"
+                      style={{ flex: 1, width: '100%' }}
+                    />
+                  </div>
+                  
+                  {showProductResults && (
+                    <div className="sm-product-results">
+                      {filteredPurchaseProducts.length > 0 ? (
+                        filteredPurchaseProducts.map((p) => (
+                          <div 
+                            key={p._id} 
+                            className="sm-product-result-item"
+                            onClick={() => handleProductSelect(p._id)}
+                          >
+                            <div>
                                 <span className="sm-product-result-name">{p.name}</span>
                                 <span className="sm-product-result-cat">{p.category}</span>
-                              </div>
-                              <span className="sm-product-result-qty">Qty: {p.quantity}</span>
                             </div>
-                          ))
-                        ) : productSearchTerm.length > 0 ? (
-                          <div className="sm-product-no-results">No products found</div>
-                        ) : (
-                          <div className="sm-product-no-results">Type to search...</div>
-                        )}
-                      </div>
-                    )}
-                  </div>
+                            <span style={{ fontSize: '11px', color: '#3b82f6' }}>In Stock: {p.quantity}</span>
+                          </div>
+                        ))
+                      ) : (
+                        <div style={{ padding: '12px', textAlign: 'center', color: '#94a3b8', fontSize: '13px' }}>No products found</div>
+                      )}
+                    </div>
+                  )}
                   {purchaseForm.productId && (
                     <div className="sm-selected-product">
-                      Linked to: <strong>{products.find(p => p._id === purchaseForm.productId)?.name}</strong>
-                      <button type="button" onClick={() => {
+                      <span>Linking to: <strong>{products.find(p => p._id === purchaseForm.productId)?.name}</strong></span>
+                      <span className="sm-clear-link" onClick={() => {
                         setPurchaseForm({...purchaseForm, productId: ""});
                         setProductSearchTerm("");
-                      }} className="sm-clear-link">Clear</button>
+                      }}>Clear</span>
                     </div>
                   )}
                 </div>
-                <div className="sm-form__group sm-form__group--full">
+
+              <div className="si-form__grid">
+                <div className="si-form__group" style={{ gridColumn: 'span 2' }}>
                   <label>Product Name *</label>
-                  <input required value={purchaseForm.productName} onChange={(e) => setPurchaseForm({ ...purchaseForm, productName: e.target.value })} placeholder="Product name" />
+                  <input required value={purchaseForm.productName} onChange={(e) => setPurchaseForm({ ...purchaseForm, productName: e.target.value })} placeholder="Enter item name" />
                 </div>
-                <div className="sm-form__group">
+                <div className="si-form__group">
                   <label>Quantity *</label>
                   <input required type="number" min="1" value={purchaseForm.quantity} onChange={(e) => setPurchaseForm({ ...purchaseForm, quantity: e.target.value })} placeholder="0" />
                 </div>
-                <div className="sm-form__group">
-                  <label>Cost Price (per unit) *</label>
+                <div className="si-form__group">
+                  <label>Cost Price (unit) *</label>
                   <input required type="number" min="0" step="0.01" value={purchaseForm.costPrice} onChange={(e) => setPurchaseForm({ ...purchaseForm, costPrice: e.target.value })} placeholder="0.00" />
                 </div>
-                {purchaseForm.quantity && purchaseForm.costPrice && (
-                  <div className="sm-form__group sm-form__group--full sm-total-preview">
-                    <span>Total Cost: </span>
-                    <strong>{fmt(Number(purchaseForm.quantity) * Number(purchaseForm.costPrice))}</strong>
-                  </div>
-                )}
-                <div className="sm-form__group">
-                  <label>Purchase Date</label>
-                  <input type="date" value={purchaseForm.purchaseDate} onChange={(e) => setPurchaseForm({ ...purchaseForm, purchaseDate: e.target.value })} />
+                <div className="si-form__group">
+                    <label>Selling Price (unit) *</label>
+                    <input required type="number" min="0" step="0.01" value={purchaseForm.sellingPrice} onChange={(e) => setPurchaseForm({ ...purchaseForm, sellingPrice: e.target.value })} placeholder="0.00" />
                 </div>
-                <div className="sm-form__group">
-                  <label>Selling Price (per unit) *</label>
-                  <input required type="number" min="0" step="0.01" value={purchaseForm.sellingPrice} onChange={(e) => setPurchaseForm({ ...purchaseForm, sellingPrice: e.target.value })} placeholder="0.00" />
-                </div>
-                <div className="sm-form__group sm-form__group--full">
-                  <label>Category *</label>
-                  <select required value={purchaseForm.category} onChange={(e) => setPurchaseForm({ ...purchaseForm, category: e.target.value })}>
-                    <option value="Others">Others</option>
-                    <option value="Electronics">Electronics</option>
-                    <option value="Fashion">Fashion</option>
-                    <option value="Beauty & Personal Care">Beauty & Personal Care</option>
-                    <option value="Home & Kitchen">Home & Kitchen</option>
-                    <option value="Books & Stationery">Books & Stationery</option>
-                    <option value="Toys & Games">Toys & Games</option>
-                    <option value="Sports & Fitness">Sports & Fitness</option>
-                    <option value="Automotive">Automotive</option>
-                  </select>
-                </div>
-                <div className="sm-form__group sm-form__group--full">
-                  <label>Description *</label>
-                  <textarea required value={purchaseForm.description} onChange={(e) => setPurchaseForm({ ...purchaseForm, description: e.target.value })} placeholder="Product description" rows="3" style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1.5px solid #e2e8f0', fontFamily: 'inherit' }}></textarea>
-                </div>
-                <div className="sm-form__group sm-form__group--full">
-                  <label>Product Image</label>
-                  <input type="file" accept="image/*" onChange={(e) => {
-                    const file = e.target.files[0];
-                    if (file) {
-                      setPurchaseImage(file);
-                      const reader = new FileReader();
-                      reader.onloadend = () => setPurchaseImagePreview(reader.result);
-                      reader.readAsDataURL(file);
-                    }
-                  }} />
-                  {purchaseImagePreview && (
-                    <div style={{ marginTop: '10px' }}>
-                      <img src={purchaseImagePreview} alt="Preview" style={{ width: '100px', height: '100px', objectFit: 'cover', borderRadius: '8px', border: '2px solid #3b82f6' }} />
-                    </div>
-                  )}
+                <div className="si-form__group">
+                    <label>Category *</label>
+                    <select required value={purchaseForm.category} onChange={(e) => setPurchaseForm({ ...purchaseForm, category: e.target.value })}>
+                        <option value="Others">Others</option>
+                        <option value="Electronics">Electronics</option>
+                        <option value="Fashion">Fashion</option>
+                        <option value="Beauty & Personal Care">Beauty & Personal Care</option>
+                        <option value="Home & Kitchen">Home & Kitchen</option>
+                        <option value="Books & Stationery">Books & Stationery</option>
+                        <option value="Toys & Games">Toys & Games</option>
+                        <option value="Sports & Fitness">Sports & Fitness</option>
+                        <option value="Automotive">Automotive</option>
+                    </select>
                 </div>
               </div>
-              <div className="sm-form__actions">
-                <button type="button" className="sm-btn sm-btn--ghost" onClick={() => setShowRecordPurchase(false)}>Cancel</button>
-                <button type="submit" className="sm-btn sm-btn--primary">Record Purchase</button>
+              <div className="si-form__group" style={{ marginTop: '16px' }}>
+                <label>Description *</label>
+                <textarea required value={purchaseForm.description} onChange={(e) => setPurchaseForm({ ...purchaseForm, description: e.target.value })} placeholder="Brief description of the purchase" rows="2"></textarea>
+              </div>
+              
+              <div style={{ marginTop: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f8fafc', padding: '12px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                 <span style={{ fontWeight: 600, color: '#64748b' }}>Total Invoice Amount:</span>
+                 <span style={{ fontWeight: 800, color: '#0f172a', fontSize: '18px' }}>{fmt(Number(purchaseForm.quantity || 0) * Number(purchaseForm.costPrice || 0))}</span>
+              </div>
+
+              <div className="si-form__actions">
+                <button type="button" className="si-btn-cancel" onClick={() => setShowRecordPurchase(false)}>Cancel</button>
+                <button type="submit" className="si-btn-submit">Finalize Purchase</button>
               </div>
             </form>
           </div>
@@ -948,100 +883,92 @@ const SupplierManagement = () => {
 
       {/* Record Payment Modal */}
       {showRecordPayment && (
-        <div className="sm-modal-overlay" onClick={() => setShowRecordPayment(false)}>
-          <div className="sm-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="sm-modal__header">
-              <h2>💳 Record Payment</h2>
-              <button className="sm-modal__close" onClick={() => setShowRecordPayment(false)}>✕</button>
+        <div className="si-modal-overlay" onClick={() => setShowRecordPayment(false)}>
+          <div className="si-modal" style={{ maxWidth: '450px' }} onClick={(e) => e.stopPropagation()}>
+            <div className="si-modal__header">
+              <h2>💰 Record Payment</h2>
+              <button className="si-modal__close" onClick={() => setShowRecordPayment(false)}>✕</button>
             </div>
-            <form className="sm-form" onSubmit={handleRecordPayment}>
-              <div className="sm-form__grid">
-                <div className="sm-form__group sm-form__group--full">
-                  <label>Supplier *</label>
-                  <div className="sm-product-search-container">
-                    <div className="sm-product-search-input-group">
-                      <input 
-                        type="text" 
-                        placeholder="Search supplier name or company..." 
-                        value={supplierSearchTerm}
-                        onChange={(e) => {
-                          setSupplierSearchTerm(e.target.value);
-                          setShowSupplierResults(true);
-                        }}
-                        onFocus={() => setShowSupplierResults(true)}
-                        className="sm-product-search-input"
-                        required={!paymentForm.supplierId}
-                      />
-                      <button 
-                        type="button" 
-                        className="sm-btn sm-btn--secondary"
-                        onClick={() => setShowSupplierResults(!showSupplierResults)}
-                      >
-                        {showSupplierResults ? "Close" : "Search"}
-                      </button>
-                    </div>
-                    
-                    {showSupplierResults && (
-                      <div className="sm-product-results">
-                        {filteredSearchSuppliers.length > 0 ? (
-                          filteredSearchSuppliers.map((s) => (
-                            <div 
-                              key={s._id} 
-                              className="sm-product-result-item"
-                              onClick={() => handleSupplierSelect(s._id, "payment")}
-                            >
-                              <div className="sm-product-result-info">
+            <form className="si-form" onSubmit={handleRecordPayment}>
+                <div className="sm-product-search-container" style={{ marginBottom: '16px' }}>
+                  <label style={{ fontSize: '12px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', marginBottom: '8px', display: 'block' }}>Select Recipient *</label>
+                  <div className="sm-product-search-input-group">
+                    <input 
+                      type="text" 
+                      placeholder="Search supplier..." 
+                      value={supplierSearchTerm}
+                      onChange={(e) => {
+                        setSupplierSearchTerm(e.target.value);
+                        setShowSupplierResults(true);
+                      }}
+                      onFocus={() => setShowSupplierResults(true)}
+                      className="si-ledger-select"
+                      style={{ flex: 1, width: '100%' }}
+                      required={!paymentForm.supplierId}
+                    />
+                  </div>
+                  
+                  {showSupplierResults && (
+                    <div className="sm-product-results">
+                      {filteredSearchSuppliers.length > 0 ? (
+                        filteredSearchSuppliers.map((s) => (
+                          <div 
+                            key={s._id} 
+                            className="sm-product-result-item"
+                            onClick={() => handleSupplierSelect(s._id, "payment")}
+                          >
+                            <div>
                                 <span className="sm-product-result-name">{s.supplierName}</span>
                                 <span className="sm-product-result-cat">{s.companyName}</span>
-                              </div>
-                              <span className="sm-product-result-qty">Due: {fmt(s.totalDue)}</span>
                             </div>
-                          ))
-                        ) : supplierSearchTerm.length > 0 ? (
-                          <div className="sm-product-no-results">No suppliers found</div>
-                        ) : (
-                          <div className="sm-product-no-results">Type to search...</div>
-                        )}
-                      </div>
-                    )}
-                  </div>
+                            <span style={{ fontWeight: 700, fontSize: '11px', color: s.totalDue > 0 ? '#ef4444' : '#10b981' }}>Due: {fmt(s.totalDue)}</span>
+                          </div>
+                        ))
+                      ) : (
+                        <div style={{ padding: '12px', textAlign: 'center', color: '#94a3b8', fontSize: '13px' }}>No suppliers found</div>
+                      )}
+                    </div>
+                  )}
                   {paymentForm.supplierId && (
                     <div className="sm-selected-product">
-                      Selected: <strong>{suppliers.find(s => s._id === paymentForm.supplierId)?.supplierName}</strong>
-                      <button type="button" onClick={() => {
+                      <span>Paying: <strong>{suppliers.find(s => s._id === paymentForm.supplierId)?.supplierName}</strong></span>
+                      <span className="sm-clear-link" onClick={() => {
                         setPaymentForm({...paymentForm, supplierId: ""});
                         setSupplierSearchTerm("");
-                      }} className="sm-clear-link">Clear</button>
+                      }}>Clear</span>
                     </div>
                   )}
                 </div>
-                <div className="sm-form__group">
-                  <label>Amount Paid *</label>
-                  <input required type="number" min="0.01" step="0.01" value={paymentForm.amountPaid} onChange={(e) => setPaymentForm({ ...paymentForm, amountPaid: e.target.value })} placeholder="0.00" />
+
+                <div className="si-form__grid">
+                    <div className="si-form__group">
+                        <label>Amount (NPR) *</label>
+                        <input required type="number" min="0.01" step="0.01" value={paymentForm.amountPaid} onChange={(e) => setPaymentForm({ ...paymentForm, amountPaid: e.target.value })} placeholder="0.00" />
+                    </div>
+                    <div className="si-form__group">
+                        <label>Date</label>
+                        <input type="date" value={paymentForm.paymentDate} onChange={(e) => setPaymentForm({ ...paymentForm, paymentDate: e.target.value })} />
+                    </div>
+                    <div className="si-form__group" style={{ gridColumn: 'span 2' }}>
+                        <label>Payment Method</label>
+                        <select value={paymentForm.paymentMethod} onChange={(e) => setPaymentForm({ ...paymentForm, paymentMethod: e.target.value })}>
+                            <option>Cash</option>
+                            <option>Bank Transfer</option>
+                            <option>Cheque</option>
+                            <option>Online</option>
+                            <option>Other</option>
+                        </select>
+                    </div>
                 </div>
-                <div className="sm-form__group">
-                  <label>Payment Method</label>
-                  <select value={paymentForm.paymentMethod} onChange={(e) => setPaymentForm({ ...paymentForm, paymentMethod: e.target.value })}>
-                    <option>Cash</option>
-                    <option>Bank Transfer</option>
-                    <option>Cheque</option>
-                    <option>Online</option>
-                    <option>Other</option>
-                  </select>
+                <div className="si-form__group" style={{ marginTop: '16px' }}>
+                    <label>Transaction Note</label>
+                    <input value={paymentForm.note} onChange={(e) => setPaymentForm({ ...paymentForm, note: e.target.value })} placeholder="Optional reference or note" />
                 </div>
-                <div className="sm-form__group">
-                  <label>Payment Date</label>
-                  <input type="date" value={paymentForm.paymentDate} onChange={(e) => setPaymentForm({ ...paymentForm, paymentDate: e.target.value })} />
+
+                <div className="si-form__actions">
+                    <button type="button" className="si-btn-cancel" onClick={() => setShowRecordPayment(false)}>Cancel</button>
+                    <button type="submit" className="si-btn-submit">Submit Payment</button>
                 </div>
-                <div className="sm-form__group sm-form__group--full">
-                  <label>Note (Optional)</label>
-                  <input value={paymentForm.note} onChange={(e) => setPaymentForm({ ...paymentForm, note: e.target.value })} placeholder="Add a note..." />
-                </div>
-              </div>
-              <div className="sm-form__actions">
-                <button type="button" className="sm-btn sm-btn--ghost" onClick={() => setShowRecordPayment(false)}>Cancel</button>
-                <button type="submit" className="sm-btn sm-btn--primary">Record Payment</button>
-              </div>
             </form>
           </div>
         </div>
@@ -1049,10 +976,7 @@ const SupplierManagement = () => {
 
       {/* Toast */}
       {toast.visible && (
-        <div className={`sm-toast sm-toast--${toast.type}`}>
-          <span>{toast.type === "success" ? "✅" : "❌"}</span>
-          {toast.message}
-        </div>
+        <div className={`sd-toast sd-toast--${toast.type}`}>{toast.message}</div>
       )}
     </div>
   );

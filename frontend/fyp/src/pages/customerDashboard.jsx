@@ -2,17 +2,17 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import CustomerSidebar from "../components/CustomerSidebar";
-import { Search, Bell, User, Star, Store, Smartphone, Shirt, Home, Car, BookOpen, Joystick, Dumbbell } from "lucide-react";
 import "../styles/customerLayout.css";
 import "../styles/customerDashboard.css";
+import Rating from "../components/Rating";
 
 const CATEGORIES = [
-  { name: "Electronics", icon: <Smartphone size={16} />, color: "pill-generic" },
-  { name: "Fashion", icon: <Shirt size={16} />, color: "pill-generic" },
-  { name: "Home & Kitchen", icon: <Home size={16} />, color: "pill-generic" },
-  { name: "Automotive", icon: <Car size={16} />, color: "pill-generic" },
-  { name: "Books", icon: <BookOpen size={16} />, color: "pill-generic" },
-  { name: "Toys & Games", icon: <Joystick size={16} />, color: "pill-generic" },
+  { name: "Electronics", icon: "📱", color: "pill-generic" },
+  { name: "Fashion", icon: "👕", color: "pill-generic" },
+  { name: "Home & Kitchen", icon: "🏠", color: "pill-generic" },
+  { name: "Automotive", icon: "🚗", color: "pill-generic" },
+  { name: "Books", icon: "📚", color: "pill-generic" },
+  { name: "Toys & Games", icon: "🎮", color: "pill-generic" },
 ];
 
 const CustomerDashboard = () => {
@@ -55,9 +55,9 @@ const CustomerDashboard = () => {
   };
 
   const getBadgeType = (price) => {
-    if (price < 1000) return { label: "Top Rated", class: "badge-dark", icon: <Star size={12} fill="white" /> };
-    if (price > 10000) return { label: "Premium", class: "badge-dark", icon: <Star size={12} fill="white" /> };
-    return { label: "Best Seller", class: "badge-light", icon: <Star size={12} fill="#1b2559" /> };
+    if (price < 1000) return { label: "Top Rated", class: "badge-dark", icon: "⭐" };
+    if (price > 10000) return { label: "Premium", class: "badge-dark", icon: "⭐" };
+    return { label: "Best Seller", class: "badge-light", icon: "⭐" };
   };
 
   if (loading) return <p className="loading">Loading stores...</p>;
@@ -68,29 +68,17 @@ const CustomerDashboard = () => {
       <CustomerSidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} />
 
       <div className={`cd-main ${sidebarOpen ? "cd-main--shifted" : ""}`}>
-        {/* TOP NAVBAR (Like Reference) */}
+        {/* TOP NAVBAR – matches Owner Dashboard */}
         <header className="cd-navbar">
           <div className="cd-navbar__left">
             <h2>Browse Marketplace</h2>
             <p>Discover amazing products from trusted stores</p>
           </div>
           
-          <div className="cd-global-search">
-            <Search size={18} color="#a3aed1" />
-            <input 
-              type="text" 
-              placeholder="Search products, stores..." 
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
-
           <div className="cd-navbar__right">
-            <button className="cd-icon-btn">
-              <Bell size={20} />
-            </button>
-            <div className="cd-profile-menu">
-              <div className="cd-profile-icon"><User size={20} /></div>
+            <button className="cd-icon-btn">🔔</button>
+            <div className="cd-profile-icon">
+              <span>C</span>
             </div>
           </div>
         </header>
@@ -102,7 +90,7 @@ const CustomerDashboard = () => {
             {/* HERO SECTION */}
             <div className="cd-hero-card">
               <div className="cd-hero-search">
-                <Search size={20} color="#8f9bba" />
+                🔍
                 <input
                   type="text"
                   placeholder="Search products by name or description..."
@@ -154,13 +142,9 @@ const CustomerDashboard = () => {
 
                   <div className="product-row">
                     {displayedProducts.map((p) => {
-                      const badge = getBadgeType(p.price);
                       return (
                         <div key={p._id} className="product-card">
                           <div className="product-card-image-wrap">
-                            <span className={`card-badge ${badge.class}`}>
-                              {badge.icon} {badge.label}
-                            </span>
                             <img
                               src={`${API_BASE}/${p.image}`}
                               alt={p.name}
@@ -179,12 +163,10 @@ const CustomerDashboard = () => {
                             
                             <div className="store-row">
                               <div className="store-name">
-                                <Store size={14} color="#8f9bba" />
-                                {shop.name}
+                                🏪 {shop.name}
                               </div>
                               <div className="store-rating">
-                                <Star size={12} fill="#f59e0b" color="#f59e0b" />
-                                4.8 <span className="rating-val"></span>
+                                <Rating value={p.rating || 0} text={`(${p.numReviews || 0})`} fontSize="12px" />
                               </div>
                             </div>
 
@@ -220,13 +202,9 @@ const CustomerDashboard = () => {
               {getFilteredProducts(
                 shops.find((s) => s._id === expandedShop)?.products
               ).map((p) => {
-                const badge = getBadgeType(p.price);
                 return (
                   <div key={p._id} className="product-card">
                     <div className="product-card-image-wrap">
-                      <span className={`card-badge ${badge.class}`}>
-                        {badge.icon} {badge.label}
-                      </span>
                       <img
                         src={`${API_BASE}/${p.image}`}
                         alt={p.name}

@@ -1,31 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import "../styles/staffDashboard.css";
-import "../styles/staffInventory.css";
+import "../styles/OwnerProfile.css"; // Isolated styling for mockup alignment
+import "../styles/ownerDashboard.css"; // Shared dashboard layout
+import OwnerSidebar from "../components/OwnerSidebar";
 
 const API_BASE = "http://localhost:8000";
-
-const nepalData = {
-  provinces: ["Bagmati", "Dhawalagiri", "gandaki", "Karnali", "Lumbini", "Madhesh", "Mechi", "Sagarmatha"],
-  districts: {
-    Bagmati: ["Kathmandu", "Bhaktapur", "Lalitpur", "Kavre", "Sindhuli"],
-    Dhawalagiri: ["Baglung", "Myagdi", "Parbat"],
-    gandaki: ["Gorkha", "Lamjung", "Manang", "Kaski", "Syangja"],
-    Karnali: ["Dailekh", "Jumla", "Dolpa"],
-    Lumbini: ["Gulmi", "Palpa", "Nawalparasi", "Rupandehi"],
-    Madhesh: ["Parsa", "Bara", "Rautahat", "Saptari"],
-    Mechi: ["Ilam", "Jhapa"],
-    Sagarmatha: ["Dolakha", "Khotang", "Solukhumbu"],
-  },
-  municipalities: {
-    Kathmandu: ["Kathmandu", "Budhanilkantha", "Naksal"],
-    Lalitpur: ["Lalitpur", "Mahalaxmi"],
-    Bhaktapur: ["Bhaktapur", "Suryabinayak"],
-    Gulmi: ["Gulmi", "Resunga"],
-    Ilam: ["Ilam", "Mai"],
-  },
-};
 
 const OwnerProfile = () => {
   const navigate = useNavigate();
@@ -35,7 +15,17 @@ const OwnerProfile = () => {
   const [toast, setToast] = useState({ message: "", type: "success", visible: false });
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [statistics, setStatistics] = useState({ totalProducts: 0, totalOrders: 0, lowStockProducts: 0, lowStockDetails: [] });
+  const [statistics, setStatistics] = useState({ 
+    totalProducts: 0, 
+    totalOrders: 0, 
+    lowStockProducts: 0, 
+    outOfStockProducts: 0,
+    lowStockDetails: [] 
+  });
+
+  // Notifications (Mockup state)
+  const [notifications, setNotifications] = useState([]);
+  const [showNotifications, setShowNotifications] = useState(false);
 
   // Profile edit
   const [isEditingProfile, setIsEditingProfile] = useState(false);
@@ -159,10 +149,8 @@ const OwnerProfile = () => {
     } finally { setLoading(false); }
   };
 
-  const uploadProfileImage = async () => {
-    const fileInput = document.getElementById("profileImageInput");
-    const file = fileInput?.files[0];
-    if (!file) { showToast("Please select an image", "error"); return; }
+  const uploadProfileImage = async (file) => {
+    if (!file) return;
     try {
       setUploading(true);
       const formData = new FormData();
@@ -170,19 +158,16 @@ const OwnerProfile = () => {
       await axios.post(`${API_BASE}/api/owner/upload-profile-image`, formData, {
         headers: { "Content-Type": "multipart/form-data", Authorization: `Bearer ${token}` }, withCredentials: true,
       });
-      showToast("Profile image uploaded");
+      showToast("Profile image updated");
       setProfileImagePreview(null);
-      fileInput.value = "";
       fetchProfile();
     } catch (err) {
       showToast(err.response?.data?.message || "Upload failed", "error");
     } finally { setUploading(false); }
   };
 
-  const uploadShopLogo = async () => {
-    const fileInput = document.getElementById("shopLogoInput");
-    const file = fileInput?.files[0];
-    if (!file) { showToast("Please select a logo", "error"); return; }
+  const uploadShopLogo = async (file) => {
+    if (!file) return;
     try {
       setUploading(true);
       const formData = new FormData();
@@ -190,12 +175,11 @@ const OwnerProfile = () => {
       await axios.post(`${API_BASE}/api/owner/upload-shop-logo`, formData, {
         headers: { "Content-Type": "multipart/form-data", Authorization: `Bearer ${token}` }, withCredentials: true,
       });
-      showToast("Shop logo uploaded");
+      showToast("Shop logo updated");
       setShopLogoPreview(null);
-      fileInput.value = "";
       fetchProfile();
     } catch (err) {
-      showToast(err.response?.data?.message || "Upload failed", "error");
+      showToast(err.response?.data?.message || "Logo upload failed", "error");
     } finally { setUploading(false); }
   };
 
@@ -205,75 +189,35 @@ const OwnerProfile = () => {
     navigate("/login");
   };
 
-  const navLinks = [
-    { label: "Dashboard", icon: "🏠", path: "/owner-dashboard" },
-    { label: "Product Management", icon: "📦", path: "/products" },
-    { label: "Orders", icon: "🛒", path: "/order-management" },
-    { label: "Staff Management", icon: "👥", path: "/add-staff" },
-    { label: "Supplier Management", icon: "🏭", path: "/supplier-management" },
-    { label: "Attendance", icon: "📅", path: "/attendance" },
-    { label: "Profile", icon: "👤", path: "/owner-profile" },
-  ];
-
-  /* ── Shared input/select styles ── */
-  const inputStyle = {
-    width: "100%", padding: "10px 14px", border: "1.5px solid #e2e8f0",
-    borderRadius: 10, fontSize: 14, color: "#1e293b", background: "#f8fafc",
-    fontFamily: "Inter, sans-serif", outline: "none", boxSizing: "border-box",
-  };
-  const labelStyle = { fontSize: 13, fontWeight: 600, color: "#374151", display: "block", marginBottom: 5 };
-  const groupStyle = { display: "flex", flexDirection: "column", gap: 5 };
-  const infoRowStyle = { display: "flex", gap: 12, alignItems: "center", padding: "10px 0", borderBottom: "1px solid #f1f5f9" };
-  const infoLabelStyle = { fontSize: 13, fontWeight: 600, color: "#64748b", minWidth: 130 };
-  const infoValueStyle = { fontSize: 14, color: "#1e293b", fontWeight: 500 };
+  const memberSinceDate = profile?.createdAt ? new Date(profile.createdAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : "January 12, 2023";
+  const memberDuration = " (14 months)";
 
   return (
-    <div className="sd-layout">
-      {/* ========== SIDEBAR ========== */}
-      <aside
-        className={`sd-sidebar ${sidebarOpen ? "sd-sidebar--open" : ""}`}
-        onMouseEnter={() => setSidebarOpen(true)}
-        onMouseLeave={() => setSidebarOpen(false)}
-      >
-        <div className="sd-sidebar__brand">
-          <span className="sd-sidebar__logo">🛍️</span>
-          <span className="sd-sidebar__brand-name">Khata</span>
-        </div>
-        <nav className="sd-sidebar__nav">
-          {navLinks.map((link) => (
-            <button
-              key={link.path}
-              className={`sd-sidebar__link ${window.location.pathname === link.path ? "active" : ""}`}
-              onClick={() => navigate(link.path)}
-            >
-              <span className="sd-sidebar__icon">{link.icon}</span>
-              <span className="sd-sidebar__label">{link.label}</span>
-            </button>
-          ))}
-        </nav>
-        <div className="sd-sidebar__bottom">
-          <button className="sd-sidebar__link sd-sidebar__logout" onClick={handleLogout}>
-            <span className="sd-sidebar__icon">🚪</span>
-            <span className="sd-sidebar__label">Logout</span>
-          </button>
-        </div>
-      </aside>
+    <div className="sd-layout od-modern-layout">
+      {/* Shared Owner Sidebar */}
+      <OwnerSidebar 
+        sidebarOpen={sidebarOpen} 
+        setSidebarOpen={setSidebarOpen} 
+        owner={profile} 
+        handleLogout={handleLogout} 
+      />
 
       {/* ========== MAIN ========== */}
-      <div className={`sd-main ${sidebarOpen ? "sd-main--shifted" : ""}`}>
+      <div className={`sd-main od-main-content ${sidebarOpen ? "sd-main--shifted" : ""}`}>
+        
+        {/* Global Navbar */}
         <header className="sd-navbar">
           <div className="sd-navbar__left">
-            <button className="sd-navbar__hamburger" onClick={() => setSidebarOpen((v) => !v)}>☰</button>
+            <button className="sd-navbar__hamburger" onClick={() => setSidebarOpen((v) => !v)} onMouseEnter={() => setSidebarOpen(true)}>☰</button>
             <div className="sd-navbar__title">
               <h1>Owner Profile</h1>
-              <span className="sd-navbar__subtitle">Manage your account and shop settings</span>
+              <span className="sd-navbar__subtitle">Manage your personal and shop credentials</span>
             </div>
           </div>
+          
           <div className="sd-navbar__right">
             <div className="sd-avatar">
-              {profile?.profileImage
-                ? <img src={`${API_BASE}/${profile.profileImage}`} alt="avatar" />
-                : <span>{(profile?.username || "O")[0].toUpperCase()}</span>}
+              <span>{(profile?.username || "O")[0].toUpperCase()}</span>
             </div>
             <div className="sd-navbar__staff-info">
               <span className="sd-navbar__name">{profile?.username || "Owner"}</span>
@@ -281,292 +225,239 @@ const OwnerProfile = () => {
             </div>
           </div>
         </header>
+        
 
-        <main className="sd-content">
-          {/* Banner */}
-          <div className="sd-welcome si-banner">
-            <div>
-              <h2>👤 Your Account</h2>
-              <p>Update your personal info, shop details, password, and images.</p>
+        <div className="op-container">
+          
+          {/* Consolidated Header with Profile Card */}
+          <header className="op-page-header">
+            <div className="op-header-text">
+              <span className="op-breadcrumb">Settings / Account</span>
+              <h2 className="op-title">Account Overview</h2>
+              <p className="op-subtitle">Manage your personal information and shop credentials</p>
             </div>
-          </div>
 
-          {/* Stats mini-cards */}
-          <div className="si-mini-cards">
-            <div className="si-mini-card si-mini-card--blue">
-              <span className="si-mini-card__icon">📦</span>
-              <div>
-                <div className="si-mini-card__num">{statistics.totalProducts}</div>
-                <div className="si-mini-card__label">Total Products</div>
-              </div>
-            </div>
-            <div className="si-mini-card si-mini-card--green">
-              <span className="si-mini-card__icon">📋</span>
-              <div>
-                <div className="si-mini-card__num">{statistics.totalOrders}</div>
-                <div className="si-mini-card__label">Total Orders</div>
-              </div>
-            </div>
-            <div className="si-mini-card si-mini-card--orange">
-              <span className="si-mini-card__icon">🚨</span>
-              <div>
-                <div className="si-mini-card__num">{statistics.lowStockProducts}</div>
-                <div className="si-mini-card__label">Low Stock</div>
-              </div>
-            </div>
-            <div className="si-mini-card si-mini-card--red">
-              <span className="si-mini-card__icon">🏪</span>
-              <div>
-                <div className="si-mini-card__num">{profile?.shopName ? 1 : 0}</div>
-                <div className="si-mini-card__label">Shop Configured</div>
-              </div>
-            </div>
-          </div>
-
-          {/* Two-column layout for profile + shop */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24 }}>
-
-            {/* ── Profile Overview ── */}
-            <div className="sd-panel">
-              <div className="sd-panel__header" style={{ marginBottom: 16, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <h3>👤 Profile Details</h3>
-                {!isEditingProfile && (
-                  <button className="si-btn-submit" style={{ padding: "6px 16px", fontSize: 13 }} onClick={() => setIsEditingProfile(true)}>
-                    ✏️ Edit
-                  </button>
-                )}
-              </div>
-
-              {/* Profile image */}
-              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginBottom: 20 }}>
-                {profile?.profileImage ? (
-                  <img src={`${API_BASE}/${profile.profileImage}`} alt="Profile" style={{ width: 88, height: 88, borderRadius: "50%", objectFit: "cover", border: "3px solid #e2e8f0" }} />
+            <div className="op-profile-floating-card">
+              <div className="op-avatar-wrapper" onClick={() => document.getElementById("profileImageInput").click()} title="Change Profile Image">
+                {profile?.profileImage || profileImagePreview ? (
+                  <img src={profileImagePreview || `${API_BASE}/${profile.profileImage}`} alt="profile" className="op-avatar-img" />
                 ) : (
-                  <div className="sd-avatar" style={{ width: 88, height: 88, fontSize: 34 }}>
-                    <span>{(profile?.username || "O")[0].toUpperCase()}</span>
+                  <div className="op-avatar-img" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px', fontWeight: 800, color: '#94a3b8' }}>
+                    {(profile?.username || "O")[0].toUpperCase()}
                   </div>
                 )}
-                <div style={{ marginTop: 10, textAlign: "center" }}>
-                  <input type="file" id="profileImageInput" accept="image/*" style={{ display: "none" }}
-                    onChange={(e) => { const f = e.target.files[0]; if (f) { const r = new FileReader(); r.onloadend = () => setProfileImagePreview(r.result); r.readAsDataURL(f); } }} />
-                  <button className="si-btn-cancel" style={{ fontSize: 12, padding: "5px 14px" }}
-                    onClick={() => document.getElementById("profileImageInput").click()}>
-                    📷 Change Photo
-                  </button>
-                  {profileImagePreview && (
-                    <div style={{ marginTop: 8 }}>
-                      <img src={profileImagePreview} alt="preview" style={{ width: 60, height: 60, borderRadius: "50%", objectFit: "cover", border: "2px solid #3b82f6" }} />
-                      <br />
-                      <button className="si-btn-submit" style={{ fontSize: 12, padding: "5px 14px", marginTop: 6 }}
-                        onClick={uploadProfileImage} disabled={uploading}>
-                        {uploading ? "Uploading..." : "📤 Upload"}
-                      </button>
-                    </div>
+                <div className="op-avatar-edit-icon">✏️</div>
+                <input type="file" id="profileImageInput" hidden onChange={(e) => { const f = e.target.files[0]; if (f) uploadProfileImage(f); }} />
+              </div>
+              
+              <div className="op-profile-info">
+                <h3>{profile?.username || "Ronit Shrestha"}</h3>
+                <p>Main Administrator • {profile?.shopName || "Trending Store"}</p>
+              </div>
+            </div>
+          </header>
+
+          {/* Stats Bar */}
+          <div className="op-stats-grid">
+            <div className="op-stat-card">
+              <span className="op-stat-label">Total Products</span>
+              <div className="op-stat-value-group">
+                <span className="op-stat-num">{statistics.totalProducts?.toLocaleString() || "0"}</span>
+              </div>
+            </div>
+            <div className="op-stat-card">
+              <span className="op-stat-label">Total Orders</span>
+              <div className="op-stat-value-group">
+                <span className="op-stat-num">{statistics.totalOrders?.toLocaleString() || "0"}</span>
+              </div>
+            </div>
+            <div className="op-stat-card op-stat-card--danger">
+              <span className="op-stat-label">Low Stock</span>
+              <div className="op-stat-value-group" style={{ justifyContent: 'space-between', width: '100%' }}>
+                <span className="op-stat-num">{statistics.lowStockProducts || "0"}</span>
+                <span className="op-stat-trend fatal">Alerts Active</span>
+              </div>
+            </div>
+            <div className="op-stat-card op-stat-card--dark">
+              <span className="op-stat-label">Out of Stock</span>
+              <div className="op-stat-value-group">
+                <span className="op-stat-num">{Number(statistics.outOfStockProducts || 0).toLocaleString()}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Main Grid */}
+          <div className="op-main-grid">
+            
+            {/* Left Column */}
+            <div className="op-col-left">
+              <section style={{ marginBottom: '40px' }}>
+                <div className="op-section-header">
+                  <h2 className="op-section-title">Profile Details</h2>
+                  {!isEditingProfile && (
+                    <button className="op-edit-link" onClick={() => setIsEditingProfile(true)}>Edit Details</button>
                   )}
                 </div>
-              </div>
+                <div className="op-details-card">
+                  {isEditingProfile ? (
+                    <div className="op-form-grid">
+                       <div className="op-form-row">
+                          <div className="op-input-group">
+                             <label className="op-input-label">Full Name</label>
+                             <input className="op-input" value={editFormData.username} onChange={(e) => setEditFormData({...editFormData, username: e.target.value})} />
+                          </div>
+                          <div className="op-input-group">
+                             <label className="op-input-label">Phone Number</label>
+                             <input className="op-input" value={editFormData.phone} onChange={(e) => setEditFormData({...editFormData, phone: e.target.value})} />
+                          </div>
+                       </div>
+                       <div style={{ display: 'flex', gap: '12px', marginTop: '12px' }}>
+                          <button className="op-submit-btn" onClick={handleProfileSave}>Save Changes</button>
+                          <button className="op-submit-btn" style={{ background: '#f1f5f9', color: '#64748b' }} onClick={handleProfileCancel}>Cancel</button>
+                       </div>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="op-info-grid">
+                        <div className="op-info-field">
+                          <span className="op-info-label">Full Name</span>
+                          <span className="op-info-value">{profile?.username || "Arjun Sharma"}</span>
+                        </div>
+                        <div className="op-info-field">
+                          <span className="op-info-label">Email Address</span>
+                          <span className="op-info-value">{profile?.email || "arjun.sharma@khata.com"}</span>
+                        </div>
+                        <div className="op-info-field">
+                          <span className="op-info-label">Phone Number</span>
+                          <span className="op-info-value">{profile?.phone || "+977 14423000"}</span>
+                        </div>
+                        <div className="op-info-field">
+                          <span className="op-info-label">Account Role</span>
+                          <span className="op-info-badge">{profile?.role?.toUpperCase() || "OWNER"}</span>
+                        </div>
+                      </div>
+                      <div className="op-member-since">
+                         <span className="op-info-label">Member Since</span>
+                         <p style={{ margin: '8px 0 0', fontSize: '15px', fontWeight: 700, color: '#0f172a' }}>
+                           {memberSinceDate} {memberDuration}
+                         </p>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </section>
 
-              {!isEditingProfile ? (
-                <div>
-                  <div style={infoRowStyle}><span style={infoLabelStyle}>Name</span><span style={infoValueStyle}>{profile?.username || "—"}</span></div>
-                  <div style={infoRowStyle}><span style={infoLabelStyle}>Email</span><span style={infoValueStyle}>{profile?.email || "—"}</span></div>
-                  <div style={infoRowStyle}><span style={infoLabelStyle}>Phone</span><span style={infoValueStyle}>{profile?.phone || "Not provided"}</span></div>
-                  <div style={infoRowStyle}><span style={infoLabelStyle}>Role</span><span className="sd-badge badge-delivered">{profile?.role}</span></div>
-                  <div style={{ ...infoRowStyle, borderBottom: "none" }}><span style={infoLabelStyle}>Member Since</span><span style={infoValueStyle}>{profile?.createdAt ? new Date(profile.createdAt).toLocaleDateString() : "—"}</span></div>
+              <section>
+                <h2 className="op-section-title" style={{ marginBottom: '24px' }}>Security</h2>
+                <div className="op-security-card">
+                  <form className="op-form-grid" onSubmit={handlePasswordChange}>
+                    <div className="op-input-group">
+                       <label className="op-input-label">Current Password</label>
+                       <input className="op-input" type="password" placeholder="••••••••••••" value={passwordData.currentPassword} onChange={(e) => setPasswordData({...passwordData, currentPassword: e.target.value})} />
+                    </div>
+                    <div className="op-form-row">
+                       <div className="op-input-group">
+                          <label className="op-input-label">New Password</label>
+                          <input className="op-input" type="password" placeholder="••••••••••••" value={passwordData.newPassword} onChange={(e) => setPasswordData({...passwordData, newPassword: e.target.value})} />
+                       </div>
+                       <div className="op-input-group">
+                          <label className="op-input-label">Confirm Password</label>
+                          <input className="op-input" type="password" placeholder="••••••••••••" value={passwordData.confirmPassword} onChange={(e) => setPasswordData({...passwordData, confirmPassword: e.target.value})} />
+                       </div>
+                    </div>
+                    <button type="submit" className="op-submit-btn">Update Password</button>
+                  </form>
                 </div>
-              ) : (
-                <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-                  <div style={groupStyle}>
-                    <label style={labelStyle}>Name</label>
-                    <input style={inputStyle} type="text" value={editFormData.username}
-                      onChange={(e) => setEditFormData({ ...editFormData, username: e.target.value })} placeholder="Your name" />
-                  </div>
-                  <div style={groupStyle}>
-                    <label style={labelStyle}>Email (read-only)</label>
-                    <input style={{ ...inputStyle, background: "#f1f5f9", color: "#94a3b8" }} type="email" value={profile?.email} readOnly />
-                  </div>
-                  <div style={groupStyle}>
-                    <label style={labelStyle}>Phone</label>
-                    <input style={inputStyle} type="tel" value={editFormData.phone}
-                      onChange={(e) => setEditFormData({ ...editFormData, phone: e.target.value })} placeholder="Phone number" />
-                  </div>
-                  <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
-                    <button className="si-btn-cancel" onClick={handleProfileCancel}>Cancel</button>
-                    <button className="si-btn-submit" onClick={handleProfileSave} disabled={loading}>✓ Save</button>
-                  </div>
-                </div>
-              )}
+              </section>
             </div>
 
-            {/* ── Change Password ── */}
-            <div className="sd-panel">
-              <div className="sd-panel__header" style={{ marginBottom: 16 }}>
-                <h3>🔐 Change Password</h3>
-              </div>
-              <form onSubmit={handlePasswordChange} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-                <div style={groupStyle}>
-                  <label style={labelStyle}>Current Password</label>
-                  <input style={inputStyle} type="password" value={passwordData.currentPassword}
-                    onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
-                    placeholder="Enter current password" />
+            {/* Right Column */}
+            <div className="op-col-right">
+              <h2 className="op-section-title" style={{ marginBottom: '24px' }}>Shop Information</h2>
+              <div className="op-shop-card">
+                <div className="op-logo-box" onClick={() => document.getElementById("shopLogoInput").click()}>
+                   {profile?.shopLogo ? (
+                     <img src={`${API_BASE}/${profile.shopLogo}`} alt="logo" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '8px' }} />
+                   ) : (
+                     <>
+                        <div className="op-logo-icon">🏪</div>
+                        <span className="op-logo-text">SHOP LOGO<br/>PNG or SVG up to 2MB</span>
+                     </>
+                   )}
+                   <input type="file" id="shopLogoInput" hidden onChange={(e) => { const f = e.target.files[0]; if (f) uploadShopLogo(f); }} />
                 </div>
-                <div style={groupStyle}>
-                  <label style={labelStyle}>New Password</label>
-                  <input style={inputStyle} type="password" value={passwordData.newPassword}
-                    onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
-                    placeholder="Min 6 characters" />
-                </div>
-                <div style={groupStyle}>
-                  <label style={labelStyle}>Confirm Password</label>
-                  <input style={inputStyle} type="password" value={passwordData.confirmPassword}
-                    onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
-                    placeholder="Re-enter new password" />
-                </div>
-                <div style={{ display: "flex", justifyContent: "flex-end" }}>
-                  <button type="submit" className="si-btn-submit" disabled={loading}>🔐 Change Password</button>
-                </div>
-              </form>
-            </div>
-          </div>
 
-          {/* ── Shop Information ── */}
-          <div className="sd-panel">
-            <div className="sd-panel__header" style={{ marginBottom: 16, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <h3>🏪 Shop Information</h3>
-              {!isEditingShop && (
-                <button className="si-btn-submit" style={{ padding: "6px 16px", fontSize: 13 }} onClick={() => setIsEditingShop(true)}>
-                  ✏️ Edit Shop
-                </button>
-              )}
-            </div>
+                {!isEditingShop ? (
+                  <>
+                    <h3 className="op-shop-name">{profile?.shopName || "Khata Retail Solutions"}</h3>
+                    <div className="op-shop-contact">
+                       <span className="op-info-label">Business Contact</span>
+                       <p>{profile?.shopEmail || "contact@khata-retail.com.np"}</p>
+                       <p>{profile?.shopPhone || "+977 1 4423000"}</p>
+                    </div>
+                    <div style={{ marginBottom: '16px' }}>
+                      <span className="op-info-label">Address Details</span>
+                    </div>
+                    <div className="op-address-grid">
+                       <div className="op-address-tile">
+                          <span className="op-address-label">Province</span>
+                          <span className="op-address-value">{profile?.province || "Bagmati"}</span>
+                       </div>
+                       <div className="op-address-tile">
+                          <span className="op-address-label">District</span>
+                          <span className="op-address-value">{profile?.district || "Kathmandu"}</span>
+                       </div>
+                       <div className="op-address-tile">
+                          <span className="op-address-label">Municipality</span>
+                          <span className="op-address-value">{profile?.municipality || "Kathmandu Metro"}</span>
+                       </div>
+                       <div className="op-address-tile">
+                          <span className="op-address-label">Ward</span>
+                          <span className="op-address-value">Ward No. {profile?.ward || "10"}</span>
+                       </div>
+                    </div>
+                    <button className="op-configure-btn" onClick={() => setIsEditingShop(true)}>Configure Shop Metadata</button>
+                  </>
+                ) : (
+                   <div className="op-form-grid">
+                      <div className="op-input-group">
+                         <label className="op-input-label">Shop Name</label>
+                         <input className="op-input" value={shopFormData.shopName} onChange={(e) => setShopFormData({...shopFormData, shopName: e.target.value})} />
+                      </div>
+                      <div className="op-input-group">
+                         <label className="op-input-label">Shop Email</label>
+                         <input className="op-input" value={shopFormData.shopEmail} onChange={(e) => setShopFormData({...shopFormData, shopEmail: e.target.value})} />
+                      </div>
 
-            {/* Shop Logo */}
-            <div style={{ display: "flex", gap: 20, alignItems: "flex-start", marginBottom: 20 }}>
-              {profile?.shopLogo ? (
-                <img src={`${API_BASE}/${profile.shopLogo}`} alt="Shop Logo" style={{ width: 70, height: 70, borderRadius: 12, objectFit: "cover", border: "2px solid #e2e8f0" }} />
-              ) : (
-                <div style={{ width: 70, height: 70, borderRadius: 12, background: "#f1f5f9", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 28 }}>🏪</div>
-              )}
-              <div>
-                <p style={{ fontSize: 13, color: "#64748b", marginBottom: 8 }}>Upload or update your shop logo</p>
-                <input type="file" id="shopLogoInput" accept="image/*" style={{ display: "none" }}
-                  onChange={(e) => { const f = e.target.files[0]; if (f) { const r = new FileReader(); r.onloadend = () => setShopLogoPreview(r.result); r.readAsDataURL(f); } }} />
-                <button className="si-btn-cancel" style={{ fontSize: 12, padding: "5px 14px" }}
-                  onClick={() => document.getElementById("shopLogoInput").click()}>
-                  📷 Choose Logo
-                </button>
-                {shopLogoPreview && (
-                  <span style={{ marginLeft: 8 }}>
-                    <button className="si-btn-submit" style={{ fontSize: 12, padding: "5px 14px" }}
-                      onClick={uploadShopLogo} disabled={uploading}>
-                      {uploading ? "Uploading..." : "📤 Upload"}
-                    </button>
-                  </span>
+                      {/* Updated Image Upload in Settings */}
+                      <div className="op-input-group">
+                         <label className="op-input-label">Update Shop Photo</label>
+                         <div style={{ display: 'flex', alignItems: 'center', gap: '16px', background: '#fff', padding: '12px', borderRadius: '8px', border: '1px solid #f1f5f9' }}>
+                            <div className="op-logo-preview-mini" style={{ width: '48px', height: '48px', borderRadius: '4px', overflow: 'hidden', background: '#f8fafc', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }} onClick={() => document.getElementById("shopLogoInputSettings").click()}>
+                               {profile?.shopLogo ? (
+                                 <img src={`${API_BASE}/${profile.shopLogo}`} alt="logo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                               ) : (
+                                 <span style={{ fontSize: '18px' }}>🏪</span>
+                               )}
+                            </div>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                               <button type="button" className="op-edit-link" style={{ padding: 0 }} onClick={() => document.getElementById("shopLogoInputSettings").click()}>Click to upload new photo</button>
+                               <span style={{ fontSize: '10px', color: '#94a3b8' }}>PNG, JPG or SVG (Max. 2MB)</span>
+                            </div>
+                            <input type="file" id="shopLogoInputSettings" hidden onChange={(e) => { const f = e.target.files[0]; if (f) uploadShopLogo(f); }} />
+                         </div>
+                      </div>
+                      <div style={{ display: 'flex', gap: '12px', marginTop: '12px' }}>
+                        <button className="op-submit-btn" onClick={handleShopSave}>Save</button>
+                        <button className="op-submit-btn" style={{ background: '#fff', color: '#64748b', border: '1px solid #e2e8f0' }} onClick={handleShopCancel}>Cancel</button>
+                      </div>
+                   </div>
                 )}
               </div>
             </div>
 
-            {!isEditingShop ? (
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0 24px" }}>
-                {[
-                  ["Shop Name", profile?.shopName],
-                  ["Shop Email", profile?.shopEmail],
-                  ["Shop Phone", profile?.shopPhone],
-                  ["Address", profile?.shopAddress],
-                  ["Province", profile?.province],
-                  ["District", profile?.district],
-                  ["Municipality", profile?.municipality],
-                  ["Ward", profile?.ward],
-                ].map(([label, value]) => (
-                  <div key={label} style={{ ...infoRowStyle, gridColumn: "auto" }}>
-                    <span style={infoLabelStyle}>{label}</span>
-                    <span style={infoValueStyle}>{value || "Not provided"}</span>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div>
-                <div className="si-form__grid" style={{ marginBottom: 16 }}>
-                  {[
-                    ["Shop Name", "text", "shopName", "Enter shop name"],
-                    ["Shop Email", "email", "shopEmail", "shop@email.com"],
-                    ["Shop Phone", "tel", "shopPhone", "Phone number"],
-                    ["Shop Address", "text", "shopAddress", "Street address"],
-                  ].map(([label, type, key, placeholder]) => (
-                    <div key={key} style={groupStyle}>
-                      <label style={labelStyle}>{label}</label>
-                      <input style={inputStyle} type={type} value={shopFormData[key]}
-                        onChange={(e) => setShopFormData({ ...shopFormData, [key]: e.target.value })}
-                        placeholder={placeholder} />
-                    </div>
-                  ))}
-                  <div style={groupStyle}>
-                    <label style={labelStyle}>Province</label>
-                    <select style={inputStyle} value={shopFormData.province}
-                      onChange={(e) => setShopFormData({ ...shopFormData, province: e.target.value, district: "", municipality: "", ward: "" })}>
-                      <option value="">Select Province</option>
-                      {nepalData.provinces.map((p) => <option key={p}>{p}</option>)}
-                    </select>
-                  </div>
-                  <div style={groupStyle}>
-                    <label style={labelStyle}>District</label>
-                    <select style={inputStyle} value={shopFormData.district} disabled={!shopFormData.province}
-                      onChange={(e) => setShopFormData({ ...shopFormData, district: e.target.value, municipality: "", ward: "" })}>
-                      <option value="">Select District</option>
-                      {(nepalData.districts[shopFormData.province] || []).map((d) => <option key={d}>{d}</option>)}
-                    </select>
-                  </div>
-                  <div style={groupStyle}>
-                    <label style={labelStyle}>Municipality</label>
-                    <select style={inputStyle} value={shopFormData.municipality} disabled={!shopFormData.district}
-                      onChange={(e) => setShopFormData({ ...shopFormData, municipality: e.target.value, ward: "" })}>
-                      <option value="">Select Municipality</option>
-                      {(nepalData.municipalities[shopFormData.district] || []).map((m) => <option key={m}>{m}</option>)}
-                    </select>
-                  </div>
-                  <div style={groupStyle}>
-                    <label style={labelStyle}>Ward</label>
-                    <input style={inputStyle} type="number" min="1" max="32" value={shopFormData.ward}
-                      onChange={(e) => setShopFormData({ ...shopFormData, ward: e.target.value })} placeholder="Ward number" />
-                  </div>
-                </div>
-                <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
-                  <button className="si-btn-cancel" onClick={handleShopCancel}>Cancel</button>
-                  <button className="si-btn-submit" onClick={handleShopSave} disabled={loading}>✓ Save Shop Info</button>
-                </div>
-              </div>
-            )}
           </div>
-
-          {/* Low stock alert */}
-          {statistics.lowStockDetails.length > 0 && (
-            <div className="sd-panel si-table-panel">
-              <div className="sd-panel__header" style={{ marginBottom: 12 }}>
-                <h3>🚨 Low Stock Products</h3>
-              </div>
-              <div className="si-table-wrap">
-                <table className="si-table">
-                  <thead>
-                    <tr>
-                      <th>Product</th>
-                      <th>Qty</th>
-                      <th>Price</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {statistics.lowStockDetails.map((p) => (
-                      <tr key={p._id}>
-                        <td className="si-product-name">{p.name}</td>
-                        <td><span className="si-qty low">{p.quantity}</span></td>
-                        <td className="si-price-cell">NPR {(p.price ?? 0).toLocaleString()}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
-        </main>
+        </div>
       </div>
 
       {/* TOAST */}
