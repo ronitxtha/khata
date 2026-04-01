@@ -54,138 +54,165 @@ const CustomerDashboard = () => {
     });
   };
 
-  const getBadgeType = (price) => {
-    if (price < 1000) return { label: "Top Rated", class: "badge-dark", icon: "⭐" };
-    if (price > 10000) return { label: "Premium", class: "badge-dark", icon: "⭐" };
-    return { label: "Best Seller", class: "badge-light", icon: "⭐" };
-  };
-
   if (loading) return <p className="loading">Loading stores...</p>;
   if (error) return <p className="error">{error}</p>;
 
   return (
-    <div className="cd-layout">
+    <div className="sd-layout od-modern-layout">
       <CustomerSidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} />
 
-      <div className={`cd-main ${sidebarOpen ? "cd-main--shifted" : ""}`}>
-        {/* TOP NAVBAR – matches Owner Dashboard */}
-        <header className="cd-navbar">
-          <div className="cd-navbar__left">
-            <h2>Browse Marketplace</h2>
-            <p>Discover amazing products from trusted stores</p>
+      <div className={`sd-main od-main-content ${sidebarOpen ? "sd-main--shifted" : ""}`}>
+        {/* TOP NAVBAR */}
+        <header className="sd-navbar">
+          <div className="sd-navbar__left">
+            <button 
+              className="sd-navbar__hamburger" 
+              onClick={() => setSidebarOpen((v) => !v)}
+              onMouseEnter={() => {
+                if (window.sidebarTimer) clearTimeout(window.sidebarTimer);
+                setSidebarOpen(true);
+              }}
+              onMouseLeave={() => {
+                window.sidebarTimer = setTimeout(() => setSidebarOpen(false), 300);
+              }}
+            >
+              ☰
+            </button>
+            <div className="sd-navbar__title">
+              <h1>Marketplace</h1>
+              <span className="sd-navbar__subtitle">Discover premium products from verified stores</span>
+            </div>
           </div>
           
-          <div className="cd-navbar__right">
-            <button className="cd-icon-btn">🔔</button>
-            <div className="cd-profile-icon">
+          <div className="sd-navbar__right">
+            <button className="od-nav-icon-btn" style={{ marginRight: '16px' }}>🔔</button>
+            <div className="sd-avatar">
               <span>C</span>
+            </div>
+            <div className="sd-navbar__staff-info">
+              <span className="sd-navbar__name">Customer</span>
+              <span className="sd-navbar__role">Verified Account</span>
             </div>
           </div>
         </header>
 
         {/* BODY: content */}
-        <div className="cd-body">
-          <main className="cd-content">
+        <main className="sd-content od-content">
             
-            {/* HERO SECTION */}
-            <div className="cd-hero-card">
-              <div className="cd-hero-search">
-                🔍
-                <input
-                  type="text"
-                  placeholder="Search products by name or description..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-                <button className="cd-hero-search-btn">
-                  Search
-                </button>
-              </div>
-              <div className="cd-hero-categories">
-                <span className="label">Popular categories:</span>
-                {CATEGORIES.map((cat) => (
-                  <button
-                    key={cat.name}
-                    className={`cd-cat-pill ${cat.color} ${categoryFilter === cat.name ? "active" : ""}`}
-                    onClick={() => setCategoryFilter(categoryFilter === cat.name ? "" : cat.name)}
-                  >
-                    {cat.icon} {cat.name}
-                  </button>
-                ))}
-              </div>
+          <div className="si-header-section" style={{ marginBottom: '32px' }}>
+            <div className="si-header-info">
+              <h2>Product Discovery</h2>
+              <p>Search over thousands of items from local boutiques and brand stores.</p>
             </div>
+          </div>
 
-            {/* SHOPS GRID */}
-            {(shops || []).map((shop) => {
-              const filteredProducts = getFilteredProducts(shop.products);
-              const displayedProducts = filteredProducts.slice(0, 4);
-              const hasMore = filteredProducts.length > 4;
+          {/* HERO SEARCH */}
+          <div className="si-ledger-table-wrap" style={{ padding: '32px', marginBottom: '32px' }}>
+            <div className="cd-hero-search" style={{ borderBottom: '1px solid #f1f5f9', paddingBottom: '24px', marginBottom: '24px' }}>
+              <span style={{ fontSize: '20px' }}>🔍</span>
+              <input
+                type="text"
+                placeholder="What are you looking for today?"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                style={{ flex: 1, border: 'none', outline: 'none', fontSize: '18px', padding: '0 16px', fontWeight: 500 }}
+              />
+            </div>
+            <div className="cd-hero-categories">
+              <span style={{ fontSize: '12px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', marginRight: '16px', letterSpacing: '0.5px' }}>Quick Filters:</span>
+              {CATEGORIES.map((cat) => (
+                <button
+                  key={cat.name}
+                  className={`cd-cat-pill ${categoryFilter === cat.name ? "active" : ""}`}
+                  onClick={() => setCategoryFilter(categoryFilter === cat.name ? "" : cat.name)}
+                  style={{ 
+                    padding: '8px 16px', 
+                    borderRadius: '8px', 
+                    background: categoryFilter === cat.name ? '#0f172a' : '#f8fafc', 
+                    color: categoryFilter === cat.name ? '#fff' : '#475569',
+                    border: '1px solid',
+                    borderColor: categoryFilter === cat.name ? '#0f172a' : '#e2e8f0',
+                    fontWeight: 600,
+                    fontSize: '13px',
+                    cursor: 'pointer',
+                    marginRight: '8px',
+                    transition: 'all 0.2s'
+                  }}
+                >
+                  {cat.icon} {cat.name}
+                </button>
+              ))}
+            </div>
+          </div>
 
-              if (filteredProducts.length === 0) return null;
+          {/* SHOPS GRID */}
+          {(shops || []).map((shop) => {
+            const filteredProducts = getFilteredProducts(shop.products);
+            const displayedProducts = filteredProducts.slice(0, 4);
+            const hasMore = filteredProducts.length > 4;
 
-              return (
-                <div key={shop._id} className="shop-container">
-                  <div className="shop-header">
-                    <div>
-                      <h2>{shop.name}</h2>
-                      <p>Most popular products this week</p>
-                    </div>
-                    {hasMore && (
-                      <button
-                        className="show-all-btn"
-                        onClick={() => setExpandedShop(shop._id)}
-                      >
-                        View All Stores →
-                      </button>
-                    )}
+            if (filteredProducts.length === 0) return null;
+
+            return (
+              <div key={shop._id} className="shop-container">
+                <div className="shop-header">
+                  <div>
+                    <h2>{shop.name}</h2>
+                    <p>Most popular products this week</p>
                   </div>
+                  {hasMore && (
+                    <button
+                      className="show-all-btn"
+                      onClick={() => setExpandedShop(shop._id)}
+                    >
+                      View All Stores →
+                    </button>
+                  )}
+                </div>
 
-                  <div className="product-row">
-                    {displayedProducts.map((p) => {
-                      return (
-                        <div key={p._id} className="product-card">
-                          <div className="product-card-image-wrap">
-                            <img
-                              src={`${API_BASE}/${p.image}`}
-                              alt={p.name}
-                              onError={(e) => { e.target.src = "https://via.placeholder.com/300?text=No+Image"; }}
-                            />
+                <div className="product-row">
+                  {displayedProducts.map((p) => (
+                    <div key={p._id} className="product-card">
+                      <div className="product-card-image-wrap">
+                        <img
+                          src={`${API_BASE}/${p.image}`}
+                          alt={p.name}
+                          onError={(e) => { e.target.src = "https://via.placeholder.com/300?text=No+Image"; }}
+                        />
+                      </div>
+                      <div className="product-card-content">
+                        <h3>{p.name}</h3>
+                        <div className="price-row">
+                          <span className="price">NPR {p.price.toLocaleString()}</span>
+                          <span className={`stock-pill ${p.quantity > 5 ? "stock-green" : "stock-red"}`}>
+                            {p.quantity > 5 ? "In Stock" : "Low Stock"}
+                          </span>
+                        </div>
+                        <p className="desc">{p.description}</p>
+                        
+                        <div className="store-row">
+                          <div className="store-name">
+                             {shop.name}
                           </div>
-                          <div className="product-card-content">
-                            <h3>{p.name}</h3>
-                            <div className="price-row">
-                              <span className="price">NPR {p.price.toLocaleString()}</span>
-                              <span className={`stock-pill ${p.quantity > 5 ? "stock-green" : "stock-red"}`}>
-                                {p.quantity > 5 ? "In Stock" : "Low Stock"}
-                              </span>
-                            </div>
-                            <p className="desc">{p.description}</p>
-                            
-                            <div className="store-row">
-                              <div className="store-name">
-                                🏪 {shop.name}
-                              </div>
-                              <div className="store-rating">
-                                <Rating value={p.rating || 0} text={`(${p.numReviews || 0})`} fontSize="12px" />
-                              </div>
-                            </div>
-
-                            <button
-                              className="buy-btn"
-                              onClick={() => navigate(`/product/${p._id}`)}
-                            >
-                              View Details
-                            </button>
+                          <div className="store-rating">
+                            <Rating value={p.rating || 0} text={`(${p.numReviews || 0})`} fontSize="12px" />
                           </div>
                         </div>
-                      );
-                    })}
-                  </div>
+
+                        <button
+                          className="buy-btn"
+                          onClick={() => navigate(`/product/${p._id}`)}
+                        >
+                          View Details
+                        </button>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              );
-            })}
-          </main>
-        </div>
+              </div>
+            );
+          })}
+        </main>
       </div>
 
       {/* Modal for showing all products of a shop */}
@@ -201,35 +228,33 @@ const CustomerDashboard = () => {
             <div className="modal-products-grid">
               {getFilteredProducts(
                 shops.find((s) => s._id === expandedShop)?.products
-              ).map((p) => {
-                return (
-                  <div key={p._id} className="product-card">
-                    <div className="product-card-image-wrap">
-                      <img
-                        src={`${API_BASE}/${p.image}`}
-                        alt={p.name}
-                        onError={(e) => { e.target.src = "https://via.placeholder.com/300?text=No+Image"; }}
-                      />
-                    </div>
-                    <div className="product-card-content">
-                      <h3>{p.name}</h3>
-                      <div className="price-row">
-                        <span className="price">NPR {p.price.toLocaleString()}</span>
-                      </div>
-                      <p className="desc">{p.description}</p>
-                      <button
-                        className="buy-btn"
-                        onClick={() => {
-                          navigate(`/product/${p._id}`);
-                          setExpandedShop(null);
-                        }}
-                      >
-                        View Details
-                      </button>
-                    </div>
+              ).map((p) => (
+                <div key={p._id} className="product-card">
+                  <div className="product-card-image-wrap">
+                    <img
+                      src={`${API_BASE}/${p.image}`}
+                      alt={p.name}
+                      onError={(e) => { e.target.src = "https://via.placeholder.com/300?text=No+Image"; }}
+                    />
                   </div>
-                );
-              })}
+                  <div className="product-card-content">
+                    <h3>{p.name}</h3>
+                    <div className="price-row">
+                      <span className="price">NPR {p.price.toLocaleString()}</span>
+                    </div>
+                    <p className="desc">{p.description}</p>
+                    <button
+                      className="buy-btn"
+                      onClick={() => {
+                        navigate(`/product/${p._id}`);
+                        setExpandedShop(null);
+                      }}
+                    >
+                      View Details
+                    </button>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </div>

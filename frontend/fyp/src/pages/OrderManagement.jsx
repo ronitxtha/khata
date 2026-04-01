@@ -6,6 +6,7 @@ import "../styles/staffDashboard.css";
 import "../styles/ownerDashboard.css";
 import "../styles/orderManagement.css";
 import OwnerSidebar from "../components/OwnerSidebar";
+import StaffSidebar from "../components/StaffSidebar";
 
 const API_BASE = "http://localhost:8000";
 
@@ -101,19 +102,28 @@ const OrderManagement = () => {
 
   return (
     <div className="sd-layout">
-      {/* Shared Owner Sidebar */}
-      <OwnerSidebar 
-        sidebarOpen={sidebarOpen} 
-        setSidebarOpen={setSidebarOpen} 
-        owner={user} 
-        handleLogout={handleLogout} 
-      />
+      {/* Role-based Sidebar */}
+      {role === "owner" ? (
+        <OwnerSidebar 
+          sidebarOpen={sidebarOpen} 
+          setSidebarOpen={setSidebarOpen} 
+          owner={user} 
+          handleLogout={handleLogout} 
+        />
+      ) : (
+        <StaffSidebar 
+          sidebarOpen={sidebarOpen} 
+          setSidebarOpen={setSidebarOpen} 
+          staff={user} 
+          handleLogout={handleLogout} 
+        />
+      )}
 
       {/* ========== GLOBAL NAVBAR ========== */}
       <div className={`sd-main od-main-content ${sidebarOpen ? "sd-main--shifted" : ""}`}>
         <header className="sd-navbar">
           <div className="sd-navbar__left">
-            <button className="sd-navbar__hamburger" onClick={() => setSidebarOpen((v) => !v)}>☰</button>
+            <button className="sd-navbar__hamburger" onClick={() => setSidebarOpen((v) => !v)} onMouseEnter={() => { if (window.sidebarTimer) clearTimeout(window.sidebarTimer); setSidebarOpen(true); }} onMouseLeave={() => { window.sidebarTimer = setTimeout(() => setSidebarOpen(false), 300); }}>☰</button>
             <div className="sd-navbar__title">
               <h1>Order Management</h1>
               <span className="sd-navbar__subtitle">View and manage shop orders</span>
@@ -162,12 +172,12 @@ const OrderManagement = () => {
               )}
             </div>
 
-            <div className="sd-avatar" onClick={() => navigate("/owner-profile")}>
-              <span>{(user?.username || "O")[0].toUpperCase()}</span>
+            <div className="sd-avatar" onClick={() => navigate(role === "owner" ? "/owner-profile" : "/staff-profile")}>
+              <span>{(user?.username || (role === "owner" ? "O" : "S"))[0].toUpperCase()}</span>
             </div>
-            <div className="sd-navbar__staff-info" onClick={() => navigate("/owner-profile")}>
-              <span className="sd-navbar__name">{user?.username || "Owner"}</span>
-              <span className="sd-navbar__role">Owner</span>
+            <div className="sd-navbar__staff-info" onClick={() => navigate(role === "owner" ? "/owner-profile" : "/staff-profile")}>
+              <span className="sd-navbar__name">{user?.username || (role === "owner" ? "Owner" : "Staff")}</span>
+              <span className="sd-navbar__role" style={{ textTransform: 'capitalize' }}>{role}</span>
             </div>
           </div>
         </header>

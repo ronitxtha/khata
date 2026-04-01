@@ -6,6 +6,7 @@ import "../styles/staffDashboard.css";
 import "../styles/staffInventory.css";
 import "../styles/ownerDashboard.css";
 import OwnerSidebar from "../components/OwnerSidebar";
+import StaffSidebar from "../components/StaffSidebar";
 
 const API_BASE = "http://localhost:8000";
 
@@ -324,39 +325,48 @@ const ProductManagement = () => {
   ];
 
   return (
-    <div className="sd-layout">
-      {/* Shared Owner Sidebar */}
-      <OwnerSidebar 
-        sidebarOpen={sidebarOpen} 
-        setSidebarOpen={setSidebarOpen} 
-        owner={owner} 
-        handleLogout={handleLogout} 
-      />
+    <div className="sd-layout od-modern-layout">
+      {/* Role-based Sidebar */}
+      {owner?.role === "owner" ? (
+        <OwnerSidebar 
+          sidebarOpen={sidebarOpen} 
+          setSidebarOpen={setSidebarOpen} 
+          owner={owner} 
+          handleLogout={handleLogout} 
+        />
+      ) : (
+        <StaffSidebar 
+          sidebarOpen={sidebarOpen} 
+          setSidebarOpen={setSidebarOpen} 
+          staff={owner} 
+          handleLogout={handleLogout} 
+        />
+      )}
 
       {/* ========== MAIN AREA ========== */}
       <div className={`sd-main od-main-content ${sidebarOpen ? "sd-main--shifted" : ""}`}>
         {/* ---- TOP NAVBAR ---- */}
         <header className="sd-navbar">
           <div className="sd-navbar__left">
-            <button className="sd-navbar__hamburger" onClick={() => setSidebarOpen((v) => !v)}>☰</button>
+            <button className="sd-navbar__hamburger" onClick={() => setSidebarOpen((v) => !v)} onMouseEnter={() => { if (window.sidebarTimer) clearTimeout(window.sidebarTimer); setSidebarOpen(true); }} onMouseLeave={() => { window.sidebarTimer = setTimeout(() => setSidebarOpen(false), 300); }}>☰</button>
             <div className="sd-navbar__title">
               <h1>Product Management</h1>
               <span className="sd-navbar__subtitle">Add, edit, and manage your catalogue</span>
             </div>
           </div>
           <div className="sd-navbar__right">
-            <div className="sd-avatar">
-              <span>{(owner?.username || "O")[0].toUpperCase()}</span>
+            <div className="sd-avatar" onClick={() => navigate(owner?.role === "owner" ? "/owner-profile" : "/staff-profile")}>
+              <span>{(owner?.username || (owner?.role === "owner" ? "O" : "S"))[0].toUpperCase()}</span>
             </div>
-            <div className="sd-navbar__staff-info">
-              <span className="sd-navbar__name">{owner?.username || "Owner"}</span>
-              <span className="sd-navbar__role">Owner</span>
+            <div className="sd-navbar__staff-info" onClick={() => navigate(owner?.role === "owner" ? "/owner-profile" : "/staff-profile")}>
+              <span className="sd-navbar__name">{owner?.username || (owner?.role === "owner" ? "Owner" : "Staff")}</span>
+              <span className="sd-navbar__role" style={{ textTransform: 'capitalize' }}>{owner?.role || "Staff"}</span>
             </div>
           </div>
         </header>
 
         {/* ---- CONTENT ---- */}
-        <main className="sd-content">
+        <main className="sd-content od-content">
           
           {/* 1. Header Section */}
           <div className="si-header-section">
@@ -402,9 +412,19 @@ const ProductManagement = () => {
             </div>
           </div>
 
-          {/* 3. Filter & Utilities Row */}
+          {/* 3. Ledger Filter Row */}
           <div className="si-filter-row">
             <div className="si-filters-left">
+              <div className="si-search-input-wrap">
+                <input
+                  type="text"
+                  placeholder="Search catalog..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="si-ledger-select"
+                  style={{ width: '280px', paddingLeft: '36px' }}
+                />
+              </div>
               <select 
                 className="si-ledger-select"
                 value={filterCategory}
@@ -423,6 +443,9 @@ const ProductManagement = () => {
                 <option value="Low Stock">Low Stock</option>
                 <option value="Out of Stock">Out of Stock</option>
               </select>
+            </div>
+            <div className="si-filters-right">
+               <span style={{ fontSize: '12px', fontWeight: 600 }}>{filteredProducts.length} Results</span>
             </div>
           </div>
 
@@ -481,8 +504,8 @@ const ProductManagement = () => {
                         </td>
                         <td style={{ textAlign: 'right' }}>
                           <div className="si-actions" style={{ justifyContent: 'flex-end' }}>
-                            <button className="si-btn si-btn--edit" onClick={() => handleEditClick(p)} title="Edit">Edit</button>
-                            <button className="si-btn si-btn--delete" onClick={() => handleDeleteProduct(p._id)} title="Delete">Delete</button>
+                            <button className="si-btn si-btn--edit" onClick={() => handleEditClick(p)} style={{ width: '34px', background: '#026bf4', color: '#fff' }}>✏️</button>
+                            <button className="si-btn si-btn--delete" onClick={() => handleDeleteProduct(p._id)} style={{ width: '34px', background: '#e90a19', color: '#fff' }}>🗑️</button>
                           </div>
                         </td>
                       </tr>

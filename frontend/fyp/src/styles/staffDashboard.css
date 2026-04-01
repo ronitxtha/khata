@@ -578,6 +578,13 @@ body {
   gap: 20px;
 }
 
+.sd-row--full {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+}
+
 @media (max-width: 1000px) {
   .sd-row {
     grid-template-columns: 1fr;

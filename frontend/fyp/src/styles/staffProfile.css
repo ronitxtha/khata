@@ -1,353 +1,341 @@
 /* ============================================================
-   Staff Profile – extends staffDashboard.css theme
+   Staff Profile – High-Fidelity Monochromatic UI
    ============================================================ */
 
-.sp-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  align-items: start;
-  gap: 24px;
-  padding-bottom: 24px;
+/* PAGE BODY LAYOUT */
+.sd-layout.od-modern-layout {
+  background-color: #f8fafc;
+  min-height: 100vh;
 }
 
-@media (max-width: 900px) {
-  .sp-grid {
-    grid-template-columns: 1fr;
-  }
+.sd-content.od-content {
+  padding: 0 40px 40px !important;
 }
 
-.sp-col {
+/* ==================== PROFILE CANVAS ==================== */
+.sp-profile-canvas {
+  display: flex;
+  gap: 32px;
+  align-items: flex-start;
+}
+
+.sp-main-column {
+  flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 32px;
 }
 
-.sp-card {
-  padding: 24px !important;
-}
-
-/* ---- Profile Info Card ---- */
-.sp-profile-overview {
+.sp-side-column {
+  width: 440px;
   display: flex;
-  gap: 24px;
-  margin-top: 10px;
+  flex-direction: column;
+  gap: 32px;
 }
 
-@media (max-width: 500px) {
-  .sp-profile-overview {
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-  }
+/* ==================== CARDS ==================== */
+.sp-card { 
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
+  overflow: hidden;
+}
+
+.sp-card-header {
+  padding: 24px;
+  border-bottom: 1px solid #f1f5f9;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.sp-card-header h3 {
+  font-size: 15px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.sp-card-body {
+  padding: 32px;
+}
+
+/* ==================== AVATAR HERO ==================== */
+.sp-avatar-hero {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+  margin-bottom: 40px;
 }
 
 .sp-avatar-wrapper {
   position: relative;
-  flex-shrink: 0;
-  width: 100px;
-  height: 100px;
-  border-radius: 20px;
-  overflow: hidden;
-  border: 3px solid #fff;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  border: 3px solid white;
+  box-shadow: 0 0 0 1px #e2e8f0;
+  background: #f1f5f9;
 }
 
-.sp-avatar-large {
+.sp-avatar-img {
   width: 100%;
   height: 100%;
+  border-radius: 50%;
   object-fit: cover;
-  display: block;
 }
 
-.sp-avatar-placeholder-large {
+.sp-avatar-placeholder {
   width: 100%;
   height: 100%;
-  background: linear-gradient(135deg, #3b82f6, #1e40af);
-  color: #fff;
-  font-size: 36px;
-  font-weight: 700;
   display: flex;
   align-items: center;
   justify-content: center;
+  font-size: 40px;
+  font-weight: 800;
+  color: #94a3b8;
 }
 
-/* Camera overlay during edit mode */
-.sp-avatar-overlay {
+.sp-avatar-upload-btn {
   position: absolute;
-  inset: 0;
-  background: rgba(15, 23, 42, 0.5);
+  bottom: 0;
+  right: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #0f172a;
+  color: white;
+  border: none;
+  cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.2);
+}
+
+.sp-role-tag {
+  display: inline-block;
+  padding: 4px 12px;
+  background: #f1f5f9;
+  color: #475569;
+  font-size: 11px;
+  font-weight: 800;
+  border-radius: 6px;
+  letter-spacing: 1px;
+  margin-bottom: 8px;
+}
+
+.sp-hero-name {
   font-size: 28px;
-  color: #fff;
-  cursor: pointer;
-  opacity: 0;
-  backdrop-filter: blur(2px);
-  transition: opacity 0.2s ease;
-}
-
-.sp-avatar-overlay:hover {
-  opacity: 1;
-}
-
-.sp-info-list {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  width: 100%;
-}
-
-.sp-info-row {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  font-size: 14px;
-}
-
-.sp-info-row label {
-  color: #64748b;
-  font-weight: 600;
-  font-size: 12px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.sp-info-row span {
+  font-weight: 900;
   color: #0f172a;
+  letter-spacing: -1px;
+  margin-bottom: 4px;
+}
+
+.sp-hero-email {
+  font-size: 14px;
+  color: #64748b;
   font-weight: 500;
 }
 
-.sp-readonly {
-  color: #475569 !important;
+/* ==================== INFO GRID ==================== */
+.sp-info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
 }
 
-.sp-empty {
-  color: #94a3b8;
-  font-style: italic;
-}
-
-/* Input fields */
-.sp-input {
-  width: 100%;
-  padding: 10px 14px;
-  border: 1.5px solid #e2e8f0;
-  border-radius: 8px;
-  font-size: 14px;
-  color: #1e293b;
-  background: #f8fafc;
-  outline: none;
-  font-family: inherit;
-  transition: all 0.15s;
-}
-
-.sp-input:focus {
-  border-color: #3b82f6;
-  background: #fff;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-}
-
-/* Edit actions */
-.sp-edit-actions {
-  display: flex;
-  gap: 10px;
-  margin-top: 10px;
-}
-
-.sp-link-btn {
-  background: none;
-  border: none;
-  color: #2563eb;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.sp-link-btn:hover {
-  text-decoration: underline;
-}
-
-.sp-btn-save {
-  padding: 8px 16px;
-  background: linear-gradient(135deg, #3b82f6, #2563eb);
-  color: #fff;
-  border: none;
-  border-radius: 8px;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: opacity 0.15s;
-}
-
-.sp-btn-save:not(:disabled):hover {
-  opacity: 0.9;
-}
-
-.sp-btn-save:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.sp-btn-cancel {
-  padding: 8px 16px;
-  background: #f1f5f9;
-  color: #475569;
-  border: 1.5px solid #e2e8f0;
-  border-radius: 8px;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.15s;
-}
-
-.sp-btn-cancel:hover {
-  background: #e2e8f0;
-}
-
-/* ---- Security Card ---- */
-.sp-form {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  margin-top: 14px;
-}
-
-.sp-form-group {
+.sp-grid-field {
   display: flex;
   flex-direction: column;
   gap: 6px;
 }
 
-.sp-form-group label {
-  font-size: 13px;
-  color: #334155;
-  font-weight: 600;
+.sp-grid-field label {
+  font-size: 11px;
+  font-weight: 800;
+  color: #94a3b8;
+  letter-spacing: 0.5px;
 }
 
-.sp-input-eye {
-  position: relative;
-  display: flex;
-  align-items: center;
+.sp-grid-field span {
+  font-size: 15px;
+  font-weight: 700;
+  color: #0f172a;
 }
 
-.sp-input-eye input {
-  padding-right: 40px;
+/* ==================== TABLE ELEMENTS ==================== */
+.sp-table-footer {
+  padding: 16px;
+  background: #f8fafc;
+  text-align: center;
 }
 
-.sp-input-eye button {
-  position: absolute;
-  right: 12px;
-  background: none;
-  border: none;
-  font-size: 16px;
-  cursor: pointer;
-  opacity: 0.5;
-  transition: opacity 0.15s;
+.ledger-status-tag {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 700;
 }
 
-.sp-input-eye button:hover {
-  opacity: 0.9;
-}
+.ledger-status-tag.present { background: #ecfdf5; color: #059669; }
+.ledger-status-tag.absent { background: #fef2f2; color: #dc2626; }
 
-.sp-pw-btn {
-  margin-top: 8px;
-  padding: 12px;
-}
-
-/* ---- Attendance Card ---- */
-.sp-att-stats {
+/* ==================== SECURITY FORM ==================== */
+.sp-security-form {
+  padding: 32px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  margin-top: 12px;
+  gap: 16px;
 }
 
-.sp-att-stat {
+/* ==================== SESSION INSIGHTS ==================== */
+.sp-session-body {
+  padding: 32px;
+}
+
+.sp-session-grid {
   display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 12px 16px;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.sp-session-pill {
+  flex: 1;
   background: #f8fafc;
-  border: 1px solid #f1f5f9;
+  padding: 16px;
   border-radius: 12px;
+  border: 1px solid #e2e8f0;
 }
 
-.sp-att-icon {
-  font-size: 18px;
+.sp-session-pill label {
+  display: block;
+  font-size: 10px;
+  font-weight: 800;
+  color: #94a3b8;
+  margin-bottom: 4px;
 }
 
-.sp-att-label {
-  font-size: 12px;
-  color: #64748b;
-  font-weight: 600;
-  text-transform: uppercase;
-}
-
-.sp-att-val {
-  font-size: 15px;
+.sp-session-pill span {
+  font-size: 16px;
+  font-weight: 800;
   color: #0f172a;
-  font-weight: 700;
 }
 
-.sp-att-empty {
-  margin-top: 12px;
+.sp-session-pill span.active {
+  color: #3b82f6;
 }
 
-/* Week Table */
-.sp-week-table-wrap {
-  margin-top: 24px;
+.sp-session-total {
+  background: #0f172a;
+  padding: 24px;
+  border-radius: 12px;
+  text-align: center;
+  color: white;
 }
 
-.sp-week-title {
-  font-size: 14px;
-  color: #334155;
-  margin-bottom: 12px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid #f1f5f9;
+.sp-session-total label {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  opacity: 0.6;
 }
 
-.sp-week-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 12.5px;
-  text-align: left;
+.sp-session-total .hours {
+  display: block;
+  font-size: 32px;
+  font-weight: 900;
 }
 
-.sp-week-table th {
-  padding: 8px 4px;
+.sp-session-total .hours small {
+  font-size: 16px;
+  font-weight: 500;
+  margin-left: 4px;
+}
+
+.sp-empty-state {
+  text-align: center;
+  padding: 40px;
+  background: #f8fafc;
+  border: 2px dashed #e2e8f0;
+  border-radius: 12px;
   color: #64748b;
   font-weight: 600;
 }
 
-.sp-week-table td {
-  padding: 10px 4px;
-  color: #334155;
-  border-bottom: 1px solid #f8fafc;
-}
-
-.sp-status-green {
+/* ==================== COMPONENTS ==================== */
+.buy-btn, .show-all-btn {
+  height: 44px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 22px;
-  height: 22px;
-  background: #d1fae5;
-  color: #065f46;
-  border-radius: 6px;
-  font-weight: 700;
-  font-size: 11px;
+  padding: 0 24px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.2s;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  border: 1px solid transparent;
+  white-space: nowrap;
 }
 
-.sp-status-red {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 22px;
-  height: 22px;
-  background: #fee2e2;
-  color: #991b1b;
-  border-radius: 6px;
-  font-weight: 700;
-  font-size: 11px;
+.buy-btn { background: #0f172a; color: white; }
+.buy-btn:hover { background: #1e293b; box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15); }
+
+.buy-btn.mini { 
+  height: 32px; 
+  padding: 0 16px; 
+  font-size: 11px; 
+  width: fit-content;
+  flex: none;
 }
+
+.show-all-btn { background: white; color: #0f172a; border: 1px solid #e2e8f0; text-decoration: none; }
+.show-all-btn:hover { border-color: #0f172a; background: #f8fafc; }
+
+.show-all-btn.mini { height: 32px; padding: 0 12px; font-size: 10px; }
+
+.modern-input {
+  width: 100%;
+  height: 44px;
+  padding: 0 16px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.modern-input:focus {
+  border-color: #0f172a;
+  outline: none;
+  background: white;
+}
+
+.cp-edit-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.cp-edit-actions .buy-btn, 
+.cp-edit-actions .show-all-btn {
+  flex: 1;
+}
+
+/* Spinner */
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #f1f5f9;
+  border-top: 4px solid #0f172a;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }

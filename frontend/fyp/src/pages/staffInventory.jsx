@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import "../styles/staffDashboard.css";
 import "../styles/staffInventory.css";
+import StaffSidebar from "../components/StaffSidebar";
 
 const API_BASE = "http://localhost:8000";
 
@@ -189,43 +190,21 @@ const StaffInventory = () => {
   ];
 
   return (
-    <div className="sd-layout">
-      {/* ========== SIDEBAR ========== */}
-      <aside
-        className={`sd-sidebar ${sidebarOpen ? "sd-sidebar--open" : ""}`}
-        onMouseEnter={() => setSidebarOpen(true)}
-        onMouseLeave={() => setSidebarOpen(false)}
-      >
-        <div className="sd-sidebar__brand">
-          <span className="sd-sidebar__logo">🛍️</span>
-          <span className="sd-sidebar__brand-name">Khata</span>
-        </div>
-        <nav className="sd-sidebar__nav">
-          {navLinks.map((link) => (
-            <button
-              key={link.path}
-              className={`sd-sidebar__link ${window.location.pathname === link.path ? "active" : ""}`}
-              onClick={() => navigate(link.path)}
-            >
-              <span className="sd-sidebar__icon">{link.icon}</span>
-              <span className="sd-sidebar__label">{link.label}</span>
-            </button>
-          ))}
-        </nav>
-        <div className="sd-sidebar__bottom">
-          <button className="sd-sidebar__link sd-sidebar__logout" onClick={handleLogout}>
-            <span className="sd-sidebar__icon">🚪</span>
-            <span className="sd-sidebar__label">Logout</span>
-          </button>
-        </div>
-      </aside>
+    <div className="sd-layout od-modern-layout">
+      {/* Shared Staff Sidebar */}
+      <StaffSidebar 
+        sidebarOpen={sidebarOpen} 
+        setSidebarOpen={setSidebarOpen} 
+        staff={staff} 
+        handleLogout={handleLogout} 
+      />
 
       {/* ========== MAIN AREA ========== */}
-      <div className={`sd-main ${sidebarOpen ? "sd-main--shifted" : ""}`}>
+      <div className={`sd-main od-main-content ${sidebarOpen ? "sd-main--shifted" : ""}`}>
         {/* ---- TOP NAVBAR ---- */}
         <header className="sd-navbar">
           <div className="sd-navbar__left">
-            <button className="sd-navbar__hamburger" onClick={() => setSidebarOpen((v) => !v)}>☰</button>
+            <button className="sd-navbar__hamburger" onClick={() => setSidebarOpen((v) => !v)} onMouseEnter={() => { if (window.sidebarTimer) clearTimeout(window.sidebarTimer); setSidebarOpen(true); }} onMouseLeave={() => { window.sidebarTimer = setTimeout(() => setSidebarOpen(false), 300); }}>☰</button>
             <div className="sd-navbar__title">
               <h1>Product Management</h1>
               <span className="sd-navbar__subtitle">Manage your inventory</span>
@@ -247,164 +226,147 @@ const StaffInventory = () => {
         </header>
 
         {/* ---- CONTENT ---- */}
-        <main className="sd-content">
+        <main className="sd-content od-content">
 
-          {/* Page Header Banner */}
-          <div className="sd-welcome si-banner">
-            <div>
-              <h2>📦 Inventory Overview</h2>
-              <p>Browse, add, edit or remove products from your store.</p>
+          {/* 1. Header Section */}
+          <div className="si-header-section">
+            <div className="si-header-info">
+              <h2>Inventory</h2>
+              <p>Manage and update your product catalog for your SmartKhata.</p>
             </div>
-            <button className="sd-btn-scan si-add-btn" onClick={() => setShowAddForm(true)}>
-              ➕ Add New Product
-            </button>
-          </div>
-
-          {/* Summary mini-cards */}
-          <div className="si-mini-cards">
-            <div className="si-mini-card si-mini-card--blue">
-              <span className="si-mini-card__icon">📦</span>
-              <div>
-                <div className="si-mini-card__num">{products.length}</div>
-                <div className="si-mini-card__label">Total Products</div>
-              </div>
-            </div>
-            <div className="si-mini-card si-mini-card--green">
-              <span className="si-mini-card__icon">✅</span>
-              <div>
-                <div className="si-mini-card__num">{products.filter((p) => p.quantity > 4).length}</div>
-                <div className="si-mini-card__label">In Stock</div>
-              </div>
-            </div>
-            <div className="si-mini-card si-mini-card--orange">
-              <span className="si-mini-card__icon">⚠️</span>
-              <div>
-                <div className="si-mini-card__num">{lowStockCount}</div>
-                <div className="si-mini-card__label">Low Stock</div>
-              </div>
-            </div>
-            <div className="si-mini-card si-mini-card--red">
-              <span className="si-mini-card__icon">❌</span>
-              <div>
-                <div className="si-mini-card__num">{outOfStockCount}</div>
-                <div className="si-mini-card__label">Out of Stock</div>
-              </div>
+            <div className="si-header-actions">
+              <button className="si-btn-primary si-btn-primary--dark" onClick={() => setShowAddForm(true)}>
+                <span>+</span> Add Product
+              </button>
             </div>
           </div>
 
-          {/* Search & Filter Bar */}
-          <div className="sd-panel si-search-panel">
-            <div className="si-search-row">
+          {/* 2. Summary Metrics */}
+          <div className="si-ledger-cards">
+            <div className="si-ledger-card">
+              <span className="si-ledger-card__label">Total Products</span>
+              <div className="si-ledger-card__content">
+                <span className="si-ledger-card__num">{products.length.toLocaleString()}</span>
+              </div>
+            </div>
+            <div className="si-ledger-card">
+              <span className="si-ledger-card__label">In Stock</span>
+              <div className="si-ledger-card__content">
+                <span className="si-ledger-card__num">{products.filter((p) => p.quantity > 4).length.toLocaleString()}</span>
+              </div>
+            </div>
+            <div className="si-ledger-card">
+              <span className="si-ledger-card__label">Low Stock</span>
+              <div className="si-ledger-card__content">
+                <span className="si-ledger-card__num" style={{ color: '#f59e0b' }}>{lowStockCount}</span>
+              </div>
+            </div>
+            <div className="si-ledger-card">
+              <span className="si-ledger-card__label">Out of Stock</span>
+              <div className="si-ledger-card__content">
+                <span className="si-ledger-card__num" style={{ color: '#ef4444' }}>{outOfStockCount}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* 3. Filter Row */}
+          <div className="si-filter-row">
+            <div className="si-filters-left">
               <div className="si-search-input-wrap">
-                <svg className="si-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
-                </svg>
                 <input
                   type="text"
-                  placeholder="Search by name or category..."
+                  placeholder="Search product..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="si-search-input"
+                  className="si-ledger-select"
+                  style={{ width: '280px', paddingLeft: '36px' }}
                 />
-                {searchTerm && (
-                  <button className="si-search-clear" onClick={() => setSearchTerm("")}>✕</button>
-                )}
               </div>
               <select
-                className="sd-filter-select si-cat-filter"
+                className="si-ledger-select"
                 value={filterCategory}
                 onChange={(e) => setFilterCategory(e.target.value)}
               >
                 <option value="All">All Categories</option>
                 {CATEGORY_LIST.map((c) => <option key={c}>{c}</option>)}
               </select>
-              <span className="si-result-count">
-                {filteredProducts.length} product{filteredProducts.length !== 1 ? "s" : ""}
-              </span>
+            </div>
+            <div className="si-filters-right">
+               <span style={{ fontSize: '12px', fontWeight: 600 }}>{filteredProducts.length} Results</span>
             </div>
           </div>
 
-          {/* Product Table Panel */}
-          <div className="sd-panel si-table-panel">
-            <div className="sd-panel__header">
-              <h3>📋 Products</h3>
-            </div>
-
-            {filteredProducts.length > 0 ? (
-              <div className="si-table-wrap">
-                <table className="si-table">
-                  <thead>
-                    <tr>
-                      <th>Product</th>
-                      <th>Category</th>
-                      <th>Price (NPR)</th>
-                      <th>Qty</th>
-                      <th>Status</th>
-                      <th>Description</th>
-                      <th>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredProducts.map((p) => (
+          {/* 4. The Ledger Table */}
+          <div className="si-ledger-table-wrap">
+            <table className="si-ledger-table">
+              <thead>
+                <tr>
+                  <th style={{ width: '40%' }}>Product</th>
+                  <th>Category</th>
+                  <th>Price (NPR)</th>
+                  <th>Inventory</th>
+                  <th>Status</th>
+                  <th style={{ textAlign: 'right' }}>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredProducts.length > 0 ? (
+                  filteredProducts.map((p) => {
+                    const isOutOfStock = (p.quantity || 0) === 0;
+                    const isLowStock = (p.quantity || 0) > 0 && (p.quantity || 0) < 5;
+                    
+                    return (
                       <tr key={p._id}>
-                        <td className="si-product-cell">
-                          {p.image ? (
-                            <img
-                              src={`${API_BASE}/${p.image}`}
-                              alt={p.name}
-                              className="si-product-thumb"
-                            />
-                          ) : (
-                            <div className="si-product-thumb-placeholder">📷</div>
-                          )}
-                          <span className="si-product-name">{p.name || "Unnamed"}</span>
+                        <td>
+                          <div className="si-ledger-product">
+                            {p.image ? (
+                              <img src={`${API_BASE}/${p.image}`} alt={p.name} className="si-ledger-img" />
+                            ) : (
+                              <div className="si-ledger-img" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>📷</div>
+                            )}
+                            <div className="si-ledger-product-info">
+                              <span className="si-ledger-name">{p.name || "Unnamed"}</span>
+                              <span className="si-ledger-desc">{p.description}</span>
+                            </div>
+                          </div>
                         </td>
                         <td>
-                          <span className="si-category-tag">{p.category || "Others"}</span>
-                        </td>
-                        <td className="si-price-cell">NPR {(p.price ?? 0).toLocaleString()}</td>
-                        <td>
-                          <span className={`si-qty ${p.quantity === 0 ? "zero" : p.quantity < 5 ? "low" : "ok"}`}>
-                            {p.quantity ?? 0}
-                          </span>
+                          <span className="si-ledger-tag">{p.category || "Others"}</span>
                         </td>
                         <td>
-                          <span className={`sd-badge ${p.quantity > 0 ? "badge-delivered" : "badge-cancelled"}`}>
-                            {p.quantity > 0 ? "In Stock" : "Out of Stock"}
-                          </span>
+                          <div style={{ fontWeight: 700, color: '#0f172a' }}>
+                            Rs. {(p.price ?? 0).toLocaleString()}
+                          </div>
                         </td>
-                        <td className="si-desc-cell">
-                          {p.description?.substring(0, 55)}{p.description?.length > 55 ? "..." : ""}
+                        <td style={{ color: '#0f172a', fontWeight: 500 }}>
+                          {p.quantity ?? 0} units
                         </td>
                         <td>
-                          <div className="si-actions">
-                            <button
-                              className="si-btn si-btn--edit"
-                              onClick={() => handleEditClick(p)}
-                              title="Edit"
-                            >
-                              ✏️
-                            </button>
-                            <button
-                              className="si-btn si-btn--delete"
-                              onClick={() => handleDeleteProduct(p._id)}
-                              title="Delete"
-                            >
-                              🗑️
-                            </button>
+                          <div className="si-status-wrap">
+                            <span className={`si-dot ${isOutOfStock ? 'si-dot--red' : isLowStock ? 'si-dot--orange' : 'si-dot--green'}`}></span>
+                            <span className="si-status-text">
+                              {isOutOfStock ? "Out of Stock" : isLowStock ? "Low Stock" : "In Stock"}
+                            </span>
+                          </div>
+                        </td>
+                        <td style={{ textAlign: 'right' }}>
+                          <div className="si-actions" style={{ justifyContent: 'flex-end' }}>
+                            <button className="si-btn si-btn--edit" onClick={() => handleEditClick(p)} >Edit</button>
+                            <button className="si-btn si-btn--delete" onClick={() => handleDeleteProduct(p._id)} >Delete</button>
                           </div>
                         </td>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            ) : (
-              <div className="sd-empty">
-                <span>📦</span>
-                <p>{searchTerm || filterCategory !== "All" ? "No products match your search." : "No products yet."}</p>
-              </div>
-            )}
+                    );
+                  })
+                ) : (
+                  <tr>
+                    <td colSpan="6" style={{ textAlign: 'center', padding: '60px', color: '#64748b' }}>
+                      No products found.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
           </div>
         </main>
       </div>

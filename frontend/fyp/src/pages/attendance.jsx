@@ -120,7 +120,7 @@ const Attendance = () => {
         {/* ---- TOP NAVBAR ---- */}
         <header className="sd-navbar">
           <div className="sd-navbar__left">
-            <button className="sd-navbar__hamburger" onClick={() => setSidebarOpen((v) => !v)}>☰</button>
+            <button className="sd-navbar__hamburger" onClick={() => setSidebarOpen((v) => !v)} onMouseEnter={() => { if (window.sidebarTimer) clearTimeout(window.sidebarTimer); setSidebarOpen(true); }} onMouseLeave={() => { window.sidebarTimer = setTimeout(() => setSidebarOpen(false), 300); }}>☰</button>
             <div className="sd-navbar__title">
               <h1>Attendance History</h1>
               <span className="sd-navbar__subtitle">Monitor staff check-in/out patterns</span>

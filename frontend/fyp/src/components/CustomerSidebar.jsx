@@ -36,47 +36,63 @@ const CustomerSidebar = ({ isOpen, setIsOpen }) => {
   ];
 
   return (
-    <aside
-      className={`cd-sidebar ${open ? "cd-sidebar--open" : ""}`}
-      onMouseEnter={() => setOpen(true)}
-      onMouseLeave={() => setOpen(false)}
-    >
-      {/* Brand */}
-      <div className="cd-sidebar__brand">
-        <span className="cd-sidebar__logo">🛍️</span>
-        <span className="cd-sidebar__brand-name">Khata</span>
-      </div>
+    <>
+      <aside
+        className={`sd-sidebar-modern od-sidebar ${open ? "open" : ""}`}
+        onMouseEnter={() => {
+          if (window.sidebarTimer) clearTimeout(window.sidebarTimer);
+          setOpen(true);
+        }}
+        onMouseLeave={() => {
+          window.sidebarTimer = setTimeout(() => setOpen(false), 300);
+        }}
+      >
+        <div className="sd-sidebar__brand od-brand">
+          <div className="od-logo-container">
+            <span className="od-logo-text">KhataStore</span>
+            <span className="od-logo-subtext">CUSTOMER PORTAL</span>
+          </div>
+        </div>
 
-      {/* Navigation */}
-      <nav className="cd-sidebar__nav">
-        {navLinks.map((link) => {
-          const active = location.pathname === link.path;
+        <nav className="sd-sidebar__nav od-nav">
+          {navLinks.map((link) => {
+            const active = location.pathname === link.path;
+            return (
+              <button
+                key={link.path}
+                className={`sd-sidebar__link od-nav-link ${active ? "active" : ""}`}
+                onClick={() => navigate(link.path)}
+              >
+                <span className="sd-sidebar__label visible">{link.label}</span>
+              </button>
+            );
+          })}
+        </nav>
 
-          return (
-            <button
-              key={link.path}
-              className={`cd-sidebar__link ${active ? "active" : ""}`}
-              onClick={() => navigate(link.path)}
-            >
-              <span className="cd-sidebar__icon">{link.icon}</span>
-              <span className="cd-sidebar__label">{link.label}</span>
-              {active && <span className="cd-sidebar__active-bar" />}
-            </button>
-          );
-        })}
-      </nav>
+        <div className="sd-sidebar__bottom od-sidebar-footer">
+          <div className="od-user-profile">
+            <div className="od-user-avatar">
+              <span>C</span>
+            </div>
+            <div className="od-user-info">
+              <span className="od-user-name">Welcome!</span>
+              <span className="od-user-role">CUSTOMER</span>
+            </div>
+          </div>
+          <button className="od-logout-btn" onClick={handleLogout} title="Logout">
+             Logout
+          </button>
+        </div>
+      </aside>
 
-      {/* Bottom (Logout) */}
-      <div className="cd-sidebar__bottom">
-        <button
-          className="cd-sidebar__link cd-sidebar__logout"
-          onClick={handleLogout}
-        >
-          <span className="cd-sidebar__icon">🚪</span>
-          <span className="cd-sidebar__label">Logout</span>
-        </button>
-      </div>
-    </aside>
+      {/* Backdrop for Overlay Sidebar */}
+      {open && (
+        <div 
+          className="od-sidebar-backdrop" 
+          onClick={() => setOpen(false)}
+        ></div>
+      )}
+    </>
   );
 };
 

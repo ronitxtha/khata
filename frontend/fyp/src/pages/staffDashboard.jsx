@@ -15,6 +15,7 @@ import QRScanner from "./QRScanner";
 import socket from "../socket";
 import "../styles/staffDashboard.css";
 import "../styles/staffInventory.css";
+import StaffSidebar from "../components/StaffSidebar";
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
@@ -424,49 +425,30 @@ const StaffDashboard = () => {
   ];
 
   return (
-    <div className="sd-layout">
+    <div className="sd-layout od-modern-layout">
       {/* ========== SIDEBAR ========== */}
-      <aside
-        className={`sd-sidebar ${sidebarOpen ? "sd-sidebar--open" : ""}`}
-        onMouseEnter={() => setSidebarOpen(true)}
-        onMouseLeave={() => setSidebarOpen(false)}
-      >
-        <div className="sd-sidebar__brand">
-          <span className="sd-sidebar__logo">🛍️</span>
-          <span className="sd-sidebar__brand-name">Khata</span>
-        </div>
-
-        <nav className="sd-sidebar__nav">
-          {navLinks.map((link) => (
-            <button
-              key={link.path}
-              className={`sd-sidebar__link ${
-                window.location.pathname === link.path ? "active" : ""
-              }`}
-              onClick={() => navigate(link.path)}
-            >
-              <span className="sd-sidebar__icon">{link.icon}</span>
-              <span className="sd-sidebar__label">{link.label}</span>
-            </button>
-          ))}
-        </nav>
-
-        <div className="sd-sidebar__bottom">
-          <button className="sd-sidebar__link sd-sidebar__logout" onClick={handleLogout}>
-            <span className="sd-sidebar__icon">🚪</span>
-            <span className="sd-sidebar__label">Logout</span>
-          </button>
-        </div>
-      </aside>
+      <StaffSidebar 
+        sidebarOpen={sidebarOpen} 
+        setSidebarOpen={setSidebarOpen} 
+        staff={staff} 
+        handleLogout={handleLogout} 
+      />
 
       {/* ========== MAIN AREA ========== */}
-      <div className={`sd-main ${sidebarOpen ? "sd-main--shifted" : ""}`}>
+      <div className={`sd-main od-main-content ${sidebarOpen ? "sd-main--shifted" : ""}`}>
         {/* ---- TOP NAVBAR ---- */}
         <header className="sd-navbar">
           <div className="sd-navbar__left">
             <button
               className="sd-navbar__hamburger"
               onClick={() => setSidebarOpen((v) => !v)}
+              onMouseEnter={() => {
+                if (window.sidebarTimer) clearTimeout(window.sidebarTimer);
+                setSidebarOpen(true);
+              }}
+              onMouseLeave={() => {
+                window.sidebarTimer = setTimeout(() => setSidebarOpen(false), 300);
+              }}
             >
               ☰
             </button>
@@ -584,68 +566,62 @@ const StaffDashboard = () => {
         </header>
 
         {/* ---- DASHBOARD CONTENT ---- */}
-        <main className="sd-content">
+        <main className="sd-content od-content">
 
-          {/* Welcome Banner */}
-          <div className="sd-welcome">
-            <div>
-              <h2>Welcome back, {staff?.username || "Staff"} 👋</h2>
-              <p>Here's what's happening in your store today.</p>
+          {/* 1. Header Section */}
+          <div className="si-header-section">
+            <div className="si-header-info">
+              <h2>Staff Dashboard</h2>
+              <p>Welcome back, {staff?.username || "Staff"}. Here's your store overview for today.</p>
             </div>
-            <button className="sd-btn-scan" onClick={() => setScannerOpen(true)}>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
-                <rect x="3" y="3" width="7" height="7" rx="1"/>
-                <rect x="14" y="3" width="7" height="7" rx="1"/>
-                <rect x="3" y="14" width="7" height="7" rx="1"/>
-                <path d="M14 14h2v2h-2zM18 14h3M14 18h3M18 18h3M18 21h3"/>
-              </svg>
-              Scan QR Code
-            </button>
+            <div className="si-header-actions">
+              <button className="si-btn-primary si-btn-primary--light" onClick={() => setScannerOpen(true)}>
+                <span>🔍</span> Scan Product
+              </button>
+            </div>
           </div>
 
-          {/* ---- SUMMARY CARDS ---- */}
-          <div className="sd-cards">
-            <div className="sd-card sd-card--blue">
-              <div className="sd-card__icon">📦</div>
-              <div className="sd-card__body">
-                <span className="sd-card__num">{products.length}</span>
-                <span className="sd-card__label">Total Products</span>
+          {/* 2. Summary Metrics */}
+          <div className="si-ledger-cards">
+            <div className="si-ledger-card">
+              <span className="si-ledger-card__label">Total Products</span>
+              <div className="si-ledger-card__content">
+                <span className="si-ledger-card__num">{products.length.toLocaleString()}</span>
               </div>
             </div>
 
-            <div className="sd-card sd-card--green">
-              <div className="sd-card__icon">🛒</div>
-              <div className="sd-card__body">
-                <span className="sd-card__num">{ordersToday.length}</span>
-                <span className="sd-card__label">Orders Today</span>
+            <div className="si-ledger-card">
+              <span className="si-ledger-card__label">Orders Today</span>
+              <div className="si-ledger-card__content">
+                <span className="si-ledger-card__num" style={{ color: '#3b82f6' }}>{ordersToday.length}</span>
               </div>
             </div>
 
-            <div className="sd-card sd-card--purple">
-              <div className="sd-card__icon">✅</div>
-              <div className="sd-card__body">
-                <span className="sd-card__num">{itemsSoldToday}</span>
-                <span className="sd-card__label">Items Sold Today</span>
+            <div className="si-ledger-card">
+              <span className="si-ledger-card__label">Items Sold Today</span>
+              <div className="si-ledger-card__content">
+                <span className="si-ledger-card__num" style={{ color: '#10b981' }}>{itemsSoldToday}</span>
               </div>
             </div>
 
-            <div className="sd-card sd-card--orange">
-              <div className="sd-card__icon">⚠️</div>
-              <div className="sd-card__body">
-                <span className="sd-card__num">{lowStockProducts.length + outOfStockProducts.length}</span>
-                <span className="sd-card__label">Low Stock Items</span>
+            <div className="si-ledger-card">
+              <span className="si-ledger-card__label">Alerts & Low Stock</span>
+              <div className="si-ledger-card__content">
+                <span className="si-ledger-card__num" style={{ color: (lowStockProducts.length + outOfStockProducts.length) > 0 ? '#ef4444' : '#0f172a' }}>
+                  {lowStockProducts.length + outOfStockProducts.length}
+                </span>
               </div>
             </div>
           </div>
 
-          {/* ---- CHART + LOW STOCK ---- */}
-          <div className="sd-row">
-            {/* Bar Chart */}
-            <div className="sd-panel sd-chart-panel">
-              <div className="sd-panel__header">
-                <h3>Items Sold</h3>
+          {/* 3. Data Panels */}
+          <div className="sd-row--full">
+            {/* Items Sold Chart */}
+            <div className="si-ledger-table-wrap sd-chart-panel" style={{ padding: '24px' }}>
+              <div className="sd-panel__header" style={{ marginBottom: '20px' }}>
+                <h3 style={{ fontSize: '15px', fontWeight: 800 }}>Analytics: Items Sold</h3>
                 <select
-                  className="sd-filter-select"
+                  className="si-ledger-select"
                   value={chartFilter}
                   onChange={(e) => setChartFilter(e.target.value)}
                 >
@@ -658,132 +634,66 @@ const StaffDashboard = () => {
                 <Bar data={barChartData} options={chartOptions} />
               </div>
             </div>
-
-            {/* Low Stock */}
-            <div className="sd-panel sd-lowstock-panel">
-              <div className="sd-panel__header">
-                <h3>⚠️ Low Stock Alert</h3>
-              </div>
-              <div className="sd-lowstock-list">
-                {[...lowStockProducts, ...outOfStockProducts].length === 0 ? (
-                  <div className="sd-empty">
-                    <span>🎉</span>
-                    <p>All items well stocked!</p>
-                  </div>
-                ) : (
-                  [...lowStockProducts, ...outOfStockProducts]
-                    .slice(0, 8)
-                    .map((p) => (
-                      <div key={p._id} className="sd-lowstock-item">
-                        <div className="sd-lowstock-item__info">
-                          {p.image ? (
-                            <img
-                              src={`${API_BASE}/${p.image}`}
-                              alt={p.name}
-                              className="sd-lowstock-item__img"
-                            />
-                          ) : (
-                            <div className="sd-lowstock-item__img-placeholder">📷</div>
-                          )}
-                          <span className="sd-lowstock-item__name">{p.name}</span>
-                        </div>
-                        <span
-                          className={`sd-lowstock-item__qty ${
-                            p.quantity === 0 ? "out" : "low"
-                          }`}
-                        >
-                          {p.quantity === 0 ? "Out of stock" : `${p.quantity} left`}
-                        </span>
-                      </div>
-                    ))
-                )}
-              </div>
-            </div>
           </div>
 
-          {/* ---- RECENT ORDERS + QUICK ACTIONS ---- */}
-          <div className="sd-row">
-            {/* Recent Orders */}
-            <div className="sd-panel sd-orders-panel">
-              <div className="sd-panel__header">
-                <h3>🧾 Recent Orders</h3>
+          {/* 4. The Recent Ledger Table */}
+          <div className="sd-row--full" style={{ marginBottom: '40px' }}>
+            {/* Recent Orders Ledger */}
+            <div className="si-ledger-table-wrap sd-orders-panel">
+              <div className="sd-panel__header" style={{ padding: '20px', borderBottom: '1px solid #f1f5f9' }}>
+                <h3 style={{ fontSize: '15px', fontWeight: 800 }}>Recent Orders Ledger</h3>
                 <button
-                  className="sd-link-btn"
+                  className="si-btn-primary si-btn-primary--light"
                   onClick={() => navigate("/order-management")}
+                  style={{ padding: '6px 12px', fontSize: '12px' }}
                 >
-                  View All →
+                  View All History →
                 </button>
               </div>
               {recentOrders.length === 0 ? (
-                <div className="sd-empty">
+                <div className="sd-empty" style={{ padding: '40px' }}>
                   <span>📋</span>
-                  <p>No orders yet.</p>
+                  <p>No transactions recorded yet.</p>
                 </div>
               ) : (
-                <table className="sd-orders-table">
+                <table className="si-ledger-table">
                   <thead>
                     <tr>
                       <th>Order ID</th>
-                      <th>Items</th>
-                      <th>Total</th>
-                      <th>Date</th>
+                      <th>Quantity</th>
+                      <th>Total Amount</th>
+                      <th>Transaction Date</th>
                       <th>Status</th>
                     </tr>
                   </thead>
                   <tbody>
                     {recentOrders.map((o) => (
                       <tr key={o._id}>
-                        <td className="sd-order-id">
-                          #{o._id.slice(-8).toUpperCase()}
+                        <td className="si-ledger-name">
+                          #KH-{o._id.slice(-4).toUpperCase()}
                         </td>
-                        <td>{(o.items || []).length} item(s)</td>
-                        <td>NPR {o.totalAmount?.toLocaleString()}</td>
-                        <td>
+                        <td style={{ fontWeight: 600 }}>{(o.items || []).length} items</td>
+                        <td style={{ fontWeight: 700, color: '#0f172a' }}>Rs. {o.totalAmount?.toLocaleString()}</td>
+                        <td style={{ color: '#64748b' }}>
                           {new Date(o.createdAt).toLocaleDateString("en-US", {
                             month: "short",
                             day: "numeric",
+                            year: "numeric"
                           })}
                         </td>
                         <td>
-                          <span className={`sd-badge ${statusClass(o.status)}`}>
-                            {o.status}
-                          </span>
+                          <div className="si-status-wrap">
+                            <span className={`si-dot ${o.status === 'Pending' ? 'si-dot--orange' : o.status === 'Cancelled' ? 'si-dot--red' : 'si-dot--green'}`}></span>
+                            <span className="si-status-text" style={{ fontWeight: 600 }}>
+                              {o.status}
+                            </span>
+                          </div>
                         </td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
               )}
-            </div>
-
-            {/* Quick Actions */}
-            <div className="sd-panel sd-quickactions-panel">
-              <div className="sd-panel__header">
-                <h3>Quick Actions</h3>
-              </div>
-              <div className="sd-quickactions">
-                <button
-                  className="sd-qa-btn sd-qa-btn--primary"
-                  onClick={() => navigate("/staff-inventory")}
-                >
-                  
-                  <span>Add Product</span>
-                </button>
-                <button
-                  className="sd-qa-btn sd-qa-btn--secondary"
-                  onClick={() => setScannerOpen(true)}
-                >
-                  
-                  <span>Scan Product QR</span>
-                </button>
-                <button
-                  className="sd-qa-btn sd-qa-btn--tertiary"
-                  onClick={() => navigate("/order-management")}
-                >
-                  
-                  <span>View Orders</span>
-                </button>
-              </div>
             </div>
           </div>
         </main>

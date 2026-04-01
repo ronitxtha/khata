@@ -21,8 +21,13 @@ const OwnerSidebar = ({ sidebarOpen, setSidebarOpen, owner, handleLogout }) => {
     <>
       <aside
         className={`sd-sidebar-modern od-sidebar ${sidebarOpen ? "open" : ""}`}
-        onMouseEnter={() => setSidebarOpen(true)}
-        onMouseLeave={() => setSidebarOpen(false)}
+        onMouseEnter={() => {
+          if (window.sidebarTimer) clearTimeout(window.sidebarTimer);
+          setSidebarOpen(true);
+        }}
+        onMouseLeave={() => {
+          window.sidebarTimer = setTimeout(() => setSidebarOpen(false), 300);
+        }}
       >
         <div className="sd-sidebar__brand od-brand">
           <div className="od-logo-container">

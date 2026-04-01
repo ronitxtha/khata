@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
+import { Link } from "react-router-dom";
 import CustomerSidebar from "../components/CustomerSidebar";
 import nepalLocations from "../data/nepalLocations.json";
 import "../styles/customerLayout.css";
@@ -10,10 +11,10 @@ const getAuthHeaders = () => ({ Authorization: `Bearer ${localStorage.getItem("a
 
 // ─── Toast hook ───────────────────────────────────────────────
 const useToast = () => {
-  const [toast, setToast] = useState({ message: "", type: "success", visible: false });
-  const show = (message, type = "success") => {
-    setToast({ message, type, visible: true });
-    setTimeout(() => setToast((t) => ({ ...t, visible: false })), 3500);
+  const [toast, setToast] = useState({ message: "", visible: false });
+  const show = (message) => {
+    setToast({ message, visible: true });
+    setTimeout(() => setToast({ message: "", visible: false }), 3500);
   };
   return { toast, show };
 };
@@ -22,10 +23,10 @@ const formatDate = (d) =>
   d ? new Date(d).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }) : "—";
 
 const STATUS_COLOR = {
-  Pending: "cp-badge-pending",
-  Processing: "cp-badge-processing",
-  Delivered: "cp-badge-delivered",
-  Cancelled: "cp-badge-cancelled",
+  Pending: "status-pending",
+  Processing: "status-processing",
+  Delivered: "status-delivered",
+  Cancelled: "status-cancelled",
 };
 
 // ─── Address Modal ────────────────────────────────────────────
@@ -68,44 +69,48 @@ const AddressModal = ({ initial, onSave, onClose }) => {
           <button className="cp-modal-close" onClick={onClose}>✕</button>
         </div>
         <form className="cp-modal-body" onSubmit={(e) => { e.preventDefault(); if (!form.province || !form.district || !form.municipality || !form.ward) return; onSave(form); }}>
-          <div className="cp-form-group">
-            <label>Province *</label>
-            <select className="cp-select" value={form.province} onChange={(e) => set("province", e.target.value)} required>
-              <option value="">Select Province</option>
-              {provinces.map((p) => <option key={p} value={p}>{p}</option>)}
-            </select>
+          <div className="modern-form-grid">
+            <div className="cp-form-group">
+              <label>Province *</label>
+              <select className="modern-select" value={form.province} onChange={(e) => set("province", e.target.value)} required>
+                <option value="">Select Province</option>
+                {provinces.map((p) => <option key={p} value={p}>{p}</option>)}
+              </select>
+            </div>
+            <div className="cp-form-group">
+              <label>District *</label>
+              <select className="modern-select" value={form.district} onChange={(e) => set("district", e.target.value)} required disabled={!form.province}>
+                <option value="">Select District</option>
+                {districts.map((d) => <option key={d} value={d}>{d}</option>)}
+              </select>
+            </div>
           </div>
-          <div className="cp-form-group">
-            <label>District *</label>
-            <select className="cp-select" value={form.district} onChange={(e) => set("district", e.target.value)} required disabled={!form.province}>
-              <option value="">Select District</option>
-              {districts.map((d) => <option key={d} value={d}>{d}</option>)}
-            </select>
-          </div>
-          <div className="cp-form-group">
-            <label>Municipality *</label>
-            <select className="cp-select" value={form.municipality} onChange={(e) => set("municipality", e.target.value)} required disabled={!form.district}>
-              <option value="">Select Municipality</option>
-              {municipalities.map((m) => <option key={m} value={m}>{m}</option>)}
-            </select>
-          </div>
-          <div className="cp-form-group">
-            <label>Ward *</label>
-            <select className="cp-select" value={form.ward} onChange={(e) => set("ward", e.target.value)} required disabled={!form.municipality}>
-              <option value="">Select Ward</option>
-              {wards.map((w) => <option key={w} value={w}>{w}</option>)}
-            </select>
+          <div className="modern-form-grid">
+            <div className="cp-form-group">
+              <label>Municipality *</label>
+              <select className="modern-select" value={form.municipality} onChange={(e) => set("municipality", e.target.value)} required disabled={!form.district}>
+                <option value="">Select Municipality</option>
+                {municipalities.map((m) => <option key={m} value={m}>{m}</option>)}
+              </select>
+            </div>
+            <div className="cp-form-group">
+              <label>Ward *</label>
+              <select className="modern-select" value={form.ward} onChange={(e) => set("ward", e.target.value)} required disabled={!form.municipality}>
+                <option value="">Select Ward</option>
+                {wards.map((w) => <option key={w} value={w}>{w}</option>)}
+              </select>
+            </div>
           </div>
           <div className="cp-form-group">
             <label>Street / House No.</label>
-            <div className="cp-input-row">
-              <input className="cp-input" type="text" placeholder="e.g. Thamel, Near Bank" value={form.streetAddress} onChange={(e) => setForm((f) => ({ ...f, streetAddress: e.target.value }))} />
-              <button type="button" className="cp-geo-btn" onClick={handleGeo} title="Use Current Location">📍</button>
+            <div className="cp-input-row" style={{ display: 'flex', gap: '8px' }}>
+              <input className="modern-input" style={{ flex: 1 }} type="text" placeholder="e.g. Thamel, Near Bank" value={form.streetAddress} onChange={(e) => setForm((f) => ({ ...f, streetAddress: e.target.value }))} />
+              <button type="button" className="geo-modern-btn" style={{ width: 'auto', padding: '0 16px' }} onClick={handleGeo} title="Use Current Location">📍</button>
             </div>
           </div>
           <div className="cp-modal-actions">
-            <button type="button" className="cp-btn cp-btn-secondary" onClick={onClose}>Cancel</button>
-            <button type="submit" className="cp-btn cp-btn-primary" disabled={!form.province || !form.district || !form.municipality || !form.ward}>
+            <button type="button" className="show-all-btn" onClick={onClose}>Cancel</button>
+            <button type="submit" className="buy-btn" style={{ padding: '10px 24px' }} disabled={!form.province || !form.district || !form.municipality || !form.ward}>
               {initial?._id ? "Save Changes" : "Add Address"}
             </button>
           </div>
@@ -174,7 +179,7 @@ const CustomerProfile = () => {
         setAddresses(addressRes.data.addresses || []);
         setOrders(orderRes.data.orders || []);
       } catch (err) {
-        showToast("Failed to load profile data", "error");
+        showToast("Failed to load profile data");
       } finally {
         setLoading(false);
       }
@@ -183,15 +188,15 @@ const CustomerProfile = () => {
 
   // ── Profile handlers ─────────────────────────────────────────
   const handleSaveProfile = async () => {
-    if (!editName.trim()) { showToast("Name cannot be empty", "error"); return; }
+    if (!editName.trim()) { showToast("Name cannot be empty"); return; }
     try {
       setSavingProfile(true);
       const res = await axios.put(`${API_BASE}/api/customer/profile`, { name: editName.trim(), phone: editPhone.trim() }, { headers: getAuthHeaders() });
       setCustomer((c) => ({ ...c, name: res.data.customer.name, phone: res.data.customer.phone }));
       setIsEditing(false);
-      showToast("Profile updated successfully!", "success");
+      showToast("Profile updated successfully!");
     } catch (err) {
-      showToast(err.response?.data?.message || "Update failed", "error");
+      showToast(err.response?.data?.message || "Update failed");
     } finally { setSavingProfile(false); }
   };
 
@@ -205,7 +210,7 @@ const CustomerProfile = () => {
   };
 
   const handleImageUpload = async () => {
-    if (!imageFile) { showToast("Please select an image", "error"); return; }
+    if (!imageFile) { showToast("Please select an image"); return; }
     try {
       setUploadingImage(true);
       const fd = new FormData();
@@ -217,9 +222,9 @@ const CustomerProfile = () => {
       setImagePreview(null);
       setImageFile(null);
       if (fileInputRef.current) fileInputRef.current.value = "";
-      showToast("Profile image updated!", "success");
+      showToast("Profile image updated!");
     } catch (err) {
-      showToast(err.response?.data?.message || "Image upload failed", "error");
+      showToast(err.response?.data?.message || "Image upload failed");
     } finally { setUploadingImage(false); }
   };
 
@@ -229,14 +234,14 @@ const CustomerProfile = () => {
       if (addressModal?._id) {
         const res = await axios.put(`${API_BASE}/api/customer/address/${addressModal._id}`, form, { headers: getAuthHeaders() });
         setAddresses((prev) => prev.map((a) => (a._id === addressModal._id ? res.data.address : a)));
-        showToast("Address updated!", "success");
+        showToast("Address updated!");
       } else {
         const res = await axios.post(`${API_BASE}/api/customer/address`, form, { headers: getAuthHeaders() });
         setAddresses((prev) => [...prev, res.data.address]);
-        showToast("Address added!", "success");
+        showToast("Address added!");
       }
       setAddressModal(null);
-    } catch (err) { showToast(err.response?.data?.message || "Address save failed", "error"); }
+    } catch (err) { showToast(err.response?.data?.message || "Address save failed"); }
   };
 
   const handleDeleteAddress = async (id) => {
@@ -244,16 +249,16 @@ const CustomerProfile = () => {
     try {
       await axios.delete(`${API_BASE}/api/customer/address/${id}`, { headers: getAuthHeaders() });
       setAddresses((prev) => prev.filter((a) => a._id !== id));
-      showToast("Address deleted", "success");
-    } catch (err) { showToast("Delete failed", "error"); }
+      showToast("Address deleted");
+    } catch (err) { showToast("Delete failed"); }
   };
 
   const handleSetDefault = async (id) => {
     try {
       await axios.put(`${API_BASE}/api/customer/address/set-default/${id}`, {}, { headers: getAuthHeaders() });
       setAddresses((prev) => prev.map((a) => ({ ...a, isDefault: a._id === id })));
-      showToast("Default address updated!", "success");
-    } catch (err) { showToast("Failed to set default", "error"); }
+      showToast("Default address updated!");
+    } catch (err) { showToast("Failed to set default"); }
   };
 
   // ── Order handlers ───────────────────────────────────────────
@@ -263,8 +268,8 @@ const CustomerProfile = () => {
       setCancellingId(orderId);
       const res = await axios.put(`${API_BASE}/api/customer/cancel-order/${orderId}`, { cancelReason: "Cancelled by customer" }, { headers: getAuthHeaders() });
       setOrders((prev) => prev.map((o) => (o._id === orderId ? { ...o, status: "Cancelled", cancelReason: res.data.order.cancelReason } : o)));
-      showToast("Order cancelled", "success");
-    } catch (err) { showToast(err.response?.data?.message || "Cancel failed", "error"); }
+      showToast("Order cancelled");
+    } catch (err) { showToast(err.response?.data?.message || "Cancel failed"); }
     finally { setCancellingId(null); }
   };
 
@@ -272,33 +277,27 @@ const CustomerProfile = () => {
   const handleChangePassword = async (e) => {
     e.preventDefault();
     const { currentPassword, newPassword, confirmPassword } = pwForm;
-    if (!currentPassword || !newPassword || !confirmPassword) { showToast("All fields are required", "error"); return; }
-    if (newPassword.length < 6) { showToast("New password must be at least 6 characters", "error"); return; }
-    if (newPassword !== confirmPassword) { showToast("Passwords do not match", "error"); return; }
+    if (!currentPassword || !newPassword || !confirmPassword) { showToast("All fields are required"); return; }
+    if (newPassword.length < 6) { showToast("New password must be at least 6 characters"); return; }
+    if (newPassword !== confirmPassword) { showToast("Passwords do not match"); return; }
     try {
       setSavingPw(true);
       await axios.put(`${API_BASE}/api/customer/change-password`, { currentPassword, newPassword }, { headers: getAuthHeaders() });
       setPwForm({ currentPassword: "", newPassword: "", confirmPassword: "" });
-      showToast("Password changed successfully!", "success");
-    } catch (err) { showToast(err.response?.data?.message || "Password change failed", "error"); }
+      showToast("Password changed successfully!");
+    } catch (err) { showToast(err.response?.data?.message || "Password change failed"); }
     finally { setSavingPw(false); }
   };
 
-  // ── Loading state ────────────────────────────────────────────
   if (loading) {
     return (
-      <div className="cd-layout">
+      <div className="sd-layout od-modern-layout">
         <CustomerSidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} />
-        <div className={`cd-main ${sidebarOpen ? "cd-main--shifted" : ""}`}>
-          <main className="cd-content">
-            <div className="cd-panel">
-              <div className="cp-loading-screen">
-                <div className="cp-spinner-wrap">
-                  <div className="cp-spinner" />
-                  <div className="cp-spinner-inner" />
-                </div>
-                <p className="cp-loading-text">Loading your profile...</p>
-              </div>
+        <div className={`sd-main od-main-content ${sidebarOpen ? "sd-main--shifted" : ""}`}>
+          <main className="sd-content od-content">
+            <div className="cp-loading-container">
+              <div className="spinner" />
+              <p>Syncing Profile...</p>
             </div>
           </main>
         </div>
@@ -310,13 +309,13 @@ const CustomerProfile = () => {
   const displayAvatar = imagePreview || avatarSrc;
 
   return (
-    <div className="cd-layout">
+    <div className="sd-layout od-modern-layout">
       <CustomerSidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} />
 
       {/* Toast */}
       {toast.visible && (
-        <div className={`cp-toast cp-toast-${toast.type}`}>
-          {toast.type === "success" ? "✓" : "✕"} {toast.message}
+        <div className="toast">
+          {toast.message}
         </div>
       )}
 
@@ -325,317 +324,252 @@ const CustomerProfile = () => {
         <AddressModal initial={addressModal} onSave={handleSaveAddress} onClose={() => setAddressModal(null)} />
       )}
 
-      <div className={`cd-main ${sidebarOpen ? "cd-main--shifted" : ""}`}>
-        {/* NAVBAR */}
-        <header className="cd-navbar">
-          <div className="cd-navbar__left">
-            <h2>My Profile</h2>
-            <p>Manage your account settings and preferences</p>
+      <div className={`sd-main od-main-content ${sidebarOpen ? "sd-main--shifted" : ""}`}>
+        {/* TOP NAVBAR */}
+        <header className="sd-navbar">
+          <div className="sd-navbar__left">
+            <button 
+              className="sd-navbar__hamburger" 
+              onClick={() => setSidebarOpen((v) => !v)}
+              onMouseEnter={() => {
+                if (window.sidebarTimer) clearTimeout(window.sidebarTimer);
+                setSidebarOpen(true);
+              }}
+              onMouseLeave={() => {
+                window.sidebarTimer = setTimeout(() => setSidebarOpen(false), 300);
+              }}
+            >
+              ☰
+            </button>
+            <div className="sd-navbar__title">
+              <h1>My Profile</h1>
+              <span className="sd-navbar__subtitle">Manage your account settings and preferences</span>
+            </div>
           </div>
           
-          <div className="cd-navbar__right">
-            <button className="cd-icon-btn">🔔</button>
-            <div className="cd-profile-icon">
+          <div className="sd-navbar__right">
+            <button className="od-nav-icon-btn" style={{ marginRight: '16px' }}>🔔</button>
+            <div className="sd-avatar">
               {displayAvatar ? (
                 <img 
                   src={displayAvatar} 
                   alt="Profile" 
-                  style={{ width: "40px", height: "40px", borderRadius: "50%", objectFit: "cover" }} 
+                  style={{ width: "32px", height: "32px", borderRadius: "50%", objectFit: "cover" }} 
                 />
               ) : (
                 <span>{customer?.name?.[0]?.toUpperCase() || "C"}</span>
               )}
             </div>
+            <div className="sd-navbar__staff-info">
+              <span className="sd-navbar__name">{customer?.name || "Customer"}</span>
+              <span className="sd-navbar__role">Verified Account</span>
+            </div>
           </div>
         </header>
 
-        <main className="cd-content">
-          <div className="cd-panel">
-        <div className="cp-hero">
-          <div className="cp-hero-inner">
-            {/* Avatar */}
-            <div className="cp-hero-avatar-wrap">
-              {displayAvatar ? (
-                <img src={displayAvatar} alt="Avatar" className="cp-hero-avatar" />
-              ) : (
-                <div className="cp-hero-avatar-placeholder">
-                  {customer?.name?.[0]?.toUpperCase() || "C"}
-                </div>
-              )}
-              {imagePreview && <span className="cp-preview-badge">Preview</span>}
-              <label className="cp-hero-camera-btn" htmlFor="cp-file-input" title="Change photo">📷</label>
-              <input id="cp-file-input" type="file" accept="image/*" className="cp-file-hidden" ref={fileInputRef} onChange={handleImageSelect} />
-            </div>
-
-            {/* Info */}
-            <div className="cp-hero-info">
-              <h1 className="cp-hero-name">{customer?.name || "Customer"}</h1>
-              <p className="cp-hero-email">{customer?.email}</p>
-              <div className="cp-hero-badges">
-                <span className="cp-hero-badge">👤 Customer</span>
-                <span className="cp-hero-badge">📅 Joined {formatDate(customer?.createdAt)}</span>
-                {addresses.find((a) => a.isDefault) && (
-                  <span className="cp-hero-badge">📍 {addresses.find((a) => a.isDefault).district}</span>
-                )}
-              </div>
-              {/* Image upload actions */}
-              {imageFile && (
-                <div className="cp-hero-upload-row">
-                  <button className="cp-btn cp-btn-success" onClick={handleImageUpload} disabled={uploadingImage}>
-                    {uploadingImage ? "Uploading..." : "⬆️ Upload Photo"}
-                  </button>
-                  <button className="cp-btn cp-btn-ghost" onClick={() => { setImageFile(null); setImagePreview(null); if (fileInputRef.current) fileInputRef.current.value = ""; }}>
-                    ✕ Remove
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* ── BODY ──────────────────────────────────────────── */}
-        <div className="cp-body">
-          {/* Tabs */}
-          <div className="cp-tabs">
-            {TABS.map((t) => (
-              <button
-                key={t.id}
-                className={`cp-tab ${activeTab === t.id ? "cp-tab-active" : ""}`}
-                onClick={() => setActiveTab(t.id)}
-              >
-                {t.icon} {t.label}
-                {t.id === "addresses" && addresses.length > 0 && (
-                  <span style={{ background: "rgba(255,255,255,0.25)", borderRadius: "99px", padding: "1px 7px", fontSize: "11px" }}>
-                    {addresses.length}
-                  </span>
-                )}
-                {t.id === "orders" && orders.length > 0 && (
-                  <span style={{ background: "rgba(255,255,255,0.25)", borderRadius: "99px", padding: "1px 7px", fontSize: "11px" }}>
-                    {orders.length}
-                  </span>
-                )}
-              </button>
-            ))}
-          </div>
-
-          {/* ══ TAB: PROFILE ══════════════════════════════════ */}
-          {activeTab === "profile" && (
-            <div className="cp-card">
-              <h2 className="cp-card-title">Account Information</h2>
-              <div className="cp-info-grid">
-                <div className="cp-info-cell">
-                  <label>Full Name</label>
-                  {isEditing ? (
-                    <input className="cp-input" type="text" value={editName} onChange={(e) => setEditName(e.target.value)} placeholder="Enter name" />
+        <main className="sd-content od-content">
+          <div className="cp-modern-hero">
+            <div className="cp-hero-card">
+              <div className="cp-hero-avatar-section">
+                <div className="cp-avatar-box">
+                  {displayAvatar ? (
+                    <img src={displayAvatar} alt="Avatar" />
                   ) : (
-                    <span>{customer?.name || "—"}</span>
+                    <div className="cp-avatar-placeholder">
+                      {customer?.name?.[0]?.toUpperCase() || "C"}
+                    </div>
                   )}
+                  <label className="cp-camera-overlay" htmlFor="cp-file-input">
+                    📷
+                  </label>
+                  <input id="cp-file-input" type="file" accept="image/*" style={{ display: 'none' }} ref={fileInputRef} onChange={handleImageSelect} />
                 </div>
-                <div className="cp-info-cell">
-                  <label>Email Address</label>
-                  <span className="cp-readonly">{customer?.email || "—"}</span>
-                </div>
-                <div className="cp-info-cell">
-                  <label>Phone Number</label>
-                  {isEditing ? (
-                    <input className="cp-input" type="tel" value={editPhone} onChange={(e) => setEditPhone(e.target.value)} placeholder="Enter phone" />
-                  ) : (
-                    <span>{customer?.phone || <em className="cp-empty">Not set</em>}</span>
-                  )}
-                </div>
-                <div className="cp-info-cell">
-                  <label>Account Type</label>
-                  <span className="cp-role-badge">Customer</span>
-                </div>
-                <div className="cp-info-cell">
-                  <label>Member Since</label>
-                  <span>{formatDate(customer?.createdAt)}</span>
-                </div>
-                <div className="cp-info-cell">
-                  <label>Total Orders</label>
-                  <span style={{ color: "#2563eb" }}>{orders.length}</span>
-                </div>
-              </div>
-              <div className="cp-btn-group">
-                {!isEditing ? (
-                  <button className="cp-btn cp-btn-primary" onClick={() => { setEditName(customer?.name || ""); setEditPhone(customer?.phone || ""); setIsEditing(true); }}>
-                     Edit Profile
-                  </button>
-                ) : (
-                  <>
-                    <button className="cp-btn cp-btn-success" onClick={handleSaveProfile} disabled={savingProfile}>
-                      {savingProfile ? "Saving..." : " Save Changes"}
+                {imageFile && (
+                  <div className="cp-upload-actions">
+                    <button className="buy-btn mini" onClick={handleImageUpload} disabled={uploadingImage}>
+                      {uploadingImage ? "..." : "UPLOAD"}
                     </button>
-                    <button className="cp-btn cp-btn-secondary" onClick={() => setIsEditing(false)} disabled={savingProfile}>
-                      ✕ Cancel
-                    </button>
-                  </>
+                    <button className="show-all-btn mini" onClick={() => { setImageFile(null); setImagePreview(null); }}>✕</button>
+                  </div>
                 )}
               </div>
-            </div>
-          )}
 
-          {/* ══ TAB: ADDRESSES ════════════════════════════════ */}
-          {activeTab === "addresses" && (
-            <div className="cp-card">
-              <div className="cp-card-header-row">
-                <h2 className="cp-card-title">Delivery Addresses</h2>
-                <button className="cp-btn cp-btn-primary" onClick={() => setAddressModal({})}>
-                  + Add
+              <div className="cp-hero-text-section">
+                <h1 className="cp-profile-name">{customer?.name || "Customer"}</h1>
+                <p className="cp-profile-email">{customer?.email}</p>
+                <div className="cp-hero-pills">
+                  <span className="cp-pill">Joined {formatDate(customer?.createdAt)}</span>
+                  <span className="cp-pill black">{orders.length} Orders</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="cp-modern-tabs">
+              {TABS.map((t) => (
+                <button
+                  key={t.id}
+                  className={`cp-modern-tab ${activeTab === t.id ? "active" : ""}`}
+                  onClick={() => setActiveTab(t.id)}
+                >
+                  {t.label}
+                  {t.id === "addresses" && addresses.length > 0 && <span className="tab-count">{addresses.length}</span>}
                 </button>
-              </div>
-              {addresses.length === 0 ? (
-                <div className="cp-empty-state">
-                  <span></span>
-                  <p>No addresses saved yet</p>
-                  <p className="cp-empty-hint">Add an address for faster checkout.</p>
-                </div>
-              ) : (
-                <div className="cp-address-grid">
-                  {addresses.map((addr) => (
-                    <div key={addr._id} className={`cp-address-card ${addr.isDefault ? "cp-address-default" : ""}`}>
-                      {addr.isDefault && <span className="cp-default-badge">⭐ Default</span>}
-                      <div className="cp-address-text">
-                        <p><strong>{addr.province}</strong> &bull; {addr.district}</p>
-                        <p>{addr.municipality}, Ward {addr.ward}</p>
-                        {addr.streetAddress && <p className="cp-street">📌 {addr.streetAddress}</p>}
-                      </div>
-                      <div className="cp-address-actions">
-                        {!addr.isDefault && (
-                          <button className="cp-addr-btn cp-addr-default" onClick={() => handleSetDefault(addr._id)}>Set Default</button>
-                        )}
-                        <button className="cp-addr-btn cp-addr-edit" onClick={() => setAddressModal(addr)}>Edit</button>
-                        <button className="cp-addr-btn cp-addr-delete" onClick={() => handleDeleteAddress(addr._id)}>Delete</button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
+              ))}
             </div>
-          )}
+          </div>
 
-          {/* ══ TAB: ORDERS ═══════════════════════════════════ */}
-          {activeTab === "orders" && (
-            <div className="cp-card">
-              <h2 className="cp-card-title">Order History</h2>
-              {orders.length === 0 ? (
-                <div className="cp-empty-state">
-                  <span></span>
-                  <p>No orders yet</p>
-                  <p className="cp-empty-hint">Your orders will appear here after purchase.</p>
-                </div>
-              ) : (
-                <div className="cp-orders-list">
-                  {orders.map((order) => (
-                    <div key={order._id} className="cp-order-card">
-                      <div className="cp-order-top">
-                        <div className="cp-order-id">
-                          <span className="cp-order-label">Order ID</span>
-                          <span className="cp-order-value">#{order._id.slice(-8).toUpperCase()}</span>
-                        </div>
-                        <span className={`cp-status-badge ${STATUS_COLOR[order.status] || ""}`}>
-                          {order.status}
-                        </span>
-                      </div>
-                      <div className="cp-order-meta">
-                        <div className="cp-order-meta-item">
-                          <span className="cp-order-label">Date</span>
-                          <span className="cp-order-value">{formatDate(order.createdAt)}</span>
-                        </div>
-                        <div className="cp-order-meta-item">
-                          <span className="cp-order-label">Total</span>
-                          <span className="cp-order-value cp-order-total">NPR {order.totalAmount?.toLocaleString()}</span>
-                        </div>
-                        <div className="cp-order-meta-item">
-                          <span className="cp-order-label">Payment</span>
-                          <span className="cp-order-value">{order.paymentMethod || "Cash on Delivery"}</span>
-                        </div>
-                        <div className="cp-order-meta-item">
-                          <span className="cp-order-label">Items</span>
-                          <span className="cp-order-value">{order.items?.length || 0}</span>
-                        </div>
-                      </div>
-                      <div className="cp-order-items">
-                        {order.items?.slice(0, 3).map((item, i) => (
-                          <div key={i} className="cp-order-item">
-                            {item.image && (
-                              <img src={`${API_BASE}/${item.image}`} alt={item.name} className="cp-item-img" onError={(e) => { e.target.style.display = "none"; }} />
-                            )}
-                            <span>{item.name} × {item.quantity}</span>
-                          </div>
-                        ))}
-                        {order.items?.length > 3 && (
-                          <span className="cp-order-more">+{order.items.length - 3} more</span>
-                        )}
-                      </div>
-                      <div className="cp-order-actions">
-                        {order.status === "Pending" && (
-                          <button className="cp-btn cp-btn-danger" onClick={() => handleCancelOrder(order._id)} disabled={cancellingId === order._id}>
-                            {cancellingId === order._id ? "Cancelling..." : "✕ Cancel Order"}
-                          </button>
-                        )}
-                        {order.status === "Processing" && (
-                          <button className="cp-btn cp-btn-info"> Track Order</button>
-                        )}
-                        {order.status === "Delivered" && (
-                          <button className="cp-btn cp-btn-success">Review</button>
-                        )}
-                        {order.status === "Cancelled" && order.cancelReason && (
-                          <p className="cp-cancel-reason">Reason: {order.cancelReason}</p>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* ══ TAB: PASSWORD ═════════════════════════════════ */}
-          {activeTab === "password" && (
-            <div className="cp-card">
-              <h2 className="cp-card-title">Change Password</h2>
-              <form className="cp-pw-form" onSubmit={handleChangePassword} noValidate>
-                {[
-                  { key: "currentPassword", label: "Current Password", placeholder: "Enter current password" },
-                  { key: "newPassword",     label: "New Password",     placeholder: "Enter new password",     hint: "(min 6 characters)" },
-                  { key: "confirmPassword", label: "Confirm Password", placeholder: "Re-enter new password" },
-                ].map(({ key, label, placeholder, hint }) => (
-                  <div className="cp-form-group" key={key}>
-                    <label>{label}{hint && <span className="cp-hint">{hint}</span>}</label>
-                    <div className="cp-input-eye">
-                      <input
-                        className="cp-input"
-                        type={showPw[key.replace("Password", "").replace("current", "current").replace("new", "new").replace("confirm", "confirm")] || (showPw[key === "currentPassword" ? "current" : key === "newPassword" ? "new" : "confirm"] ? "text" : "password")}
-                        placeholder={placeholder}
-                        value={pwForm[key]}
-                        onChange={(e) => setPwForm((p) => ({ ...p, [key]: e.target.value }))}
-                      />
-                      <button type="button" className="cp-eye-btn" tabIndex={-1}
-                        onClick={() => {
-                          const k = key === "currentPassword" ? "current" : key === "newPassword" ? "new" : "confirm";
-                          setShowPw((s) => ({ ...s, [k]: !s[k] }));
-                        }}>
-                        {showPw[key === "currentPassword" ? "current" : key === "newPassword" ? "new" : "confirm"] ? "🔒" : "🔓"}
+          <div className="cp-tab-content-area">
+            {activeTab === "profile" && (
+              <div className="si-ledger-table-wrap" style={{ padding: '40px' }}>
+                <div className="cp-section-header">
+                  <h3>Personal Information</h3>
+                  {!isEditing ? (
+                    <button className="show-all-btn" onClick={() => setIsEditing(true)}>Edit Details</button>
+                  ) : (
+                    <div className="cp-edit-actions">
+                      <button className="buy-btn" onClick={handleSaveProfile} disabled={savingProfile}>
+                         {savingProfile ? "SAVING..." : "SAVE CHANGES"}
                       </button>
+                      <button className="show-all-btn" onClick={() => setIsEditing(false)}>CANCEL</button>
                     </div>
-                    {key === "newPassword" && pwForm.newPassword && pwForm.newPassword.length < 6 && (
-                      <p className="cp-field-error">⚠ Must be at least 6 characters</p>
-                    )}
-                    {key === "confirmPassword" && pwForm.confirmPassword && pwForm.newPassword !== pwForm.confirmPassword && (
-                      <p className="cp-field-error">⚠ Passwords do not match</p>
+                  )}
+                </div>
+
+                <div className="cp-info-grid">
+                  <div className="cp-info-field">
+                    <label>Full Name</label>
+                    {isEditing ? (
+                      <input className="modern-input" type="text" value={editName} onChange={(e) => setEditName(e.target.value)} />
+                    ) : (
+                      <div className="field-value">{customer?.name || "—"}</div>
                     )}
                   </div>
-                ))}
-                <div className="cp-btn-group">
-                  <button type="submit" className="cp-btn cp-btn-primary" disabled={savingPw}>
-                    {savingPw ? "Updating..." : "Update"}
-                  </button>
+                  <div className="cp-info-field">
+                    <label>Email Address</label>
+                    <div className="field-value readonly">{customer?.email || "—"}</div>
+                  </div>
+                  <div className="cp-info-field">
+                    <label>Phone Number</label>
+                    {isEditing ? (
+                      <input className="modern-input" type="tel" value={editPhone} onChange={(e) => setEditPhone(e.target.value)} />
+                    ) : (
+                      <div className="field-value">{customer?.phone || "Not provided"}</div>
+                    )}
+                  </div>
+                  <div className="cp-info-field">
+                    <label>Registration Date</label>
+                    <div className="field-value readonly">{formatDate(customer?.createdAt)}</div>
+                  </div>
                 </div>
-              </form>
-            </div>
-          )}
-          </div>
+              </div>
+            )}
+
+            {activeTab === "addresses" && (
+              <div className="si-ledger-table-wrap" style={{ padding: '40px' }}>
+                <div className="cp-section-header">
+                  <h3>Delivery Addresses</h3>
+                  <button className="buy-btn mini" onClick={() => setAddressModal({})}>+ ADD NEW</button>
+                </div>
+
+                {addresses.length === 0 ? (
+                  <div className="cp-empty-placeholder">
+                    <p>No addresses found. Add one to speed up checkout.</p>
+                  </div>
+                ) : (
+                  <div className="cp-address-grid">
+                    {addresses.map((addr) => (
+                      <div key={addr._id} className={`cp-address-card ${addr.isDefault ? "is-default" : ""}`}>
+                        {addr.isDefault && <span className="default-tag">PRIMARY</span>}
+                        <div className="addr-main-text">
+                          <h4>{addr.streetAddress || "Unnamed Location"}</h4>
+                          <p>{addr.municipality}, {addr.district}</p>
+                          <p>{addr.province}, Ward {addr.ward}</p>
+                        </div>
+                        <div className="addr-card-actions">
+                          {!addr.isDefault && (
+                            <button className="card-action-btn" onClick={() => handleSetDefault(addr._id)}>SET PRIMARY</button>
+                          )}
+                          <button className="card-action-btn" onClick={() => setAddressModal(addr)}>EDIT</button>
+                          <button className="card-action-btn delete" onClick={() => handleDeleteAddress(addr._id)}>DELETE</button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {activeTab === "orders" && (
+              <div className="si-ledger-table-wrap" style={{ padding: '40px' }}>
+                <div className="cp-section-header">
+                  <h3>Recent Purchases</h3>
+                  <Link to="/order-history" className="show-all-btn">Go to Orders</Link>
+                </div>
+
+                {orders.length === 0 ? (
+                  <div className="cp-empty-placeholder">
+                    <p>Your purchase history is empty.</p>
+                  </div>
+                ) : (
+                  <div className="cp-mini-orders-list">
+                    {orders.slice(0, 5).map((order) => (
+                      <div key={order._id} className="cp-mini-order-row">
+                        <div className="order-id-group">
+                          <span className="order-ref">#{order._id.slice(-8).toUpperCase()}</span>
+                          <span className="order-date">{formatDate(order.createdAt)}</span>
+                        </div>
+                        <div className="order-price-group">
+                          <span className="order-price">NPR {order.totalAmount?.toLocaleString()}</span>
+                          <span className={`status-badge ${STATUS_COLOR[order.status] || ""}`}>{order.status}</span>
+                        </div>
+                        <Link to="/order-history" className="view-order-link">VIEW DETAILS</Link>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {activeTab === "password" && (
+              <div className="si-ledger-table-wrap" style={{ padding: '40px', maxWidth: '600px' }}>
+                <h3 style={{ marginBottom: '24px' }}>Security Settings</h3>
+                <form className="cp-password-form" onSubmit={handleChangePassword}>
+                  <div className="cp-form-group">
+                    <label>Current Password</label>
+                    <input
+                      className="modern-input"
+                      type={showPw.current ? "text" : "password"}
+                      value={pwForm.currentPassword}
+                      onChange={(e) => setPwForm((p) => ({ ...p, currentPassword: e.target.value }))}
+                      required
+                    />
+                  </div>
+                  <div className="cp-form-group">
+                    <label>New Password</label>
+                    <input
+                      className="modern-input"
+                      type={showPw.new ? "text" : "password"}
+                      value={pwForm.newPassword}
+                      onChange={(e) => setPwForm((p) => ({ ...p, newPassword: e.target.value }))}
+                      required
+                    />
+                  </div>
+                  <div className="cp-form-group">
+                    <label>Confirm New Password</label>
+                    <input
+                      className="modern-input"
+                      type={showPw.confirm ? "text" : "password"}
+                      value={pwForm.confirmPassword}
+                      onChange={(e) => setPwForm((p) => ({ ...p, confirmPassword: e.target.value }))}
+                      required
+                    />
+                  </div>
+                  <button type="submit" className="buy-btn" disabled={savingPw} style={{ marginTop: '12px' }}>
+                    {savingPw ? "UPDATING..." : "UPDATE PASSWORD"}
+                  </button>
+                </form>
+              </div>
+            )}
           </div>
         </main>
       </div>

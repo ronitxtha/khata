@@ -298,8 +298,15 @@
   align-items: center;
   justify-content: center;
 }
-.si-btn--edit   { background: #026bf4; }
-.si-btn--delete { background: #e90a19; }
+.si-btn--edit   { 
+  background: #026bf4;
+  width: 60px;
+}
+
+.si-btn--delete { background: #e90a19;
+  width: 60px;
+
+}
 
 
 /* ---- MODALS ---- */
