@@ -215,12 +215,18 @@ const OwnerProfile = () => {
           </div>
           
           <div className="sd-navbar__right">
-            <div className="sd-avatar">
-              <span>{(profile?.username || "O")[0].toUpperCase()}</span>
-            </div>
-            <div className="sd-navbar__staff-info">
-              <span className="sd-navbar__name">{profile?.username || "Owner"}</span>
-              <span className="sd-navbar__role">Owner</span>
+            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+              <div className="sd-avatar">
+                {profile?.profileImage ? (
+                  <img src={`${API_BASE}/${profile.profileImage}`} alt="avatar" />
+                ) : (
+                  <span>{(profile?.username || "O")[0].toUpperCase()}</span>
+                )}
+              </div>
+              <div className="sd-navbar__staff-info">
+                <span className="sd-navbar__name">{profile?.username || "Owner"}</span>
+                <span className="sd-navbar__role">Owner</span>
+              </div>
             </div>
           </div>
         </header>

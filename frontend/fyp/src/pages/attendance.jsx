@@ -126,14 +126,23 @@ const Attendance = () => {
               <span className="sd-navbar__subtitle">Monitor staff check-in/out patterns</span>
             </div>
           </div>
-          <div className="sd-navbar__right" onClick={() => navigate("/owner-profile")} style={{ cursor: "pointer" }}>
+          <div className="sd-navbar__right">
+            <div
+              onClick={() => navigate("/owner-profile")}
+              style={{ display: "flex", alignItems: "center", gap: "12px", cursor: "pointer" }}
+            >
               <div className="sd-avatar">
-                <span>{(owner?.username || "O")[0].toUpperCase()}</span>
+                {owner?.profileImage ? (
+                  <img src={`${API_BASE}/${owner.profileImage}`} alt="avatar" />
+                ) : (
+                  <span>{(owner?.username || "O")[0].toUpperCase()}</span>
+                )}
               </div>
               <div className="sd-navbar__staff-info">
                 <span className="sd-navbar__name">{owner?.username || "Owner"}</span>
                 <span className="sd-navbar__role">Owner</span>
               </div>
+            </div>
           </div>
         </header>
 

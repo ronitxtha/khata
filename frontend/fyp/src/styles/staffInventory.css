@@ -249,6 +249,13 @@
 
 .si-status-text { color: #334155; }
 
+.si-btn.si-btn--edit{
+  color:#ffffff
+}
+.si-btn.si-btn--delete{
+  color: #ffffff;
+}
+
 /* Pagination */
 .si-pagination {
   display: flex;

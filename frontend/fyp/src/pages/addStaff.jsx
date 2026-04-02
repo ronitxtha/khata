@@ -186,12 +186,21 @@ const AddStaff = () => {
           <div className="sd-navbar__right">
              {/* Notifications Removed from inline pages */}
 
-            <div className="sd-avatar" onClick={() => navigate("/owner-profile")}>
-              <span>{(owner?.username || "O")[0].toUpperCase()}</span>
-            </div>
-            <div className="sd-navbar__staff-info" onClick={() => navigate("/owner-profile")}>
-              <span className="sd-navbar__name">{owner?.username || "Owner"}</span>
-              <span className="sd-navbar__role">Owner</span>
+            <div
+              onClick={() => navigate("/owner-profile")}
+              style={{ display: "flex", alignItems: "center", gap: "12px", cursor: "pointer" }}
+            >
+              <div className="sd-avatar">
+                {owner?.profileImage ? (
+                  <img src={`${API_BASE}/${owner.profileImage}`} alt="avatar" />
+                ) : (
+                  <span>{(owner?.username || "O")[0].toUpperCase()}</span>
+                )}
+              </div>
+              <div className="sd-navbar__staff-info">
+                <span className="sd-navbar__name">{owner?.username || "Owner"}</span>
+                <span className="sd-navbar__role">Owner</span>
+              </div>
             </div>
           </div>
         </header>

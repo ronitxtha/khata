@@ -1,168 +1,70 @@
-import React, { useState } from "react";
+import React from "react";
 import { useNavigate } from "react-router-dom";
+import "../styles/home.css";
 
 export default function Home() {
   const navigate = useNavigate();
-  const [hovered, setHovered] = useState("");
 
   const features = [
-    { title: "User Authentication", icon: "🔐", text: "Secure login and registration for customers, staff, and owners." },
-    { title: "Product Management", icon: "🛒", text: "Add, update, and manage your products easily with real-time data." },
-    { title: "Order Tracking", icon: "📦", text: "Track customer orders, manage status, and ensure timely delivery." },
-    { title: "Store Management", icon: "🏬", text: "Manage multiple stores, staff, and inventory with one dashboard." },
-    { title: "Attendance System", icon: "🕒", text: "Record staff attendance and monitor working hours automatically." },
-    { title: "Analytics & Reports", icon: "📊", text: "View business performance insights to make smart decisions." },
+    { title: "User Authentication", icon: "🔐", text: "Secure login and registration for customers, staff, and owners.", nav: "/login" },
+    { title: "Product Management", icon: "🛒", text: "Add, update, and manage your products easily with real-time data.", nav: "/login" },
+    { title: "Order Tracking", icon: "📦", text: "Track customer orders, manage status, and ensure timely delivery.", nav: "/login" },
+    { title: "Store Management", icon: "🏬", text: "Manage multiple stores, staff, and inventory with one dashboard.", nav: "/login" },
+    { title: "Attendance System", icon: "🕒", text: "Record staff attendance and monitor working hours automatically.", nav: "/login" },
+    { title: "Analytics & Reports", icon: "📊", text: "View business performance insights to make smart decisions.", nav: "/login" },
   ];
 
   return (
-    <div className="container">
-      <style>{`
-        * {
-          box-sizing: border-box;
-          margin: 0;
-          padding: 0;
-        }
-        body, html, .container {
-          height: 100%;
-          font-family: Arial, sans-serif;
-        }
-        .container {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: flex-start;
-          min-height: 100vh;
-          background: linear-gradient(135deg, #007bff, #00c6ff);
-          color: #fff;
-          padding: 60px 20px;
-        }
-        .header {
-          text-align: center;
-          margin-bottom: 40px;
-        }
-        .title {
-          font-size: 3rem;
-          font-weight: bold;
-          margin-bottom: 10px;
-        }
-        .subtitle {
-          font-size: 1.2rem;
-          max-width: 700px;
-          margin: 0 auto;
-          color: #f0f0f0;
-        }
-        .feature-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-          gap: 25px;
-          width: 100%;
-          max-width: 1000px;
-          margin-top: 40px;
-        }
-        .feature-card {
-          background: rgba(255,255,255,0.1);
-          border-radius: 12px;
-          padding: 20px;
-          text-align: center;
-          cursor: pointer;
-          transition: 0.3s;
-          box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-        }
-        .feature-card.hovered {
-          background: rgba(255,255,255,0.2);
-          transform: scale(1.05);
-        }
-        .feature-icon {
-          font-size: 2rem;
-          margin-bottom: 10px;
-        }
-        .feature-title {
-          font-weight: bold;
-          font-size: 1.2rem;
-          margin-bottom: 8px;
-        }
-        .feature-text {
-          font-size: 0.95rem;
-          color: #e0e0e0;
-        }
-        .button-container {
-          display: flex;
-          gap: 20px;
-          margin-top: 50px;
-        }
-        .button {
-          background-color: #fff;
-          color: #007bff;
-          border: none;
-          padding: 12px 28px;
-          border-radius: 10px;
-          font-size: 16px;
-          cursor: pointer;
-          transition: 0.3s;
-          font-weight: bold;
-        }
-        .button.hovered {
-          background-color: #0056b3;
-          color: #fff;
-        }
-        .footer {
-          margin-top: 60px;
-          color: #cce7ff;
-          font-size: 0.9rem;
-          text-align: center;
-        }
-      `}</style>
+    <div className="home-layout">
+      {/* Navbar */}
+      <header className="home-nav">
+        <div className="home-logo">
+          <span>SmartKhata.</span>
+        </div>
+        <div className="home-nav-actions">
+          <button className="home-btn-outline" onClick={() => navigate("/login")}>Sign In</button>
+          <button className="home-btn-primary" onClick={() => navigate("/register")}>Open Account</button>
+        </div>
+      </header>
 
-      <div className="header">
-        <h1 className="title">Welcome to Smart-Khata</h1>
-        <p className="subtitle">
-          A complete business management and e-commerce solution — built for
-          owners, staff, and customers to connect seamlessly.
-        </p>
-      </div>
-
-      <div className="feature-grid">
-        {features.map((f, i) => (
-          <div
-            key={i}
-            className={`feature-card ${hovered === i ? "hovered" : ""}`}
-            onMouseEnter={() => setHovered(i)}
-            onMouseLeave={() => setHovered("")}
-            onClick={() => {
-              if (f.title === "User Authentication") navigate("/user-authentication");
-              if (f.title === "Product Management") navigate("/product-management");
-            }}
-          >
-            <div className="feature-icon">{f.icon}</div>
-            <div className="feature-title">{f.title}</div>
-            <div className="feature-text">{f.text}</div>
+      {/* Hero Section */}
+      <section className="home-hero">
+        <div className="home-hero-bg"></div>
+        <div className="home-hero-content">
+          <span className="home-badge">v2.0 Release Now Available</span>
+          <h1 className="home-title">Retail infrastructure for the <span>modern age.</span></h1>
+          <p className="home-subtitle">
+            A complete business management and e-commerce solution built for 
+            owners, staff, and customers to connect seamlessly.
+          </p>
+          <div className="home-hero-actions">
+            <button className="home-btn-primary" onClick={() => navigate("/register")}>Start for free</button>
+            <button className="home-btn-outline" onClick={() => navigate("/login")}>View Demo</button>
           </div>
-        ))}
-      </div>
+        </div>
+      </section>
 
-      <div className="button-container">
-        <button
-          className={`button ${hovered === "login" ? "hovered" : ""}`}
-          onMouseEnter={() => setHovered("login")}
-          onMouseLeave={() => setHovered("")}
-          onClick={() => navigate("/login")}
-        >
-          Login
-        </button>
+      {/* Features Grid */}
+      <section className="home-features-section">
+        <h2 className="home-section-title">Everything you need to scale</h2>
+        <div className="home-grid">
+          {features.map((f, i) => (
+            <div key={i} className="home-card">
+              <div className="home-card-icon">{f.icon}</div>
+              <h3>{f.title}</h3>
+              <p>{f.text}</p>
+              <div className="home-card-link" onClick={() => navigate(f.nav)}>
+                Explore feature →
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
 
-        <button
-          className={`button ${hovered === "signup" ? "hovered" : ""}`}
-          onMouseEnter={() => setHovered("signup")}
-          onMouseLeave={() => setHovered("")}
-          onClick={() => navigate("/register")}
-        >
-          Sign Up
-        </button>
-      </div>
-
-      <div className="footer">
-        <p>© 2025 V Ecommerce — Simplifying your business, one click at a time.</p>
-      </div>
+      {/* Footer */}
+      <footer className="home-footer">
+        <p>© 2026 Khata Retail Solutions. Simplifying your business, one click at a time.</p>
+      </footer>
     </div>
   );
 }

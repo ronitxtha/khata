@@ -126,12 +126,21 @@ const OrderManagement = () => {
           <div className="sd-navbar__right">
             {/* Notifications Removed from inline pages */}
 
-            <div className="sd-avatar" onClick={() => navigate(role === "owner" ? "/owner-profile" : "/staff-profile")}>
-              <span>{(user?.username || (role === "owner" ? "O" : "S"))[0].toUpperCase()}</span>
-            </div>
-            <div className="sd-navbar__staff-info" onClick={() => navigate(role === "owner" ? "/owner-profile" : "/staff-profile")}>
-              <span className="sd-navbar__name">{user?.username || (role === "owner" ? "Owner" : "Staff")}</span>
-              <span className="sd-navbar__role" style={{ textTransform: 'capitalize' }}>{role}</span>
+            <div
+              onClick={() => navigate(role === "owner" ? "/owner-profile" : "/staff-profile")}
+              style={{ display: "flex", alignItems: "center", gap: "12px", cursor: "pointer" }}
+            >
+              <div className="sd-avatar">
+                {user?.profileImage ? (
+                  <img src={`${API_BASE}/${user.profileImage}`} alt="avatar" />
+                ) : (
+                  <span>{(user?.username || (role === "owner" ? "O" : "S"))[0].toUpperCase()}</span>
+                )}
+              </div>
+              <div className="sd-navbar__staff-info">
+                <span className="sd-navbar__name">{user?.username || (role === "owner" ? "Owner" : "Staff")}</span>
+                <span className="sd-navbar__role" style={{ textTransform: 'capitalize' }}>{role}</span>
+              </div>
             </div>
           </div>
         </header>

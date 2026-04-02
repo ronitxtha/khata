@@ -23,6 +23,7 @@ const ProductManagement = () => {
   const ITEMS_PER_PAGE = 10;
   const [toast, setToast] = useState({ message: "", type: "success", visible: false });
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [viewQr, setViewQr] = useState(null);
 
   // Add product form
   const [showAddForm, setShowAddForm] = useState(false);
@@ -352,12 +353,21 @@ const ProductManagement = () => {
             </div>
           </div>
           <div className="sd-navbar__right">
-            <div className="sd-avatar" onClick={() => navigate(owner?.role === "owner" ? "/owner-profile" : "/staff-profile")}>
-              <span>{(owner?.username || (owner?.role === "owner" ? "O" : "S"))[0].toUpperCase()}</span>
-            </div>
-            <div className="sd-navbar__staff-info" onClick={() => navigate(owner?.role === "owner" ? "/owner-profile" : "/staff-profile")}>
-              <span className="sd-navbar__name">{owner?.username || (owner?.role === "owner" ? "Owner" : "Staff")}</span>
-              <span className="sd-navbar__role" style={{ textTransform: 'capitalize' }}>{owner?.role || "Staff"}</span>
+            <div
+              onClick={() => navigate(owner?.role === "owner" ? "/owner-profile" : "/staff-profile")}
+              style={{ display: "flex", alignItems: "center", gap: "12px", cursor: "pointer" }}
+            >
+              <div className="sd-avatar">
+                {owner?.profileImage ? (
+                  <img src={`${API_BASE}/${owner.profileImage}`} alt="avatar" />
+                ) : (
+                  <span>{(owner?.username || (owner?.role === "owner" ? "O" : "S"))[0].toUpperCase()}</span>
+                )}
+              </div>
+              <div className="sd-navbar__staff-info">
+                <span className="sd-navbar__name">{owner?.username || (owner?.role === "owner" ? "Owner" : "Staff")}</span>
+                <span className="sd-navbar__role" style={{ textTransform: 'capitalize' }}>{owner?.role || "Staff"}</span>
+              </div>
             </div>
           </div>
         </header>
@@ -451,11 +461,12 @@ const ProductManagement = () => {
             <table className="si-ledger-table">
               <thead>
                 <tr>
-                  <th style={{ width: '40%' }}>Product</th>
+                  <th style={{ width: '30%' }}>Product</th>
                   <th>Category</th>
                   <th>Price (NPR)</th>
                   <th>Inventory</th>
                   <th>Status</th>
+                  <th style={{ textAlign: 'center' }}>QR Code</th>
                   <th style={{ textAlign: 'right' }}>Actions</th>
                 </tr>
               </thead>
@@ -474,6 +485,7 @@ const ProductManagement = () => {
                             ) : (
                               <div className="si-ledger-img" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>📷</div>
                             )}
+                            
                             <div className="si-ledger-product-info">
                               <span className="si-ledger-name">{p.name || "Unnamed"}</span>
                               <span className="si-ledger-desc">{p.description}</span>
@@ -499,10 +511,32 @@ const ProductManagement = () => {
                             </span>
                           </div>
                         </td>
+                        <td style={{ textAlign: 'center' }}>
+                          {p.qrCode ? (
+                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px' }}>
+                              <img 
+                                src={`${API_BASE}/${p.qrCode}`} 
+                                alt="QR" 
+                                style={{ width: "36px", height: "36px", objectFit: "contain", borderRadius: "4px", border: "1px solid #e2e8f0", cursor: "pointer" }}
+                                onClick={() => setViewQr(`${API_BASE}/${p.qrCode}`)}
+                                title="Click to enlarge"
+                              />
+                              <button 
+                                onClick={() => downloadQR(p._id)} 
+                                style={{ background: 'none', border: 'none', color: '#2563eb', fontSize: '11px', fontWeight: 600, cursor: 'pointer', padding: 0 }}
+                                title="Download QR"
+                              >
+                                Download
+                              </button>
+                            </div>
+                          ) : (
+                            <span style={{ color: '#94a3b8', fontSize: '12px' }}>N/A</span>
+                          )}
+                        </td>
                         <td style={{ textAlign: 'right' }}>
                           <div className="si-actions" style={{ justifyContent: 'flex-end' }}>
-                            <button className="si-btn si-btn--edit" onClick={() => handleEditClick(p)} style={{ width: '60px', background: '#026bf4', color: '#fff' }}>Edit</button>
-                            <button className="si-btn si-btn--delete" onClick={() => handleDeleteProduct(p._id)} style={{ width: '60px', background: '#e90a19', color: '#fff' }}>Delete</button>
+                            <button className="si-btn si-btn--edit" onClick={() => handleEditClick(p)} style={{ width: '60px', background: '#026bf4', color: '#ffffffff' }}>Edit</button>
+                            <button className="si-btn si-btn--delete" onClick={() => handleDeleteProduct(p._id)} style={{ width: '60px', background: '#e90a19', color: '#ffffffff' }}>Delete</button>
                           </div>
                         </td>
                       </tr>
@@ -510,7 +544,7 @@ const ProductManagement = () => {
                   })
                 ) : (
                   <tr>
-                    <td colSpan="6" style={{ textAlign: 'center', padding: '40px', color: '#64748b' }}>
+                    <td colSpan="7" style={{ textAlign: 'center', padding: '40px', color: '#64748b' }}>
                       No products found.
                     </td>
                   </tr>
@@ -677,6 +711,21 @@ const ProductManagement = () => {
 
       {/* QR SCANNER */}
       {scannerOpen && <QRScanner onScanSuccess={handleScanSuccess} onClose={() => setScannerOpen(false)} />}
+
+      {/* ========== VIEW QR MODAL ========== */}
+      {viewQr && (
+        <div className="si-modal-overlay" onClick={() => setViewQr(null)} style={{ zIndex: 9999 }}>
+          <div className="si-modal" style={{ maxWidth: '400px', textAlign: 'center' }} onClick={(e) => e.stopPropagation()}>
+            <div className="si-modal__header" style={{ borderBottom: 'none', paddingBottom: 0 }}>
+              <h2 style={{ fontSize: '18px' }}>Scan QR Code</h2>
+              <button className="si-modal__close" onClick={() => setViewQr(null)}>✕</button>
+            </div>
+            <div style={{ padding: '20px' }}>
+              <img src={viewQr} alt="Large QR" style={{ width: '100%', maxWidth: '300px', height: 'auto', borderRadius: '8px', border: '1px solid #e2e8f0' }} />
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* TOAST */}
       {toast.visible && (

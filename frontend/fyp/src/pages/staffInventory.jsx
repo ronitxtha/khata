@@ -4,6 +4,7 @@ import axios from "axios";
 import "../styles/staffDashboard.css";
 import "../styles/staffInventory.css";
 import StaffSidebar from "../components/StaffSidebar";
+import QRScanner from "./QRScanner";
 
 const API_BASE = "http://localhost:8000";
 
@@ -27,11 +28,13 @@ const StaffInventory = () => {
   const [filterCategory, setFilterCategory] = useState("All");
   const [toast, setToast] = useState({ message: "", type: "success", visible: false });
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [viewQr, setViewQr] = useState(null);
 
   // Add product form
   const [showAddForm, setShowAddForm] = useState(false);
   const [productName, setProductName] = useState("");
   const [productPrice, setProductPrice] = useState("");
+  const [productCostPrice, setProductCostPrice] = useState("");
   const [productQuantity, setProductQuantity] = useState("");
   const [productCategory, setProductCategory] = useState("");
   const [productDescription, setProductDescription] = useState("");
@@ -41,10 +44,23 @@ const StaffInventory = () => {
   const [editingProduct, setEditingProduct] = useState(null);
   const [editName, setEditName] = useState("");
   const [editPrice, setEditPrice] = useState("");
+  const [editCostPrice, setEditCostPrice] = useState("");
   const [editQuantity, setEditQuantity] = useState("");
   const [editCategory, setEditCategory] = useState("");
   const [editDescription, setEditDescription] = useState("");
   const [editImage, setEditImage] = useState(null);
+
+  // Scanner state
+  const [scannerOpen, setScannerOpen] = useState(false);
+  const [scannedProduct, setScannedProduct] = useState(null);
+  const [closedScannedProduct, setClosedScannedProduct] = useState(false);
+  const [reAddQuantity, setReAddQuantity] = useState(1);
+  const [isAddingStock, setIsAddingStock] = useState(false);
+
+  const [editScannedPrice, setEditScannedPrice] = useState("");
+  const [editScannedCostPrice, setEditScannedCostPrice] = useState("");
+  const [editScannedQuantity, setEditScannedQuantity] = useState("");
+  const [isUpdatingScanned, setIsUpdatingScanned] = useState(false);
 
   const showToast = (message, type = "success", duration = 3000) => {
     setToast({ message, type, visible: true });
@@ -73,6 +89,14 @@ const StaffInventory = () => {
     fetchData();
   }, []);
 
+  // Scanner effect
+  useEffect(() => {
+    if (scannedProduct?._id) {
+      setReAddQuantity(1);
+      setClosedScannedProduct(false);
+    }
+  }, [scannedProduct?._id]);
+
   // Logout
   const handleLogout = async () => {
     try {
@@ -96,6 +120,7 @@ const StaffInventory = () => {
       const formData = new FormData();
       formData.append("name", productName);
       formData.append("price", productPrice);
+      formData.append("costPrice", productCostPrice);
       formData.append("quantity", productQuantity);
       formData.append("description", productDescription);
       formData.append("category", productCategory);
@@ -106,7 +131,7 @@ const StaffInventory = () => {
       });
       setProducts((prev) => [...prev, res.data.product]);
       showToast("Product added successfully!");
-      setProductName(""); setProductPrice(""); setProductQuantity("");
+      setProductName(""); setProductPrice(""); setProductCostPrice(""); setProductQuantity("");
       setProductDescription(""); setProductCategory(""); setProductImage(null);
       setShowAddForm(false);
     } catch (err) {
@@ -120,6 +145,7 @@ const StaffInventory = () => {
     setEditingProduct(product._id);
     setEditName(product.name || "");
     setEditPrice(product.price || "");
+    setEditCostPrice(product.costPrice || "");
     setEditQuantity(product.quantity || "");
     setEditCategory(product.category || "Others");
     setEditDescription(product.description || "");
@@ -134,6 +160,7 @@ const StaffInventory = () => {
       const formData = new FormData();
       formData.append("name", editName);
       formData.append("price", editPrice);
+      formData.append("costPrice", editCostPrice);
       formData.append("quantity", editQuantity);
       formData.append("category", editCategory);
       formData.append("description", editDescription);
@@ -166,6 +193,107 @@ const StaffInventory = () => {
     } catch (err) {
       console.error(err);
       showToast(err.response?.data?.message || "Delete failed", "error");
+    }
+  };
+
+  // QR Download
+  const downloadQR = async (productId) => {
+    try {
+      const token = localStorage.getItem("accessToken");
+      const res = await axios.get(`${API_BASE}/api/owner/download-qr/${productId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+        responseType: "blob",
+      });
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", `product-${productId}-qr.png`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    } catch (err) {
+      showToast("QR Download failed", "error");
+    }
+  };
+
+  // Scanner Logic
+  const handleScanSuccess = async (productId) => {
+    try {
+      const token = localStorage.getItem("accessToken");
+      const res = await axios.get(`${API_BASE}/api/owner/product/${productId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.data.success && res.data.product) {
+        setScannedProduct({
+          ...res.data.product,
+          deleted: !!res.data.product.deleted,
+          imageFile: res.data.product.image || null,
+        });
+        setEditScannedPrice(res.data.product.price || 0);
+        setEditScannedCostPrice(res.data.product.costPrice || 0);
+        setEditScannedQuantity(res.data.product.quantity || 0);
+      }
+      setScannerOpen(false);
+    } catch (err) {
+      setScannedProduct({ name: "Product not found", price: "-", description: "-", deleted: true, imageFile: null });
+      setScannerOpen(false);
+    }
+  };
+
+  const handleUpdateScannedProduct = async () => {
+    setIsUpdatingScanned(true);
+    try {
+      const token = localStorage.getItem("accessToken");
+      const formData = new FormData();
+      formData.append("name", scannedProduct.name);
+      formData.append("price", editScannedPrice);
+      formData.append("costPrice", editScannedCostPrice);
+      formData.append("quantity", editScannedQuantity);
+      formData.append("category", scannedProduct.category || "Others");
+      formData.append("description", scannedProduct.description || "");
+
+      const res = await axios.put(
+        `${API_BASE}/api/owner/update-product/${scannedProduct._id}`,
+        formData,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      
+      setProducts((prev) => {
+        const exists = prev.find((p) => p._id === scannedProduct._id);
+        if (exists) return prev.map((p) => (p._id === scannedProduct._id ? res.data.product : p));
+        return [...prev, res.data.product];
+      });
+      
+      setScannedProduct(null);
+      setClosedScannedProduct(true);
+      showToast("Product updated successfully!");
+    } catch (err) {
+      showToast(err.response?.data?.message || "Failed to update product", "error");
+    } finally {
+      setIsUpdatingScanned(false);
+    }
+  };
+
+  const handleAddProductAgain = async (product) => {
+    setIsAddingStock(true);
+    setClosedScannedProduct(true);
+    try {
+      const token = localStorage.getItem("accessToken");
+      const res = await axios.put(`${API_BASE}/api/owner/restore-product/${product._id}`,
+        { quantity: reAddQuantity },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setProducts((prev) => {
+        const exists = prev.find((p) => p._id === product._id);
+        return exists ? prev.map((p) => (p._id === product._id ? res.data.product : p)) : [...prev, res.data.product];
+      });
+      setReAddQuantity(1);
+      showToast("Stock added successfully!");
+    } catch (err) {
+      showToast("Failed to update stock", "error");
+      setClosedScannedProduct(false);
+    } finally {
+      setIsAddingStock(false);
     }
   };
 
@@ -240,6 +368,9 @@ const StaffInventory = () => {
               <p>Manage and update your product catalog for your SmartKhata.</p>
             </div>
             <div className="si-header-actions">
+              <button className="si-btn-primary si-btn-primary--light" onClick={() => setScannerOpen(true)} style={{ background: '#f1f5f9', color: '#0f172a', border: '1px solid #e2e8f0', marginRight: '12px' }}>
+                <span></span> Scan QR
+              </button>
               <button className="si-btn-primary si-btn-primary--dark" onClick={() => setShowAddForm(true)}>
                 <span>+</span> Add Product
               </button>
@@ -306,11 +437,12 @@ const StaffInventory = () => {
             <table className="si-ledger-table">
               <thead>
                 <tr>
-                  <th style={{ width: '40%' }}>Product</th>
+                  <th style={{ width: '30%' }}>Product</th>
                   <th>Category</th>
                   <th>Price (NPR)</th>
                   <th>Inventory</th>
                   <th>Status</th>
+                  <th style={{ textAlign: 'center' }}>QR Code</th>
                   <th style={{ textAlign: 'right' }}>Actions</th>
                 </tr>
               </thead>
@@ -329,6 +461,7 @@ const StaffInventory = () => {
                             ) : (
                               <div className="si-ledger-img" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>📷</div>
                             )}
+                            
                             <div className="si-ledger-product-info">
                               <span className="si-ledger-name">{p.name || "Unnamed"}</span>
                               <span className="si-ledger-desc">{p.description}</span>
@@ -354,6 +487,28 @@ const StaffInventory = () => {
                             </span>
                           </div>
                         </td>
+                        <td style={{ textAlign: 'center' }}>
+                          {p.qrCode ? (
+                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px' }}>
+                              <img 
+                                src={`${API_BASE}/${p.qrCode}`} 
+                                alt="QR" 
+                                style={{ width: "36px", height: "36px", objectFit: "contain", borderRadius: "4px", border: "1px solid #e2e8f0", cursor: "pointer" }}
+                                onClick={() => setViewQr(`${API_BASE}/${p.qrCode}`)}
+                                title="Click to enlarge"
+                              />
+                              <button 
+                                onClick={() => downloadQR(p._id)} 
+                                style={{ background: 'none', border: 'none', color: '#2563eb', fontSize: '11px', fontWeight: 600, cursor: 'pointer', padding: 0 }}
+                                title="Download QR"
+                              >
+                                Download
+                              </button>
+                            </div>
+                          ) : (
+                            <span style={{ color: '#94a3b8', fontSize: '12px' }}>N/A</span>
+                          )}
+                        </td>
                         <td style={{ textAlign: 'right' }}>
                           <div className="si-actions" style={{ justifyContent: 'flex-end' }}>
                             <button className="si-btn si-btn--edit" onClick={() => handleEditClick(p)} >Edit</button>
@@ -365,7 +520,7 @@ const StaffInventory = () => {
                   })
                 ) : (
                   <tr>
-                    <td colSpan="6" style={{ textAlign: 'center', padding: '60px', color: '#64748b' }}>
+                    <td colSpan="7" style={{ textAlign: 'center', padding: '60px', color: '#64748b' }}>
                       No products found.
                     </td>
                   </tr>
@@ -392,7 +547,12 @@ const StaffInventory = () => {
                     onChange={(e) => setProductName(e.target.value)} required />
                 </div>
                 <div className="si-form__group">
-                  <label>Price (NPR) *</label>
+                  <label>Cost Price *</label>
+                  <input type="number" placeholder="Cost Price" value={productCostPrice}
+                    onChange={(e) => setProductCostPrice(e.target.value)} required />
+                </div>
+                <div className="si-form__group">
+                  <label>Selling Price (NPR) *</label>
                   <input type="number" placeholder="0.00" value={productPrice}
                     onChange={(e) => setProductPrice(e.target.value)} required />
                 </div>
@@ -453,7 +613,12 @@ const StaffInventory = () => {
                     placeholder="Product Name" required />
                 </div>
                 <div className="si-form__group">
-                  <label>Price (NPR) *</label>
+                  <label>Cost Price *</label>
+                  <input type="number" value={editCostPrice} onChange={(e) => setEditCostPrice(e.target.value)}
+                    placeholder="0.00" required />
+                </div>
+                <div className="si-form__group">
+                  <label>Selling Price (NPR) *</label>
                   <input type="number" value={editPrice} onChange={(e) => setEditPrice(e.target.value)}
                     placeholder="0.00" required />
                 </div>
@@ -484,6 +649,24 @@ const StaffInventory = () => {
                 <button type="submit" className="si-btn-submit">💾 Save Changes</button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* QR SCANNER */}
+      {scannerOpen && <QRScanner onScanSuccess={handleScanSuccess} onClose={() => setScannerOpen(false)} />}
+
+      {/* ========== VIEW QR MODAL ========== */}
+      {viewQr && (
+        <div className="si-modal-overlay" onClick={() => setViewQr(null)} style={{ zIndex: 9999 }}>
+          <div className="si-modal" style={{ maxWidth: '400px', textAlign: 'center' }} onClick={(e) => e.stopPropagation()}>
+            <div className="si-modal__header" style={{ borderBottom: 'none', paddingBottom: 0 }}>
+              <h2 style={{ fontSize: '18px' }}>Scan QR Code</h2>
+              <button className="si-modal__close" onClick={() => setViewQr(null)}>✕</button>
+            </div>
+            <div style={{ padding: '20px' }}>
+              <img src={viewQr} alt="Large QR" style={{ width: '100%', maxWidth: '300px', height: 'auto', borderRadius: '8px', border: '1px solid #e2e8f0' }} />
+            </div>
           </div>
         </div>
       )}
