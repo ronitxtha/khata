@@ -20,10 +20,10 @@ const notificationSchema = new mongoose.Schema({
     enum: ["low_stock", "new_order"],
     default: "new_order"
   },
-  isRead: {
-    type: Boolean,
-    default: false
-  }
+  readBy: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User"
+  }]
 }, { timestamps: true });
 
 export const Notification = mongoose.model("Notification", notificationSchema);

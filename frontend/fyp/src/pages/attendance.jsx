@@ -126,7 +126,7 @@ const Attendance = () => {
               <span className="sd-navbar__subtitle">Monitor staff check-in/out patterns</span>
             </div>
           </div>
-          <div className="sd-navbar__right">
+          <div className="sd-navbar__right" onClick={() => navigate("/owner-profile")} style={{ cursor: "pointer" }}>
               <div className="sd-avatar">
                 <span>{(owner?.username || "O")[0].toUpperCase()}</span>
               </div>

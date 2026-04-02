@@ -1,5 +1,6 @@
 import express from "express";
 import { Notification } from "../models/notificationModel.js";
+import { isAuthenticated } from "../middleware/isAuthenticated.js";
 
 const router = express.Router();
 
@@ -9,11 +10,11 @@ router.get("/test", (req, res) => {
 });
 
 // Mark all unread notifications for a shop as read
-router.put("/mark-all-read/:shopId", async (req, res) => {
+router.put("/mark-all-read/:shopId", isAuthenticated, async (req, res) => {
   try {
     const result = await Notification.updateMany(
-      { shopId: req.params.shopId, isRead: false },
-      { $set: { isRead: true } }
+      { shopId: req.params.shopId },
+      { $addToSet: { readBy: req.userId } }
     );
     res.status(200).json({ 
       message: "Notifications cleared", 
@@ -26,11 +27,12 @@ router.put("/mark-all-read/:shopId", async (req, res) => {
 });
 
 // Fetch unread notifications for a shop
-router.get("/:shopId", async (req, res) => {
+router.get("/:shopId", isAuthenticated, async (req, res) => {
   try {
     const notifications = await Notification.find({
       shopId: req.params.shopId,
-      isRead: false
+      readBy: { $ne: req.userId },
+      isRead: { $ne: true } // Hide old legacy global-read notifications from before the schema upgrade
     }).sort({ createdAt: -1 });
 
     res.status(200).json(notifications);

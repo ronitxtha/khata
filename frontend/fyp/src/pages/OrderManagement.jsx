@@ -2,8 +2,6 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import socket from "../socket";
-import "../styles/staffDashboard.css";
-import "../styles/ownerDashboard.css";
 import "../styles/orderManagement.css";
 import OwnerSidebar from "../components/OwnerSidebar";
 import StaffSidebar from "../components/StaffSidebar";
@@ -21,12 +19,7 @@ const OrderManagement = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [expandedOrder, setExpandedOrder] = useState(null);
   
-  // Notifications state (sync with dashboard logic)
-  const [notifications, setNotifications] = useState(() => {
-    const saved = localStorage.getItem("owner_notifications");
-    return saved ? JSON.parse(saved) : [];
-  });
-  const [showNotifications, setShowNotifications] = useState(false);
+  // Notifications handled globally in Dashboard
 
   const user = JSON.parse(localStorage.getItem("user"));
   const role = user?.role || "staff";
@@ -131,46 +124,7 @@ const OrderManagement = () => {
           </div>
           
           <div className="sd-navbar__right">
-            {/* Notifications */}
-            <div className="od-notif-wrapper" style={{ marginRight: '16px' }}>
-              <button 
-                className="od-nav-icon-btn"
-                onClick={() => setShowNotifications(!showNotifications)}
-              >
-                🔔
-                {notifications.some(n => !n.read) && <span className="sd-navbar__badge"></span>}
-              </button>
-
-              {showNotifications && (
-                <div className="od-notif-dropdown">
-                  <div className="od-notif-header">
-                    <h3>Notifications</h3>
-                    <button
-                      onClick={() => {
-                        setNotifications([]);
-                        localStorage.setItem("owner_notifications", JSON.stringify([]));
-                        showToast("Notifications cleared");
-                      }}
-                      className="od-notif-clear"
-                    >
-                      Clear All
-                    </button>
-                  </div>
-                  {notifications.length === 0 ? (
-                    <div className="od-notif-empty"><span>📭</span><p>No new notifications</p></div>
-                  ) : (
-                    <div className="od-notif-list">
-                      {notifications.map((n, i) => (
-                        <div key={i} className={`od-notif-item ${n.read ? 'read' : ''}`}>
-                          <p>{n.message}</p>
-                          <span>{new Date(n.time).toLocaleTimeString()}</span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
+            {/* Notifications Removed from inline pages */}
 
             <div className="sd-avatar" onClick={() => navigate(role === "owner" ? "/owner-profile" : "/staff-profile")}>
               <span>{(user?.username || (role === "owner" ? "O" : "S"))[0].toUpperCase()}</span>

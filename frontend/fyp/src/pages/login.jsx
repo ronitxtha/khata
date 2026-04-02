@@ -73,22 +73,28 @@ export default function Login() {
         {error && <div className="error-box">{error}</div>}
         {success && <div className="success-box">{success}</div>}
 
-        <form onSubmit={handleLogin}>
-          <input
-            type="email"
-            placeholder="Email address"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
+        <form onSubmit={handleLogin} className="login-form-content">
+          <div className="login-form-group">
+            <label>Email Address *</label>
+            <input
+              type="email"
+              placeholder="abcd@gmail.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
+          </div>
 
-          <input
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
+          <div className="login-form-group">
+            <label>Password *</label>
+            <input
+              type="password"
+              placeholder="Enter your password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+          </div>
 
-          <button type="submit">Login</button>
+          <button type="submit" className="login-submit-btn">Login</button>
         </form>
 
         <div className="form-links">

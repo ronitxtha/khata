@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import "../styles/supplierManagement.css";
 import "../styles/staffDashboard.css";
-import "../styles/ownerDashboard.css";
 import "../styles/staffInventory.css";
 import OwnerSidebar from "../components/OwnerSidebar";
 
@@ -332,7 +331,7 @@ const SupplierManagement = () => {
               <span className="sd-navbar__subtitle">Oversee your supply chain and payments</span>
             </div>
           </div>
-          <div className="sd-navbar__right">
+          <div className="sd-navbar__right" onClick={() => navigate("/owner-profile")} style={{ cursor: "pointer" }}>
               <div className="sd-avatar">
                 <span>{(owner?.username || "O")[0].toUpperCase()}</span>
               </div>
@@ -354,7 +353,7 @@ const SupplierManagement = () => {
             </div>
             <div className="si-header-actions">
               <button className="si-btn-primary si-btn-primary--light" onClick={() => setShowRecordPayment(true)}>
-                <span>💳</span> Record Payment
+                 Record Payment
               </button>
               <button className="si-btn-primary si-btn-primary--dark" onClick={() => setShowAddSupplier(true)}>
                 <span>+</span> Add Supplier
@@ -394,7 +393,6 @@ const SupplierManagement = () => {
           {outstandingSuppliers.length > 0 && (
             <div className="sm-alert-card">
               <div className="sm-alert-card__header">
-                <span className="sm-alert-card__icon">🚨</span>
                 <h3>Payment Action Required ({outstandingSuppliers.length} Pending)</h3>
               </div>
               <div className="sm-alert-items">
@@ -449,7 +447,7 @@ const SupplierManagement = () => {
                     <th>Products</th>
                     <th>Financials</th>
                     <th>Due Status</th>
-                    <th style={{ textAlign: 'right' }}>Actions</th>
+                    <th className="action">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -486,9 +484,9 @@ const SupplierManagement = () => {
                         </td>
                         <td style={{ textAlign: 'right' }}>
                           <div className="sm-actions" style={{ justifyContent: 'flex-end' }}>
-                            <button className="sm-action-btn" onClick={() => { setSelectedSupplier(s); setShowViewSupplier(true); }} title="View Details">👁</button>
-                            <button className="sm-action-btn" onClick={() => openEditSupplier(s)} title="Edit">✏️</button>
-                            <button className="sm-action-btn sm-action-btn--delete" onClick={() => handleDeleteSupplier(s._id)} title="Delete">🗑</button>
+                            <button className="sm-action-btn" onClick={() => { setSelectedSupplier(s); setShowViewSupplier(true); }} title="View Details">Details</button>
+                            <button className="sm-action-btn" onClick={() => openEditSupplier(s)} title="Edit">Edit</button>
+                            <button className="sm-action-btn sm-action-btn--delete" onClick={() => handleDeleteSupplier(s._id)} title="Delete">Delete</button>
                           </div>
                         </td>
                       </tr>
@@ -886,7 +884,7 @@ const SupplierManagement = () => {
         <div className="si-modal-overlay" onClick={() => setShowRecordPayment(false)}>
           <div className="si-modal" style={{ maxWidth: '450px' }} onClick={(e) => e.stopPropagation()}>
             <div className="si-modal__header">
-              <h2>💰 Record Payment</h2>
+              <h2>Record Payment</h2>
               <button className="si-modal__close" onClick={() => setShowRecordPayment(false)}>✕</button>
             </div>
             <form className="si-form" onSubmit={handleRecordPayment}>

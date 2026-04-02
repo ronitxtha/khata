@@ -78,16 +78,6 @@
   box-shadow: 0 10px 20px rgba(0,0,0,0.04);
 }
 
-.sm-stat-label {
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--sm-text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
 
 .sm-stat-num {
   font-size: 32px;
@@ -243,6 +233,137 @@
 .sm-btn-delete {
   background-color: #ef4444; /* Red */
 }
+
+
+/* ---- MODALS ---- */
+.sm-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.4);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.sm-modal {
+  background: #ffffff;
+  width: 100%;
+  max-width: 500px;
+  border-radius: 16px;
+  box-shadow: 0 20px 40px rgba(233, 231, 231, 0.1);
+  overflow: hidden;
+  animation: smModalSlideIn 0.2s ease-out;
+}
+
+@keyframes smModalSlideIn {
+  from { opacity: 0; transform: translateY(10px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.sm-modal__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--sm-border);
+}
+
+.sm-modal__header h2 {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--sm-primary);
+  margin: 0;
+}
+
+.sm-modal__close {
+  background: none;
+  border: none;
+  font-size: 20px;
+  color: var(--sm-text-muted);
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  transition: all 0.2s;
+}
+
+.sm-modal__close:hover {
+  background: #f1f5f9;
+  color: #ef4444;
+}
+
+.sm-form {
+  padding: 24px;
+}
+
+.sm-form__grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.sm-form__group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sm-form__group label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--sm-text-main);
+}
+
+.sm-form__group input,
+.sm-form__group select {
+  padding: 10px 14px;
+  background: #ffffff;
+  border: 1px solid var(--sm-border);
+  border-radius: 8px;
+  font-size: 14px;
+  color: var(--sm-primary);
+  outline: none;
+  transition: all 0.2s;
+}
+
+.sm-form__group input::placeholder,
+.sm-form__group select::placeholder {
+  color: #94a3b8;
+}
+
+.sm-form__group input:focus,
+.sm-form__group select:focus {
+  border-color: var(--sm-accent);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.sm-form__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid var(--sm-border);
+}
+
+.sm-btn-cancel {
+  padding: 10px 18px;
+  background: #fff;
+  border: 1px solid var(--sm-border);
+  color: var(--sm-text-main);
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.sm-btn-cancel:hover { background: #f8fafc; }
 
 
 

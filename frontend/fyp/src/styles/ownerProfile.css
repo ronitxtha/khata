@@ -115,7 +115,23 @@
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02);
     border: 1px solid #f1f5f9;
 }
+.op-stat-card.op-stat-card--dark {
+    background: #fcfcfc; /* Deep dark blue */
+    color: #030101;
+    border: none;
+}
 
+.op-stat-card.op-stat-card--dark {
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02);
+    border: 1px solid #f1f5f9;
+}
+
+.op-stat-card.op-stat-card--dark .op-stat-num{
+    color: #000000;
+}
 .op-stat-label {
     font-size: 11px;
     font-weight: 800;
@@ -148,21 +164,7 @@
     color: #10b981;
 }
 
-.op-stat-trend.fatal {
-    color: #ef4444;
-}
 
-.op-stat-card--danger {
-    border-left: 4px solid #ef4444;
-}
-
-.op-stat-card--danger .op-stat-num {
-    color: #ef4444;
-}
-
-.op-stat-card--danger .op-stat-trend {
-    color: #dc2626;
-}
 
 .op-stat-card--dark {
     background: #001f3f; /* Deep dark blue */

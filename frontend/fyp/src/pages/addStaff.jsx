@@ -35,12 +35,7 @@ const AddStaff = () => {
 
   const [createdStaffInfo, setCreatedStaffInfo] = useState(null);
 
-  // Notifications state
-  const [notifications, setNotifications] = useState(() => {
-    const saved = localStorage.getItem("owner_notifications");
-    return saved ? JSON.parse(saved) : [];
-  });
-  const [showNotifications, setShowNotifications] = useState(false);
+  // Notifications handled globally in Dashboards
 
   const showToast = (message, type = "success", duration = 3000) => {
     setToast({ message, type, visible: true });
@@ -189,45 +184,7 @@ const AddStaff = () => {
           </div>
           
           <div className="sd-navbar__right">
-             {/* Notifications */}
-             <div className="od-notif-wrapper">
-              <button 
-                className="od-nav-icon-btn"
-                onClick={() => setShowNotifications(!showNotifications)}
-              >
-                🔔
-                {notifications.some(n => !n.read) && <span className="sd-navbar__badge"></span>}
-              </button>
-
-              {showNotifications && (
-                <div className="od-notif-dropdown">
-                  <div className="od-notif-header">
-                    <h3>Notifications</h3>
-                    <button
-                      onClick={() => {
-                        setNotifications([]);
-                        localStorage.setItem("owner_notifications", JSON.stringify([]));
-                        showToast("Notifications cleared");
-                      }}
-                      className="od-notif-clear"
-                    >
-                      Clear All
-                    </button>
-                  </div>
-                  {notifications.length === 0 ? (
-                    <div className="od-notif-empty"><span>📭</span><p>No new notifications</p></div>
-                  ) : (
-                    <div className="od-notif-list">
-                      {notifications.map((n) => (
-                        <div key={n.id} className={`od-notif-item ${!n.read ? "unread" : ""}`}>
-                          {n.message}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
+             {/* Notifications Removed from inline pages */}
 
             <div className="sd-avatar" onClick={() => navigate("/owner-profile")}>
               <span>{(owner?.username || "O")[0].toUpperCase()}</span>
@@ -260,19 +217,19 @@ const AddStaff = () => {
           {/* 2. Summary Stats Grid */}
           <div className="sm-stats-grid">
             <div className="sm-stat-card">
-              <div className="sm-stat-label">Total Staff <span>👥</span></div>
+              <div className="sm-stat-label">Total Staff</div>
               <div className="sm-stat-num">{staffList.length}</div>
             </div>
             <div className="sm-stat-card">
-              <div className="sm-stat-label">Present Today <span>👤</span></div>
+              <div className="sm-stat-label">Present Today</div>
               <div className="sm-stat-num">{presentCount}</div>
             </div>
             <div className="sm-stat-card">
-              <div className="sm-stat-label">Absent Today <span>🚫</span></div>
+              <div className="sm-stat-label">Absent Today</div>
               <div className="sm-stat-num">{absentCount}</div>
             </div>
             <div className="sm-stat-card">
-              <div className="sm-stat-label">Logged Out <span>🚪</span></div>
+              <div className="sm-stat-label">Logged Out</div>
               <div className="sm-stat-num">{loggedOutCount}</div>
             </div>
           </div>
@@ -400,29 +357,29 @@ const AddStaff = () => {
 
       {/* ========== ADD STAFF MODAL ========== */}
       {showAddForm && (
-        <div className="si-modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) setShowAddForm(false); }}>
-          <div className="si-modal">
-            <div className="si-modal__header">
-              <h2> Add New Staff</h2>
-              <button className="si-modal__close" onClick={() => setShowAddForm(false)}>✕</button>
+        <div className="sm-modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) setShowAddForm(false); }}>
+          <div className="sm-modal">
+            <div className="sm-modal__header">
+              <h2>Add New Staff</h2>
+              <button className="sm-modal__close" onClick={() => setShowAddForm(false)}>✕</button>
             </div>
-            <form onSubmit={handleAddStaff} className="si-form">
-              <div className="si-form__grid">
-                <div className="si-form__group">
+            <form onSubmit={handleAddStaff} className="sm-form">
+              <div className="sm-form__grid">
+                <div className="sm-form__group">
                   <label>Full Name *</label>
                   <input
                     type="text" placeholder="Staff Name"
                     value={staffName} onChange={(e) => setStaffName(e.target.value)} required
                   />
                 </div>
-                <div className="si-form__group">
+                <div className="sm-form__group">
                   <label>Email *</label>
                   <input
                     type="email" placeholder="staff@example.com"
                     value={staffEmail} onChange={(e) => setStaffEmail(e.target.value)} required
                   />
                 </div>
-                <div className="si-form__group">
+                <div className="sm-form__group">
                   <label>Phone (10 digits) *</label>
                   <input
                     type="text" placeholder="98XXXXXXXX"
@@ -431,7 +388,7 @@ const AddStaff = () => {
                     maxLength={10} required
                   />
                 </div>
-                <div className="si-form__group">
+                <div className="sm-form__group">
                   <label>Address *</label>
                   <input
                     type="text" placeholder="City, District"
@@ -439,12 +396,12 @@ const AddStaff = () => {
                   />
                 </div>
               </div>
-              <p style={{ fontSize: 12, color: "#94a3b8", marginTop: -8 }}>
-                💡 A random password will be auto-generated and shown after adding.
+              <p style={{ fontSize: 13, color: "var(--sm-text-muted)", marginTop: -8, display: "flex", gap: "6px", alignItems: "center" }}>
+                <span>💡</span> A random password will be auto-generated.
               </p>
-              <div className="si-form__actions">
-                <button type="button" className="si-btn-cancel" onClick={() => setShowAddForm(false)}>Cancel</button>
-                <button type="submit" className="si-btn-submit">Add Staff</button>
+              <div className="sm-form__actions">
+                <button type="button" className="sm-btn-cancel" onClick={() => setShowAddForm(false)}>Cancel</button>
+                <button type="submit" className="sm-btn-primary">Add Staff</button>
               </div>
             </form>
           </div>
@@ -453,47 +410,47 @@ const AddStaff = () => {
 
       {/* ========== SUCCESS MODAL (Show Password) ========== */}
       {createdStaffInfo && (
-        <div className="si-modal-overlay">
-          <div className="si-modal" style={{ maxWidth: "400px", textAlign: "center" }}>
-            <div className="si-modal__header" style={{ justifyContent: "center" }}>
-              <h2 style={{ color: "#10b981" }}>✅ Staff Added!</h2>
+        <div className="sm-modal-overlay">
+          <div className="sm-modal" style={{ maxWidth: "420px", textAlign: "center", padding: "16px 0 0 0" }}>
+            <div className="sm-modal__header" style={{ justifyContent: "center", borderBottom: "none", paddingBottom: "0" }}>
+              <h2 style={{ fontSize: "24px" }}>🎉 Staff Added!</h2>
             </div>
             
-            <div style={{ padding: "20px 0" }}>
-              <p style={{ color: "#64748b", marginBottom: "15px" }}>
+            <div style={{ padding: "16px 32px 32px 32px" }}>
+              <p style={{ color: "var(--sm-text-muted)", marginBottom: "24px", fontSize: "14px" }}>
                 Staff account for <strong>{createdStaffInfo.name}</strong> has been created.
               </p>
               
               <div style={{ 
                 background: "#f8fafc", 
-                padding: "20px", 
+                padding: "24px", 
                 borderRadius: "12px", 
-                border: "2px dashed #e2e8f0",
-                marginBottom: "20px"
+                border: "1px solid var(--sm-border)",
+                marginBottom: "24px"
               }}>
-                <span style={{ fontSize: "14px", color: "#94a3b8", display: "block", marginBottom: "8px" }}>
+                <span style={{ fontSize: "12px", color: "var(--sm-text-muted)", display: "block", marginBottom: "8px", fontWeight: "700", letterSpacing: "1px" }}>
                   AUTO-GENERATED PASSWORD
                 </span>
                 <span style={{ 
-                  fontSize: "24px", 
-                  fontWeight: "700", 
-                  letterSpacing: "2px", 
-                  color: "#1e293b",
+                  fontSize: "32px", 
+                  fontWeight: "800", 
+                  letterSpacing: "3px", 
+                  color: "var(--sm-primary)",
                   fontFamily: "monospace" 
                 }}>
                   {createdStaffInfo.password}
                 </span>
               </div>
 
-              <p style={{ fontSize: "12px", color: "#ef4444", fontWeight: "500" }}>
-                ⚠️ Please copy this password now. It will not be shown again.
-              </p>
-            </div>
+              <div style={{ padding: "12px", background: "#fff1f2", borderRadius: "8px", marginBottom: "24px" }}>
+                <p style={{ fontSize: "12px", color: "#ef4444", fontWeight: "600", margin: 0 }}>
+                  ⚠️ Please copy this password now. It will not be shown again.
+                </p>
+              </div>
 
-            <div className="si-form__actions" style={{ justifyContent: "center", marginTop: "10px" }}>
               <button 
-                className="si-btn-submit" 
-                style={{ width: "100%", padding: "12px" }}
+                className="sm-btn-primary" 
+                style={{ width: "100%", justifyContent: "center", padding: "12px" }}
                 onClick={() => setCreatedStaffInfo(null)}
               >
                 Close & Got it
@@ -505,29 +462,29 @@ const AddStaff = () => {
 
       {/* ========== EDIT STAFF MODAL ========== */}
       {showEditForm && (
-        <div className="si-modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) setShowEditForm(false); }}>
-          <div className="si-modal">
-            <div className="si-modal__header">
-              <h2> Edit Staff Details</h2>
-              <button className="si-modal__close" onClick={() => setShowEditForm(false)}>✕</button>
+        <div className="sm-modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) setShowEditForm(false); }}>
+          <div className="sm-modal">
+            <div className="sm-modal__header">
+              <h2>Edit Staff Details</h2>
+              <button className="sm-modal__close" onClick={() => setShowEditForm(false)}>✕</button>
             </div>
-            <form onSubmit={handleEditStaff} className="si-form">
-              <div className="si-form__grid">
-                <div className="si-form__group">
+            <form onSubmit={handleEditStaff} className="sm-form">
+              <div className="sm-form__grid">
+                <div className="sm-form__group">
                   <label>Full Name *</label>
                   <input
                     type="text" placeholder="Staff Name"
                     value={editStaffName} onChange={(e) => setEditStaffName(e.target.value)} required
                   />
                 </div>
-                <div className="si-form__group">
+                <div className="sm-form__group">
                   <label>Email *</label>
                   <input
                     type="email" placeholder="staff@example.com"
                     value={editStaffEmail} onChange={(e) => setEditStaffEmail(e.target.value)} required
                   />
                 </div>
-                <div className="si-form__group">
+                <div className="sm-form__group">
                   <label>Phone (10 digits) *</label>
                   <input
                     type="text" placeholder="98XXXXXXXX"
@@ -536,7 +493,7 @@ const AddStaff = () => {
                     maxLength={10} required
                   />
                 </div>
-                <div className="si-form__group">
+                <div className="sm-form__group">
                   <label>Address *</label>
                   <input
                     type="text" placeholder="City, District"
@@ -544,9 +501,9 @@ const AddStaff = () => {
                   />
                 </div>
               </div>
-              <div className="si-form__actions">
-                <button type="button" className="si-btn-cancel" onClick={() => setShowEditForm(false)}>Cancel</button>
-                <button type="submit" className="si-btn-submit">Update Staff</button>
+              <div className="sm-form__actions">
+                <button type="button" className="sm-btn-cancel" onClick={() => setShowEditForm(false)}>Cancel</button>
+                <button type="submit" className="sm-btn-primary">Update Staff</button>
               </div>
             </form>
           </div>

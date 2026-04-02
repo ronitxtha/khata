@@ -103,16 +103,21 @@ const StaffAttendance = () => {
             </div>
           </div>
           <div className="sd-navbar__right">
-              <div className="sd-avatar">
-                {staff?.profileImage ? (
-                  <img src={`${API_BASE}/${staff.profileImage}`} alt="avatar" />
-                ) : (
-                  <span>{(staff?.username || "S")[0].toUpperCase()}</span>
-                )}
-              </div>
-              <div className="sd-navbar__staff-info">
-                <span className="sd-navbar__name">{staff?.username || "Staff"}</span>
-                <span className="sd-navbar__role">Staff</span>
+              <div
+                onClick={() => navigate("/staff-profile")}
+                style={{ display: "flex", alignItems: "center", gap: "12px", cursor: "pointer" }}
+              >
+                <div className="sd-avatar">
+                  {staff?.profileImage ? (
+                    <img src={`${API_BASE}/${staff.profileImage}`} alt="avatar" />
+                  ) : (
+                    <span>{(staff?.username || "S")[0].toUpperCase()}</span>
+                  )}
+                </div>
+                <div className="sd-navbar__staff-info">
+                  <span className="sd-navbar__name">{staff?.username || "Staff"}</span>
+                  <span className="sd-navbar__role">Staff</span>
+                </div>
               </div>
           </div>
         </header>

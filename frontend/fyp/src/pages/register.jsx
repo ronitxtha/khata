@@ -91,34 +91,46 @@ export default function Register() {
         {error && <div className="error-box">{error}</div>}
         {success && <div className="success-box">{success}</div>}
 
-        <form onSubmit={handleRegister}>
-          <input
-            type="text"
-            placeholder="Full Name"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-          />
+        <form onSubmit={handleRegister} className="register-form-content">
+          <div className="register-form-group">
+            <label>Full Name *</label>
+            <input
+              type="text"
+              placeholder="Your Full Name"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+            />
+          </div>
 
-          <input
-            type="email"
-            placeholder="Email address"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
+          <div className="register-form-group">
+            <label>Email Address *</label>
+            <input
+              type="email"
+              placeholder="abcd@gmail.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
+          </div>
 
-          <input
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
+          <div className="register-form-group">
+            <label>Password *</label>
+            <input
+              type="password"
+              placeholder="Create a strong password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+          </div>
 
-          <select value={role} onChange={(e) => setRole(e.target.value)}>
-            <option value="customer">Customer</option>
-            <option value="owner">Owner</option>
-          </select>
+          <div className="register-form-group">
+            <label>Select Role *</label>
+            <select value={role} onChange={(e) => setRole(e.target.value)}>
+              <option value="customer">Customer</option>
+              <option value="owner">Owner</option>
+            </select>
+          </div>
 
-          <button type="submit">Create Account</button>
+          <button type="submit" className="register-submit-btn">Create Account</button>
         </form>
 
         <div className="form-links">

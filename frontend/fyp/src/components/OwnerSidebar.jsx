@@ -1,7 +1,7 @@
 import React from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import "../styles/staffDashboard.css";
-import "../styles/ownerDashboard.css";
+
 
 const OwnerSidebar = ({ sidebarOpen, setSidebarOpen, owner, handleLogout }) => {
   const navigate = useNavigate();

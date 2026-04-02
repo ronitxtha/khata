@@ -2,9 +2,6 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import QRScanner from "./QRScanner";
-import "../styles/staffDashboard.css";
-import "../styles/staffInventory.css";
-import "../styles/ownerDashboard.css";
 import OwnerSidebar from "../components/OwnerSidebar";
 import StaffSidebar from "../components/StaffSidebar";
 
@@ -418,7 +415,7 @@ const ProductManagement = () => {
               <div className="si-search-input-wrap">
                 <input
                   type="text"
-                  placeholder="Search catalog..."
+                  placeholder="Search products..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="si-ledger-select"
@@ -504,8 +501,8 @@ const ProductManagement = () => {
                         </td>
                         <td style={{ textAlign: 'right' }}>
                           <div className="si-actions" style={{ justifyContent: 'flex-end' }}>
-                            <button className="si-btn si-btn--edit" onClick={() => handleEditClick(p)} style={{ width: '34px', background: '#026bf4', color: '#fff' }}>✏️</button>
-                            <button className="si-btn si-btn--delete" onClick={() => handleDeleteProduct(p._id)} style={{ width: '34px', background: '#e90a19', color: '#fff' }}>🗑️</button>
+                            <button className="si-btn si-btn--edit" onClick={() => handleEditClick(p)} style={{ width: '60px', background: '#026bf4', color: '#fff' }}>Edit</button>
+                            <button className="si-btn si-btn--delete" onClick={() => handleDeleteProduct(p._id)} style={{ width: '60px', background: '#e90a19', color: '#fff' }}>Delete</button>
                           </div>
                         </td>
                       </tr>

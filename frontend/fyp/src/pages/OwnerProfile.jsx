@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import "../styles/OwnerProfile.css"; // Isolated styling for mockup alignment
-import "../styles/ownerDashboard.css"; // Shared dashboard layout
+import "../styles/ownerProfile.css";
 import OwnerSidebar from "../components/OwnerSidebar";
 
 const API_BASE = "http://localhost:8000";
@@ -275,7 +274,6 @@ const OwnerProfile = () => {
               <span className="op-stat-label">Low Stock</span>
               <div className="op-stat-value-group" style={{ justifyContent: 'space-between', width: '100%' }}>
                 <span className="op-stat-num">{statistics.lowStockProducts || "0"}</span>
-                <span className="op-stat-trend fatal">Alerts Active</span>
               </div>
             </div>
             <div className="op-stat-card op-stat-card--dark">

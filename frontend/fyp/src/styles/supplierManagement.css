@@ -80,7 +80,7 @@
 .sm-alert-card {
   background: #fff;
   border: 1px solid #fee2e2;
-  border-left: 4px solid var(--sm-danger);
+  
   border-radius: 12px;
   padding: 20px;
   margin-bottom: 32px;
@@ -206,6 +206,12 @@
 }
 
 /* ── ACTIONS ── */
+
+.action{
+   padding-left: 200px !important;
+   color: red;
+}
+
 .sm-actions {
   display: flex;
   gap: 8px;
@@ -214,7 +220,7 @@
 .sm-action-btn {
   background: none;
   border: none;
-  color: #94a3b8;
+  color: #000000;
   padding: 6px;
   border-radius: 6px;
   cursor: pointer;

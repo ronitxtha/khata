@@ -30,10 +30,7 @@ const StaffDashboard = () => {
   const [orders, setOrders] = useState([]);
 
   // Notifications
-  const [notifications, setNotifications] = useState(() => {
-    const saved = localStorage.getItem("staff_notifications");
-    return saved ? JSON.parse(saved) : [];
-  });
+  const [notifications, setNotifications] = useState([]);
   const [showNotifications, setShowNotifications] = useState(false);
 
   // Toast
@@ -93,50 +90,29 @@ const StaffDashboard = () => {
     };
 
     fetchData();
+  }, []);
 
-    // Socket listeners
+  useEffect(() => {
+    if (!staff?.shopId) return;
+
     socket.on("lowStockAlert", (data) => {
-      const newNotif = {
-        id: Date.now(),
-        ...data,
-        type: "low_stock",
-        read: false,
-        createdAt: new Date(),
-      };
-      setNotifications((prev) => {
-        const updated = [newNotif, ...prev];
-        localStorage.setItem("staff_notifications", JSON.stringify(updated));
-        return updated;
-      });
       showToast(data.message, "error");
-      setProducts((prevProducts) =>
-        prevProducts.map((p) =>
-          p._id === data.productId ? { ...p, quantity: data.quantity } : p
-        )
-      );
+      fetchNotifications(staff.shopId);
+      setProducts((prev) => prev.map((p) => p._id === data.productId ? { ...p, quantity: data.quantity } : p));
     });
 
     socket.on("newOrder", (data) => {
-      const newNotif = {
-        id: data.orderId + "_" + Date.now(),
-        message: data.message,
-        type: "new_order",
-        read: false,
-        createdAt: new Date(),
-      };
-      setNotifications((prev) => {
-        const updated = [newNotif, ...prev];
-        localStorage.setItem("staff_notifications", JSON.stringify(updated));
-        return updated;
-      });
-      showToast(data.message, "success");
+      if (data.shopId === staff.shopId) {
+        showToast(data.message, "success");
+        fetchNotifications(staff.shopId);
+      }
     });
 
     return () => {
       socket.off("lowStockAlert");
       socket.off("newOrder");
     };
-  }, []);
+  }, [staff?.shopId]);
 
   // Close notification dropdown on outside click
   useEffect(() => {
@@ -153,24 +129,26 @@ const StaffDashboard = () => {
     try {
       const token = localStorage.getItem("accessToken");
       const res = await axios.get(`${API_BASE}/api/notifications/${shopId}`, {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { Authorization: `Bearer ${token}` }
       });
-      const clearedIds = JSON.parse(
-        localStorage.getItem("staff_cleared_notifications") || "[]"
-      );
-      const backendNotifications = res.data
-        .filter((n) => !n.isRead && !clearedIds.includes(n._id))
-        .map((n) => ({
-          id: n._id,
-          message: n.message,
-          type: n.type,
-          read: n.isRead,
-          createdAt: n.createdAt,
-        }));
-      setNotifications(backendNotifications);
-      localStorage.setItem("staff_notifications", JSON.stringify(backendNotifications));
+      if (res.data) setNotifications(res.data);
     } catch (err) {
-      console.error("Failed to load notifications", err);
+      console.error("Failed to fetch notifications:", err);
+    }
+  };
+
+  const handleMarkAllRead = async () => {
+    try {
+      const token = localStorage.getItem("accessToken");
+      await axios.put(`${API_BASE}/api/notifications/mark-all-read/${staff.shopId}`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setNotifications([]);
+      setShowNotifications(false);
+      showToast("Notifications cleared", "success");
+    } catch (err) {
+      console.error(err);
+      showToast("Failed to clear notifications", "error");
     }
   };
 
@@ -466,82 +444,49 @@ const StaffDashboard = () => {
 
           <div className="sd-navbar__right">
             {/* Notification Bell */}
-            <div className="sd-notif" ref={notifRef}>
-              <button
-                className="sd-notif__btn"
-                onClick={() => setShowNotifications((v) => !v)}
+            <div style={{ position: "relative" }} ref={notifRef}>
+              <button 
+                className="od-nav-icon-btn" 
+                style={{ marginRight: '16px', position: "relative" }} 
+                onClick={() => setShowNotifications(!showNotifications)}
               >
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
-                  <path d="M13.73 21a2 2 0 0 1-3.46 0" />
-                </svg>
-                {unreadCount > 0 && (
-                  <span className="sd-notif__badge">{unreadCount}</span>
+                🔔
+                {notifications.length > 0 && (
+                  <span style={{
+                    position: "absolute", top: "-5px", right: "8px",
+                    background: "#ef4444", color: "#fff", fontSize: "10px",
+                    padding: "2px 6px", borderRadius: "10px", fontWeight: "bold"
+                  }}>
+                    {notifications.length}
+                  </span>
                 )}
               </button>
-
+              
               {showNotifications && (
-                <div className="sd-notif__dropdown">
-                  <div className="sd-notif__header">
-                    <span>Notifications</span>
-                    <button
-                      className="sd-notif__clear"
-                      onClick={() => {
-                        const clearedIds = JSON.parse(
-                          localStorage.getItem("staff_cleared_notifications") || "[]"
-                        );
-                        const newCleared = [
-                          ...clearedIds,
-                          ...notifications.map((n) => n.id),
-                        ];
-                        localStorage.setItem(
-                          "staff_cleared_notifications",
-                          JSON.stringify(newCleared)
-                        );
-                        setNotifications([]);
-                        localStorage.setItem("staff_notifications", JSON.stringify([]));
-                      }}
-                    >
-                      Clear all
-                    </button>
+                <div style={{
+                  position: "absolute", top: "50px", right: "16px",
+                  width: "320px", background: "#fff", borderRadius: "12px",
+                  boxShadow: "0 10px 25px rgba(0,0,0,0.1)", zIndex: 1000,
+                  border: "1px solid #e2e8f0", overflow: "hidden"
+                }}>
+                  <div style={{ padding: "16px", borderBottom: "1px solid #e2e8f0", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <strong style={{ fontSize: "14px", color: "#0f172a" }}>Notifications ({notifications.length})</strong>
+                    {notifications.length > 0 && (
+                      <button onClick={handleMarkAllRead} style={{ background: "none", border: "none", color: "#2563eb", fontSize: "12px", cursor: "pointer", fontWeight: "600" }}>Mark all read</button>
+                    )}
                   </div>
-
-                  <div className="sd-notif__list">
+                  <div style={{ maxHeight: "320px", overflowY: "auto", padding: "8px 0" }}>
                     {notifications.length === 0 ? (
-                      <div className="sd-notif__empty">
-                        <span>📭</span>
-                        <p>No notifications</p>
-                      </div>
+                      <div style={{ padding: "20px", textAlign: "center", color: "#64748b", fontSize: "13px" }}>You have no unread notifications</div>
                     ) : (
-                      notifications.map((n) => (
-                        <div
-                          key={n.id}
-                          className={`sd-notif__item ${n.read ? "" : "unread"}`}
-                          onClick={() => {
-                            const updated = notifications.map((notif) =>
-                              notif.id === n.id ? { ...notif, read: true } : notif
-                            );
-                            setNotifications(updated);
-                            localStorage.setItem(
-                              "staff_notifications",
-                              JSON.stringify(updated)
-                            );
-                          }}
-                        >
-                          <span className="sd-notif__item-icon">
-                            {n.type === "new_order" ? "📦" : n.type === "low_stock" ? "⚠️" : "🔔"}
-                          </span>
-                          <div>
-                            <p className="sd-notif__item-msg">{n.message}</p>
-                            <span className="sd-notif__item-time">
-                              {n.createdAt
-                                ? new Date(n.createdAt).toLocaleTimeString([], {
-                                    hour: "2-digit",
-                                    minute: "2-digit",
-                                  })
-                                : ""}
-                            </span>
-                          </div>
+                      notifications.map(noti => (
+                        <div key={noti._id} style={{
+                          padding: "12px 16px", borderBottom: "1px solid #f1f5f9", background: noti.type === "low_stock" ? "#fef2f2" : "#f8fafc", cursor: "pointer"
+                        }}>
+                          <p style={{ margin: "0 0 6px", fontSize: "13px", color: noti.type === "low_stock" ? "#991b1b" : "#0f172a", fontWeight: "500", lineHeight: "1.4" }}>
+                            {noti.type === "low_stock" ? "🚨 " : "📦 "}{noti.message}
+                          </p>
+                          <span style={{ fontSize: "11px", color: "#94a3b8" }}>{new Date(noti.createdAt).toLocaleString()}</span>
                         </div>
                       ))
                     )}
@@ -551,16 +496,21 @@ const StaffDashboard = () => {
             </div>
 
             {/* Avatar */}
-            <div className="sd-avatar">
-              {staff?.profileImage ? (
-                <img src={`${API_BASE}/${staff.profileImage}`} alt="avatar" />
-              ) : (
-                <span>{(staff?.username || "S")[0].toUpperCase()}</span>
-              )}
-            </div>
-            <div className="sd-navbar__staff-info">
-              <span className="sd-navbar__name">{staff?.username || "Staff"}</span>
-              <span className="sd-navbar__role">Staff</span>
+            <div
+              onClick={() => navigate("/staff-profile")}
+              style={{ display: "flex", alignItems: "center", gap: "12px", cursor: "pointer" }}
+            >
+              <div className="sd-avatar">
+                {staff?.profileImage ? (
+                  <img src={`${API_BASE}/${staff.profileImage}`} alt="avatar" />
+                ) : (
+                  <span>{(staff?.username || "S")[0].toUpperCase()}</span>
+                )}
+              </div>
+              <div className="sd-navbar__staff-info">
+                <span className="sd-navbar__name">{staff?.username || "Staff"}</span>
+                <span className="sd-navbar__role">Staff</span>
+              </div>
             </div>
           </div>
         </header>

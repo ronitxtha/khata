@@ -349,7 +349,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 20px 24px;
-  background: linear-gradient(135deg, #1e40af, #2563eb);
+  background: #0f172a;
   border-radius: 18px 18px 0 0;
   position: sticky;
   top: 0;
@@ -485,19 +485,19 @@
 
 .si-btn-submit {
   padding: 10px 24px;
-  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  background: #0f172a;
   border: none;
   border-radius: 10px;
   font-size: 14px;
   font-weight: 700;
   color: #fff;
   cursor: pointer;
-  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);
-  transition: opacity 0.15s, transform 0.12s;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.25);
+  transition: background 0.15s, transform 0.12s;
 }
 
 .si-btn-submit:hover {
-  opacity: 0.9;
+  background: #1e293b;
   transform: translateY(-1px);
 }
 

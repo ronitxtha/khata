@@ -20,11 +20,36 @@ const OwnerDashboard = () => {
   const [salesData, setSalesData] = useState([]);
   const [salesTimeframe, setSalesTimeframe] = useState("today");
   const [yearlyOrders, setYearlyOrders] = useState([]);
-  const [notifications, setNotifications] = useState(() => {
-    const saved = localStorage.getItem("owner_notifications");
-    return saved ? JSON.parse(saved) : [];
-  });
+  const [notifications, setNotifications] = useState([]);
   const [showNotifications, setShowNotifications] = useState(false);
+
+  const fetchNotifications = async (shopId) => {
+    try {
+      const token = localStorage.getItem("accessToken");
+      const res = await axios.get(`${API_BASE}/api/notifications/${shopId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.data) setNotifications(res.data);
+    } catch (err) {
+      console.error("Failed to fetch notifications:", err);
+    }
+  };
+
+  const handleMarkAllRead = async () => {
+    try {
+      const token = localStorage.getItem("accessToken");
+      await axios.put(`${API_BASE}/api/notifications/mark-all-read/${owner.shopId}`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setNotifications([]);
+      setShowNotifications(false);
+      showToast("Notifications cleared", "success");
+    } catch (err) {
+      console.error(err);
+      showToast("Failed to clear notifications", "error");
+    }
+  };
+
   const [stats, setStats] = useState({
     totalProducts: 0,
     totalOrders: 0,
@@ -65,19 +90,24 @@ const OwnerDashboard = () => {
         });
         setOwner(resOwner.data.owner);
         fetchDashboardMetrics(token, "today");
+        if (resOwner.data.owner.shopId) {
+          fetchNotifications(resOwner.data.owner.shopId);
+        }
       } catch (err) { console.error(err); }
     };
     fetchOwnerData();
 
     socket.on("lowStockAlert", (data) => {
       showToast(data.message, "error");
-      fetchDashboardMetrics(localStorage.getItem("accessToken"), salesTimeframe);
+      fetchDashboardMetrics(localStorage.getItem("accessToken"), "today");
+      if (owner.shopId) fetchNotifications(owner.shopId);
     });
 
     socket.on("newOrder", (data) => {
       if (data.shopId === owner.shopId) {
         showToast(data.message, "success");
-        fetchDashboardMetrics(localStorage.getItem("accessToken"), salesTimeframe);
+        fetchDashboardMetrics(localStorage.getItem("accessToken"), "today");
+        fetchNotifications(owner.shopId);
       }
     });
 
@@ -122,7 +152,56 @@ const OwnerDashboard = () => {
           </div>
           
           <div className="sd-navbar__right">
-            <button className="od-nav-icon-btn" style={{ marginRight: '16px' }}>🔔</button>
+            <div style={{ position: "relative" }}>
+              <button 
+                className="od-nav-icon-btn" 
+                style={{ marginRight: '16px', position: "relative" }} 
+                onClick={() => setShowNotifications(!showNotifications)}
+              >
+                🔔
+                {notifications.length > 0 && (
+                  <span style={{
+                    position: "absolute", top: "-5px", right: "8px",
+                    background: "#ef4444", color: "#fff", fontSize: "10px",
+                    padding: "2px 6px", borderRadius: "10px", fontWeight: "bold"
+                  }}>
+                    {notifications.length}
+                  </span>
+                )}
+              </button>
+              
+              {showNotifications && (
+                <div style={{
+                  position: "absolute", top: "50px", right: "16px",
+                  width: "320px", background: "#fff", borderRadius: "12px",
+                  boxShadow: "0 10px 25px rgba(0,0,0,0.1)", zIndex: 1000,
+                  border: "1px solid #e2e8f0", overflow: "hidden"
+                }}>
+                  <div style={{ padding: "16px", borderBottom: "1px solid #e2e8f0", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <strong style={{ fontSize: "14px", color: "#0f172a" }}>Notifications ({notifications.length})</strong>
+                    {notifications.length > 0 && (
+                      <button onClick={handleMarkAllRead} style={{ background: "none", border: "none", color: "#2563eb", fontSize: "12px", cursor: "pointer", fontWeight: "600" }}>Mark all read</button>
+                    )}
+                  </div>
+                  <div style={{ maxHeight: "320px", overflowY: "auto", padding: "8px 0" }}>
+                    {notifications.length === 0 ? (
+                      <div style={{ padding: "20px", textAlign: "center", color: "#64748b", fontSize: "13px" }}>You have no unread notifications</div>
+                    ) : (
+                      notifications.map(noti => (
+                        <div key={noti._id} style={{
+                          padding: "12px 16px", borderBottom: "1px solid #f1f5f9", background: noti.type === "low_stock" ? "#fef2f2" : "#f8fafc", cursor: "pointer"
+                        }}>
+                          <p style={{ margin: "0 0 6px", fontSize: "13px", color: noti.type === "low_stock" ? "#991b1b" : "#0f172a", fontWeight: "500", lineHeight: "1.4" }}>
+                            {noti.type === "low_stock" ? "🚨 " : "📦 "}{noti.message}
+                          </p>
+                          <span style={{ fontSize: "11px", color: "#94a3b8" }}>{new Date(noti.createdAt).toLocaleString()}</span>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
             <div className="sd-avatar">
               <span>{(owner?.username || "O")[0].toUpperCase()}</span>
             </div>
