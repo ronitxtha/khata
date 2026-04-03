@@ -387,4 +387,16 @@ router.post("/esewa-success", async (req, res) => {
 });
 
 
+// Get a single order by ID
+router.get("/:id", async (req, res) => {
+  try {
+    const order = await Order.findById(req.params.id).populate("user", "username email phone");
+    if (!order) return res.status(404).json({ message: "Order not found" });
+    res.json(order);
+  } catch (err) {
+    res.status(500).json({ message: "Error fetching order" });
+  }
+});
+
 export default router;
+

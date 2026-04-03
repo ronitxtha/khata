@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useCart } from "../context/CartContext";
 import CustomerSidebar from "../components/CustomerSidebar";
 import axios from "axios";
+import { imgUrl } from "../utils/imageUrl";
 import nepalLocations from "../data/nepalLocations.json";
 import "../styles/customerLayout.css";
 import "../styles/cart.css";
@@ -79,7 +80,7 @@ const Cart = () => {
     fetchProfile();
   }, []);
 
-  const avatarSrc = customerInfo?.profileImage ? `${API_BASE}/${customerInfo.profileImage}` : null;
+  const avatarSrc = customerInfo?.profileImage ? imgUrl(customerInfo.profileImage) : null;
 
   return (
     <div className="sd-layout od-modern-layout">
@@ -160,7 +161,7 @@ const Cart = () => {
                   <div key={item._id} className="cart-item-card">
                     <div className="cart-item-image-wrap">
                       <img 
-                        src={item.image ? `${API_BASE}/${item.image}` : "https://via.placeholder.com/100"} 
+                        src={item.image ? imgUrl(item.image) : "https://via.placeholder.com/100"} 
                         alt={item.name} 
                       />
                     </div>

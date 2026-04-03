@@ -7,7 +7,7 @@ const API_BASE = "http://localhost:8000";
 const EsewaSuccess = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const [status, setStatus] = useState("Verifying payment...");
+  const [status, setStatus] = useState("Verifying payment…");
 
   useEffect(() => {
     const data = searchParams.get("data");
@@ -20,10 +20,11 @@ const EsewaSuccess = () => {
     const verifyPayment = async () => {
       try {
         const res = await axios.post(`${API_BASE}/api/orders/esewa-success`, { data });
-        setStatus("Payment verified successfully! Redirecting...");
+        setStatus("Payment verified! Redirecting to your receipt…");
+        // Navigate to receipt page with the returned orderId
         setTimeout(() => {
-          navigate("/orders");
-        }, 2000);
+          navigate("/order-receipt", { state: { orderId: res.data.orderId } });
+        }, 1200);
       } catch (error) {
         console.error("Verification error:", error);
         setStatus(error.response?.data?.message || "Payment verification failed.");
@@ -32,6 +33,7 @@ const EsewaSuccess = () => {
 
     verifyPayment();
   }, [searchParams, navigate]);
+
 
   return (
     <div style={{ padding: "50px", textAlign: "center", fontFamily: "sans-serif" }}>

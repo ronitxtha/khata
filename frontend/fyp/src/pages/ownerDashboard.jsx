@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import { imgUrl } from "../utils/imageUrl";
 import "../styles/staffDashboard.css";
 import "../styles/ownerDashboard.css";
 import "../styles/OwnerProfile.css"; // Reuse some refined styles if needed
@@ -208,7 +209,7 @@ const OwnerDashboard = () => {
             >
               <div className="sd-avatar">
                 {owner?.profileImage ? (
-                  <img src={`${API_BASE}/${owner.profileImage}`} alt="avatar" />
+                  <img src={imgUrl(owner.profileImage)} alt="avatar" />
                 ) : (
                   <span>{(owner?.username || "O")[0].toUpperCase()}</span>
                 )}
@@ -240,44 +241,44 @@ const OwnerDashboard = () => {
               <span className="si-ledger-card__label">TOTAL REVENUE (NPR)</span>
               <div className="si-ledger-card__content">
                 <span className="si-ledger-card__num">Rs. {totalRevenue.toLocaleString()}</span>
-                <span className="si-ledger-tag si-ledger-tag--success" style={{ fontWeight: 800 }}>+12.4%</span>
+                
               </div>
             </div>
             <div className="si-ledger-card">
               <span className="si-ledger-card__label">ESTIMATED PROFIT</span>
               <div className="si-ledger-card__content">
                 <span className="si-ledger-card__num">Rs. {totalProfit.toLocaleString()}</span>
-                <span className="si-ledger-tag" style={{ background: '#f1f5f9', fontWeight: 800 }}>NPR</span>
+               
               </div>
             </div>
-            <div className="si-ledger-card" style={{ borderLeft: '4px solid #f59e0b' }}>
+            <div className="si-ledger-card">
               <span className="si-ledger-card__label">PENDING ORDERS</span>
               <div className="si-ledger-card__content">
                 <span className="si-ledger-card__num" style={{ color: '#d97706' }}>{stats.pendingOrdersCount}</span>
-                <span className="si-ledger-tag si-ledger-tag--warning" style={{ fontWeight: 800 }}>ATTENTION</span>
+                
               </div>
             </div>
-            <div className="si-ledger-card" style={{ borderLeft: '4px solid #6366f1' }}>
+            <div className="si-ledger-card">
               <span className="si-ledger-card__label">STAFF ONLINE</span>
               <div className="si-ledger-card__content">
                 <span className="si-ledger-card__num">{stats.onlineStaffCount}/{stats.totalStaffCount}</span>
-                <span className="si-ledger-tag" style={{ background: '#eef2ff', color: '#4338ca', fontWeight: 800 }}>ACTIVE</span>
+                
               </div>
             </div>
             
-            <div className="si-ledger-card" style={{ borderLeft: '4px solid #10b981' }}>
+            <div className="si-ledger-card">
               <span className="si-ledger-card__label">TOTAL PRODUCTS</span>
               <div className="si-ledger-card__content">
                 <span className="si-ledger-card__num">{stats.totalProducts?.toLocaleString() || "0"}</span>
-                <span className="si-ledger-tag si-ledger-tag--success" style={{ fontWeight: 800 }}>CATALOGUE</span>
+                
               </div>
             </div>
 
-            <div className="si-ledger-card" style={{ borderLeft: '4px solid #0f172a' }}>
+            <div className="si-ledger-card">
               <span className="si-ledger-card__label">OUT OF STOCK</span>
               <div className="si-ledger-card__content">
                 <span className="si-ledger-card__num" style={{ color: '#ef4444' }}>{stats.outOfStockProducts || "0"}</span>
-                <span className="si-ledger-tag" style={{ background: '#fee2e2', color: '#ef4444', fontWeight: 800 }}>CRITICAL</span>
+                
               </div>
             </div>
           </div>

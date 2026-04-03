@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import { imgUrl } from "../utils/imageUrl";
 
 import "../styles/staffManagement.css";
 import OwnerSidebar from "../components/OwnerSidebar";
@@ -192,7 +193,7 @@ const AddStaff = () => {
             >
               <div className="sd-avatar">
                 {owner?.profileImage ? (
-                  <img src={`${API_BASE}/${owner.profileImage}`} alt="avatar" />
+                  <img src={imgUrl(owner.profileImage)} alt="avatar" />
                 ) : (
                   <span>{(owner?.username || "O")[0].toUpperCase()}</span>
                 )}

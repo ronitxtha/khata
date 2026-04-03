@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import { imgUrl } from "../utils/imageUrl";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -502,7 +503,7 @@ const StaffDashboard = () => {
             >
               <div className="sd-avatar">
                 {staff?.profileImage ? (
-                  <img src={`${API_BASE}/${staff.profileImage}`} alt="avatar" />
+                  <img src={imgUrl(staff.profileImage)} alt="avatar" />
                 ) : (
                   <span>{(staff?.username || "S")[0].toUpperCase()}</span>
                 )}
@@ -678,7 +679,7 @@ const StaffDashboard = () => {
           </div>
           {scannedProduct.image && (
             <img
-              src={`${API_BASE}/${scannedProduct.image}`}
+              src={imgUrl(scannedProduct.image)}
               alt={scannedProduct.name}
               className="sd-scanned-card__img"
             />

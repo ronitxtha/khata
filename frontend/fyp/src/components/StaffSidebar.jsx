@@ -2,6 +2,7 @@ import React from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import "../styles/staffDashboard.css";
 import "../styles/ownerDashboard.css";
+import { imgUrl } from "../utils/imageUrl";
 
 const StaffSidebar = ({ sidebarOpen, setSidebarOpen, staff, handleLogout }) => {
   const navigate = useNavigate();
@@ -51,7 +52,7 @@ const StaffSidebar = ({ sidebarOpen, setSidebarOpen, staff, handleLogout }) => {
           <div className="od-user-profile">
             <div className="od-user-avatar">
               <img 
-                src={staff?.profileImage ? `${API_BASE}/${staff.profileImage}` : `https://ui-avatars.com/api/?name=${staff?.username || "Staff"}`} 
+                src={staff?.profileImage ? imgUrl(staff.profileImage) : `https://ui-avatars.com/api/?name=${staff?.username || "Staff"}`} 
                 alt="Profile" 
               />
             </div>

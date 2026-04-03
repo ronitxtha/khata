@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import "../styles/ownerProfile.css";
 import OwnerSidebar from "../components/OwnerSidebar";
+import { imgUrl } from "../utils/imageUrl";
 
 const API_BASE = "http://localhost:8000";
 
@@ -218,7 +219,7 @@ const OwnerProfile = () => {
             <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
               <div className="sd-avatar">
                 {profile?.profileImage ? (
-                  <img src={`${API_BASE}/${profile.profileImage}`} alt="avatar" />
+                  <img src={imgUrl(profile.profileImage)} alt="avatar" />
                 ) : (
                   <span>{(profile?.username || "O")[0].toUpperCase()}</span>
                 )}
@@ -245,7 +246,7 @@ const OwnerProfile = () => {
             <div className="op-profile-floating-card">
               <div className="op-avatar-wrapper" onClick={() => document.getElementById("profileImageInput").click()} title="Change Profile Image">
                 {profile?.profileImage || profileImagePreview ? (
-                  <img src={profileImagePreview || `${API_BASE}/${profile.profileImage}`} alt="profile" className="op-avatar-img" />
+                  <img src={profileImagePreview || imgUrl(profile.profileImage)} alt="profile" className="op-avatar-img" />
                 ) : (
                   <div className="op-avatar-img" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px', fontWeight: 800, color: '#94a3b8' }}>
                     {(profile?.username || "O")[0].toUpperCase()}
@@ -381,7 +382,7 @@ const OwnerProfile = () => {
               <div className="op-shop-card">
                 <div className="op-logo-box" onClick={() => document.getElementById("shopLogoInput").click()}>
                    {profile?.shopLogo ? (
-                     <img src={`${API_BASE}/${profile.shopLogo}`} alt="logo" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '8px' }} />
+                     <img src={imgUrl(profile.shopLogo)} alt="logo" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '8px' }} />
                    ) : (
                      <>
                         <div className="op-logo-icon">🏪</div>
@@ -439,7 +440,7 @@ const OwnerProfile = () => {
                          <div style={{ display: 'flex', alignItems: 'center', gap: '16px', background: '#fff', padding: '12px', borderRadius: '8px', border: '1px solid #f1f5f9' }}>
                             <div className="op-logo-preview-mini" style={{ width: '48px', height: '48px', borderRadius: '4px', overflow: 'hidden', background: '#f8fafc', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }} onClick={() => document.getElementById("shopLogoInputSettings").click()}>
                                {profile?.shopLogo ? (
-                                 <img src={`${API_BASE}/${profile.shopLogo}`} alt="logo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                 <img src={imgUrl(profile.shopLogo)} alt="logo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                                ) : (
                                  <span style={{ fontSize: '18px' }}>🏪</span>
                                )}

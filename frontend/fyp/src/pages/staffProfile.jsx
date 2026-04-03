@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import { imgUrl } from "../utils/imageUrl";
 import "../styles/staffProfile.css";
 import StaffSidebar from "../components/StaffSidebar";
 
@@ -170,7 +171,7 @@ const StaffProfile = () => {
     );
   }
 
-  const avatarDisplay = imagePreview || (staff?.profileImage ? `${API_BASE}/${staff.profileImage}` : null);
+  const avatarDisplay = imagePreview || (staff?.profileImage ? imgUrl(staff.profileImage) : null);
 
   return (
     <div className="sd-layout od-modern-layout">
@@ -197,7 +198,7 @@ const StaffProfile = () => {
             <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
               <div className="sd-avatar">
                 {staff?.profileImage ? (
-                  <img src={`${API_BASE}/${staff.profileImage}`} alt="avatar" />
+                  <img src={imgUrl(staff.profileImage)} alt="avatar" />
                 ) : (
                   <span>{(staff?.username || "S")[0].toUpperCase()}</span>
                 )}

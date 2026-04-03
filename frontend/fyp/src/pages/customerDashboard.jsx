@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import { imgUrl } from "../utils/imageUrl";
 import CustomerSidebar from "../components/CustomerSidebar";
 import "../styles/customerLayout.css";
 import "../styles/customerDashboard.css";
@@ -175,7 +176,7 @@ const CustomerDashboard = () => {
                     <div key={p._id} className="product-card">
                       <div className="product-card-image-wrap">
                         <img
-                          src={`${API_BASE}/${p.image}`}
+                          src={imgUrl(p.image)}
                           alt={p.name}
                           onError={(e) => { e.target.src = "https://via.placeholder.com/300?text=No+Image"; }}
                         />
@@ -232,7 +233,7 @@ const CustomerDashboard = () => {
                 <div key={p._id} className="product-card">
                   <div className="product-card-image-wrap">
                     <img
-                      src={`${API_BASE}/${p.image}`}
+                      src={imgUrl(p.image)}
                       alt={p.name}
                       onError={(e) => { e.target.src = "https://via.placeholder.com/300?text=No+Image"; }}
                     />

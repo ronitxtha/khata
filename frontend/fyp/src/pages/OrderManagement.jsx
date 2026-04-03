@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import { imgUrl } from "../utils/imageUrl";
 import socket from "../socket";
 import "../styles/orderManagement.css";
 import OwnerSidebar from "../components/OwnerSidebar";
@@ -132,7 +133,7 @@ const OrderManagement = () => {
             >
               <div className="sd-avatar">
                 {user?.profileImage ? (
-                  <img src={`${API_BASE}/${user.profileImage}`} alt="avatar" />
+                  <img src={imgUrl(user.profileImage)} alt="avatar" />
                 ) : (
                   <span>{(user?.username || (role === "owner" ? "O" : "S"))[0].toUpperCase()}</span>
                 )}
@@ -167,29 +168,27 @@ const OrderManagement = () => {
             <div className="om-ledger-card">
               <span className="om-ledger-card__label">Total Orders</span>
               <span className="om-ledger-card__num">{orders.length.toLocaleString()}</span>
-              <span className="om-ledger-trend om-trend--high">~12%</span>
+              
             </div>
             <div className="om-ledger-card">
               <span className="om-ledger-card__label">Pending</span>
               <span className="om-ledger-card__num">{countByStatus("Pending")}</span>
-              <span className="om-ledger-trend om-trend--high">! High</span>
+              
             </div>
             <div className="om-ledger-card">
               <span className="om-ledger-card__label">Processing</span>
               <span className="om-ledger-card__num">{countByStatus("Processing")}</span>
-              <div className="om-trend--progress">
-                <div className="om-trend--bar" style={{ width: orders.length > 0 ? (countByStatus("Processing")/orders.length*100)+'%' : '0%' }}></div>
-              </div>
+              
             </div>
             <div className="om-ledger-card">
               <span className="om-ledger-card__label">Delivered</span>
               <span className="om-ledger-card__num">{countByStatus("Delivered")}</span>
-              <span className="om-ledger-trend om-trend--check">✔ Verified</span>
+              
             </div>
             <div className="om-ledger-card">
               <span className="om-ledger-card__label">Cancelled</span>
               <span className="om-ledger-card__num">{countByStatus("Cancelled")}</span>
-              <span className="om-ledger-trend om-trend--high" style={{ color: '#94a3b8', background: '#f1f5f9' }}>4.8%</span>
+              
             </div>
           </div>
 
@@ -274,7 +273,7 @@ const OrderManagement = () => {
                           {order.items.map((item, idx) => (
                             <div key={idx} className="om-item-card">
                               <img 
-                                src={`${API_BASE}/${item.image}`} 
+                                src={imgUrl(item.image)} 
                                 alt={item.name} 
                                 className="om-item-img" 
                                 onError={(e) => { e.target.src = "https://placehold.co/60x60?text=Item"; }}

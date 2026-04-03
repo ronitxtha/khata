@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import { imgUrl } from "../utils/imageUrl";
 import CustomerSidebar from "../components/CustomerSidebar";
 import "../styles/customerLayout.css";
 import "../styles/orderHistory.css";
@@ -244,7 +245,7 @@ const OrderHistory = () => {
                               {order.items?.map((item, index) => (
                                 <div key={index} className="order-item-card">
                                   <div className="item-card-image">
-                                    <img src={`${API_BASE}/${item.image}`} alt={item.name} />
+                                    <img src={imgUrl(item.image)} alt={item.name} />
                                   </div>
                                   
                                   <div className="item-card-content">

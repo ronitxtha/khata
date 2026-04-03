@@ -200,7 +200,7 @@ export const uploadProfileImage = async (req, res) => {
       fs.mkdirSync(uploadDir, { recursive: true });
     }
 
-    const filePath = path.join(uploadDir, req.file.filename);
+    const filePath = path.join(uploadDir, req.file.filename).replace(/\\/g, "/");
     fs.renameSync(req.file.path, filePath);
 
     owner.profileImage = filePath;
@@ -254,7 +254,7 @@ export const uploadShopLogo = async (req, res) => {
       fs.mkdirSync(uploadDir, { recursive: true });
     }
 
-    const filePath = path.join(uploadDir, req.file.filename);
+    const filePath = path.join(uploadDir, req.file.filename).replace(/\\/g, "/");
     fs.renameSync(req.file.path, filePath);
 
     owner.shopLogo = filePath;

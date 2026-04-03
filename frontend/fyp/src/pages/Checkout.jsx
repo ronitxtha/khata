@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
+import { imgUrl } from "../utils/imageUrl";
 import "../styles/checkout.css";
 
 const API_BASE = "http://localhost:8000";
@@ -62,8 +63,7 @@ const Checkout = () => {
       if (payment === "COD") {
         // Standard COD flow
         const res = await axios.post(`${API_BASE}/api/orders/create`, payload);
-        alert("Order placed successfully");
-        navigate("/orders");
+        navigate("/order-receipt", { state: { order: res.data } });
       } else if (payment === "ESEWA") {
         // eSewa Flow
         const res = await axios.post(`${API_BASE}/api/orders/initiate-esewa`, payload);
@@ -116,7 +116,7 @@ const Checkout = () => {
             cartItems.map((item) => (
               <div key={item._id} className="product-item">
                 <div className="product-img-wrapper">
-                  <img src={`${API_BASE}/${item.image}`} alt={item.name} />
+                  <img src={imgUrl(item.image)} alt={item.name} />
                 </div>
                 <div className="product-info">
                   <h4>{item.name}</h4>
@@ -132,7 +132,7 @@ const Checkout = () => {
           ) : (
             <div className="product-item">
               <div className="product-img-wrapper">
-                <img src={`${API_BASE}/${product.image}`} alt={product.name} />
+                <img src={imgUrl(product.image)} alt={product.name} />
               </div>
 
               <div className="product-info">

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import { imgUrl } from "../utils/imageUrl";
 import "../styles/customerLayout.css";
 import "../styles/customerDashboard.css";
 import Rating from "../components/Rating";
@@ -181,7 +182,7 @@ const DemoShop = () => {
                   <div key={p._id} className="product-card" style={{ border: '1px solid #f1f5f9', borderRadius: '12px', overflow: 'hidden', padding: '16px' }}>
                     <div className="product-card-image-wrap" style={{ height: '200px', background: '#f8fafc', borderRadius: '8px', marginBottom: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                       <img
-                        src={`${API_BASE}/${p.image}`}
+                        src={imgUrl(p.image)}
                         alt={p.name}
                         onError={(e) => { e.target.src = "https://placehold.co/300x300?text=No+Image"; }}
                         style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }}
@@ -241,7 +242,7 @@ const DemoShop = () => {
                   <div key={p._id} className="product-card" style={{ border: '1px solid #f1f5f9', borderRadius: '12px', overflow: 'hidden', padding: '16px' }}>
                     <div className="product-card-image-wrap" style={{ height: '180px', background: '#f8fafc', borderRadius: '8px', marginBottom: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                       <img
-                        src={`${API_BASE}/${p.image}`}
+                        src={imgUrl(p.image)}
                         alt={p.name}
                         onError={(e) => { e.target.src = "https://placehold.co/300x300?text=No+Image"; }}
                         style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }}

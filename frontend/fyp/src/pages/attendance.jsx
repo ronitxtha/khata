@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import { imgUrl } from "../utils/imageUrl";
 import "../styles/staffDashboard.css";
 import "../styles/staffInventory.css";
 import "../styles/ownerDashboard.css";
@@ -133,7 +134,7 @@ const Attendance = () => {
             >
               <div className="sd-avatar">
                 {owner?.profileImage ? (
-                  <img src={`${API_BASE}/${owner.profileImage}`} alt="avatar" />
+                  <img src={imgUrl(owner.profileImage)} alt="avatar" />
                 ) : (
                   <span>{(owner?.username || "O")[0].toUpperCase()}</span>
                 )}

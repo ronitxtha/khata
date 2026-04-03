@@ -4,6 +4,7 @@ import axios from "axios";
 import QRScanner from "./QRScanner";
 import OwnerSidebar from "../components/OwnerSidebar";
 import StaffSidebar from "../components/StaffSidebar";
+import { imgUrl } from "../utils/imageUrl";
 
 const API_BASE = "http://localhost:8000";
 
@@ -359,7 +360,7 @@ const ProductManagement = () => {
             >
               <div className="sd-avatar">
                 {owner?.profileImage ? (
-                  <img src={`${API_BASE}/${owner.profileImage}`} alt="avatar" />
+                  <img src={imgUrl(owner.profileImage)} alt="avatar" />
                 ) : (
                   <span>{(owner?.username || (owner?.role === "owner" ? "O" : "S"))[0].toUpperCase()}</span>
                 )}
@@ -481,7 +482,7 @@ const ProductManagement = () => {
                         <td>
                           <div className="si-ledger-product">
                             {p.image ? (
-                              <img src={`${API_BASE}/${p.image}`} alt={p.name} className="si-ledger-img" />
+                              <img src={imgUrl(p.image)} alt={p.name} className="si-ledger-img" />
                             ) : (
                               <div className="si-ledger-img" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>📷</div>
                             )}
@@ -515,10 +516,10 @@ const ProductManagement = () => {
                           {p.qrCode ? (
                             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px' }}>
                               <img 
-                                src={`${API_BASE}/${p.qrCode}`} 
+                                src={imgUrl(p.qrCode)} 
                                 alt="QR" 
                                 style={{ width: "36px", height: "36px", objectFit: "contain", borderRadius: "4px", border: "1px solid #e2e8f0", cursor: "pointer" }}
-                                onClick={() => setViewQr(`${API_BASE}/${p.qrCode}`)}
+                                onClick={() => setViewQr(imgUrl(p.qrCode))}
                                 title="Click to enlarge"
                               />
                               <button 
@@ -657,7 +658,7 @@ const ProductManagement = () => {
               {products.find((p) => p._id === editingProduct)?.image && !editImage && (
                 <div className="si-edit-img-preview">
                   <img
-                    src={`${API_BASE}/${products.find((p) => p._id === editingProduct)?.image}`}
+                    src={imgUrl(products.find((p) => p._id === editingProduct)?.image)}
                     alt="Current"
                   />
                 </div>

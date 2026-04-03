@@ -141,7 +141,7 @@ export const recordPurchase = async (req, res) => {
     }
 
     const totalCost = Number(quantity) * Number(costPrice);
-    const imagePath = req.file ? req.file.path : null;
+    const imagePath = req.file ? req.file.path.replace(/\\/g, "/") : null;
 
     let targetProduct;
 

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
+import { imgUrl } from "../utils/imageUrl";
 import nepalLocations from "../data/nepalLocations.json";
 import "../styles/productDetails.css";
 import { useCart } from "../context/CartContext";
@@ -193,7 +194,7 @@ const ProductDetails = () => {
       <main className="pd-product-section">
         <div className="pd-image-section">
           <div className="pd-image-card">
-            <img src={`${API_BASE}/${product.image}`} alt={product.name} />
+            <img src={imgUrl(product.image)} alt={product.name} />
           </div>
         </div>
 

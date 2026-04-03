@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
+import { imgUrl } from "../utils/imageUrl";
 import { Link } from "react-router-dom";
 import CustomerSidebar from "../components/CustomerSidebar";
 import nepalLocations from "../data/nepalLocations.json";
@@ -305,7 +306,7 @@ const CustomerProfile = () => {
     );
   }
 
-  const avatarSrc = customer?.profileImage ? `${API_BASE}/${customer.profileImage}` : null;
+  const avatarSrc = customer?.profileImage ? imgUrl(customer.profileImage) : null;
   const displayAvatar = imagePreview || avatarSrc;
 
   return (
