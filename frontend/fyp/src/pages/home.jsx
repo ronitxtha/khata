@@ -39,7 +39,7 @@ export default function Home() {
           </p>
           <div className="home-hero-actions">
             <button className="home-btn-primary" onClick={() => navigate("/register")}>Start for free</button>
-            <button className="home-btn-outline" onClick={() => navigate("/login")}>View Demo</button>
+            <button className="home-btn-outline" onClick={() => navigate("/demo-shop")}>View Demo</button>
           </div>
         </div>
       </section>
