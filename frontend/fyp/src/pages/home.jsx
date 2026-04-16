@@ -19,7 +19,7 @@ export default function Home() {
       {/* Navbar */}
       <header className="home-nav">
         <div className="home-logo">
-          <span>SmartKhata.</span>
+          <span>SmartKhata</span>
         </div>
         <div className="home-nav-actions">
           <button className="home-btn-outline" onClick={() => navigate("/login")}>Sign In</button>

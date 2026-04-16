@@ -316,7 +316,7 @@ const OwnerDashboard = () => {
             {/* Sales Chart Panel */}
             <div className="si-ledger-table-wrap">
               <div style={{ padding: '20px', borderBottom: '1px solid #f1f5f9' }}>
-                 <h3 style={{ fontSize: '15px', fontWeight: 800 }}>Revenue Trends</h3>
+                 <h3 style={{ fontSize: '15px', fontWeight: 800 }}>Total Sales</h3>
               </div>
               <div style={{ height: '350px', padding: '24px' }}>
                  <ResponsiveContainer width="100%" height="100%">
@@ -334,7 +334,7 @@ const OwnerDashboard = () => {
             {/* Profit & Loss Chart Panel */}
             <div className="si-ledger-table-wrap">
               <div style={{ padding: '20px', borderBottom: '1px solid #f1f5f9' }}>
-                 <h3 style={{ fontSize: '15px', fontWeight: 800 }}>Profit & Loss Ledger</h3>
+                 <h3 style={{ fontSize: '15px', fontWeight: 800 }}>Total Profit & Loss</h3>
               </div>
               <div style={{ height: '350px', padding: '24px' }}>
                  <ResponsiveContainer width="100%" height="100%">

@@ -624,4 +624,21 @@ router.get("/yearly-orders", isAuthenticated, async (req, res) => {
   }
 });
 
+// ----------------------- Product Reviews (Owner only) -----------------------
+router.get("/product-reviews", isAuthenticated, async (req, res) => {
+  try {
+    const shopId = req.shopId;
+    const products = await Product.find({ shopId, deleted: false })
+      .populate("reviews.user", "username email")
+      .select("name image rating numReviews reviews category price")
+      .sort({ rating: -1 });
+
+    res.json({ success: true, products });
+  } catch (err) {
+    console.error("Product reviews fetch error:", err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 export default router;
+

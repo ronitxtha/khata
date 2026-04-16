@@ -29,6 +29,7 @@ import EsewaFailure from "./pages/EsewaFailure.jsx";
 import Cart from "./pages/Cart.jsx";
 import DemoShop from "./pages/DemoShop.jsx";
 import OrderReceipt from "./pages/OrderReceipt.jsx";
+import OwnerReviews from "./pages/OwnerReviews.jsx";
 
 export default function App() {
   return (
@@ -63,6 +64,7 @@ export default function App() {
         <Route path="/cart" element={<Cart />} />
         <Route path="/demo-shop" element={<DemoShop />} />
         <Route path="/order-receipt" element={<OrderReceipt />} />
+        <Route path="/owner-reviews" element={<OwnerReviews />} />
       </Routes>
    
   );

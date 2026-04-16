@@ -14,6 +14,7 @@ const OwnerSidebar = ({ sidebarOpen, setSidebarOpen, owner, handleLogout }) => {
     { label: "Staff Management", icon: "👥", path: "/add-staff" },
     { label: "Supplier Management", icon: "🏭", path: "/supplier-management" },
     { label: "Attendance", icon: "📅", path: "/attendance" },
+    { label: "Ratings & Reviews", icon: "⭐", path: "/owner-reviews" },
     { label: "Profile", icon: "👤", path: "/owner-profile" },
   ];
 

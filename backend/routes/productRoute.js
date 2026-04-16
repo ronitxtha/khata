@@ -82,4 +82,38 @@ router.post("/products/:id/reviews", isAuthenticated, async (req, res) => {
   }
 });
 
+// @desc    Edit existing review
+// @route   PUT /api/products/:id/reviews
+// @access  Private
+router.put("/products/:id/reviews", isAuthenticated, async (req, res) => {
+  const { rating, comment } = req.body;
+  try {
+    const product = await Product.findById(req.params.id);
+    if (!product) return res.status(404).json({ message: "Product not found" });
+
+    const existingReview = product.reviews.find(
+      (r) => r.user.toString() === req.userId.toString()
+    );
+
+    if (!existingReview) {
+      return res.status(404).json({ message: "Review not found. Submit a review first." });
+    }
+
+    existingReview.rating = Number(rating);
+    existingReview.comment = comment;
+
+    // Recalculate average
+    product.rating =
+      product.reviews.reduce((acc, r) => r.rating + acc, 0) /
+      product.reviews.length;
+
+    await product.save();
+    res.json({ message: "Review updated successfully" });
+  } catch (err) {
+    console.error("Edit review error:", err);
+    res.status(500).json({ message: "Server Error" });
+  }
+});
+
 export default router;
+

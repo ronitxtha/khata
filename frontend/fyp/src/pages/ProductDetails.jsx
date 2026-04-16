@@ -172,7 +172,7 @@ const ProductDetails = () => {
             ← Back
           </button>
           <div className="pd-logo" onClick={() => navigate("/customer-dashboard")}>
-            <span>🛍️</span>
+            
             <h2>Khata</h2>
           </div>
         </div>
