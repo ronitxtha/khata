@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
+import "../styles/auth.css";
 
 export default function VerifyEmail() {
   const { token } = useParams(); // Extract the token from frontend route
@@ -35,8 +36,13 @@ export default function VerifyEmail() {
   }, [token, navigate]);
 
   return (
-    <div style={{ textAlign: "center", marginTop: "50px" }}>
-      <h2>{status}</h2>
+    <div className="auth-wrapper" style={{ justifyContent: "center", alignItems: "center" }}>
+      <div className="auth-form-container glass-card" style={{ maxWidth: "500px", borderRadius: "1.5rem", textAlign: "center" }}>
+        <h2 style={{ marginBottom: "1rem" }}>{status}</h2>
+        <div className="form-links" style={{ justifyContent: "center", margin: "auto" }}>
+          <span onClick={() => navigate("/login")}>Go to Login</span>
+        </div>
+      </div>
     </div>
   );
 }

@@ -201,7 +201,8 @@ const CustomerDashboard = () => {
                         </div>
 
                         <button
-                          className="buy-btn"
+                          className="premium-btn"
+                          style={{ width: "100%", marginTop: "4px", padding: "10px" }}
                           onClick={() => navigate(`/product/${p._id}`)}
                         >
                           View Details
@@ -245,7 +246,8 @@ const CustomerDashboard = () => {
                     </div>
                     <p className="desc">{p.description}</p>
                     <button
-                      className="buy-btn"
+                      className="premium-btn"
+                      style={{ width: "100%", marginTop: "4px" }}
                       onClick={() => {
                         navigate(`/product/${p._id}`);
                         setExpandedShop(null);

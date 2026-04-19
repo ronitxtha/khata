@@ -30,6 +30,8 @@ import Cart from "./pages/Cart.jsx";
 import DemoShop from "./pages/DemoShop.jsx";
 import OrderReceipt from "./pages/OrderReceipt.jsx";
 import OwnerReviews from "./pages/OwnerReviews.jsx";
+import OwnerMessages from "./pages/OwnerMessages.jsx";
+import CustomerMessages from "./pages/CustomerMessages.jsx";
 
 export default function App() {
   return (
@@ -65,6 +67,8 @@ export default function App() {
         <Route path="/demo-shop" element={<DemoShop />} />
         <Route path="/order-receipt" element={<OrderReceipt />} />
         <Route path="/owner-reviews" element={<OwnerReviews />} />
+        <Route path="/owner-messages" element={<OwnerMessages />} />
+        <Route path="/customer-messages" element={<CustomerMessages />} />
       </Routes>
    
   );

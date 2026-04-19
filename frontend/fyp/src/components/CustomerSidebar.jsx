@@ -31,6 +31,7 @@ const CustomerSidebar = ({ isOpen, setIsOpen }) => {
   const navLinks = [
     { path: "/customer-dashboard", label: "Browse Stores", icon: "🏪" },
     { path: "/orders", label: "My Orders", icon: "📦" },
+    { path: "/customer-messages", label: "Messages", icon: "💬" },
     { path: "/cart", label: "Shopping Cart", icon: "🛒" },
     { path: "/customer-profile", label: "My Profile", icon: "👤" },
   ];

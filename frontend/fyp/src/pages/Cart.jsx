@@ -267,7 +267,7 @@ const Cart = () => {
                   </div>
 
                   <button 
-                    className="buy-btn" 
+                    className="premium-btn" 
                     disabled={!isDeliveryComplete}
                     style={{ width: '100%', opacity: isDeliveryComplete ? 1 : 0.4 }}
                     onClick={() => {

@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import "../styles/login.css";
+import "../styles/auth.css";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -54,47 +54,49 @@ export default function Login() {
   };
 
   return (
-    <div className="login-wrapper">
+    <div className="auth-wrapper">
       {/* LEFT IMAGE SECTION */}
-      <div className="login-image">
+      <div className="auth-image">
         <h1>Smart Khata</h1>
         <p>Manage your accounts smarter & faster</p>
         <img
-          src="https://images.unsplash.com/photo-1554224155-6726b3ff858f"
+          src="https://images.unsplash.com/photo-1554224155-6726b3ff858f?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80"
           alt="Business"
         />
       </div>
 
       {/* RIGHT FORM SECTION */}
-      <div className="login-form">
+      <div className="auth-form-container glass-card" style={{borderRadius: 0}}>
         <h2>Welcome Back</h2>
         <p className="form-subtitle">Login to your account</p>
 
         {error && <div className="error-box">{error}</div>}
         {success && <div className="success-box">{success}</div>}
 
-        <form onSubmit={handleLogin} className="login-form-content">
-          <div className="login-form-group">
-            <label>Email Address *</label>
+        <form onSubmit={handleLogin} className="auth-form-content animate-fade-in">
+          <div className="auth-form-group">
+            <label className="input-label">Email Address *</label>
             <input
               type="email"
+              className="input-field"
               placeholder="abcd@gmail.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
             />
           </div>
 
-          <div className="login-form-group">
-            <label>Password *</label>
+          <div className="auth-form-group">
+            <label className="input-label">Password *</label>
             <input
               type="password"
+              className="input-field"
               placeholder="Enter your password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
           </div>
 
-          <button type="submit" className="login-submit-btn">Login</button>
+          <button type="submit" className="premium-btn auth-submit-btn">Login</button>
         </form>
 
         <div className="form-links">

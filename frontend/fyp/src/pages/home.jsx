@@ -22,8 +22,8 @@ export default function Home() {
           <span>SmartKhata</span>
         </div>
         <div className="home-nav-actions">
-          <button className="home-btn-outline" onClick={() => navigate("/login")}>Sign In</button>
-          <button className="home-btn-primary" onClick={() => navigate("/register")}>Open Account</button>
+          <button className="premium-btn-outline" onClick={() => navigate("/login")}>Sign In</button>
+          <button className="premium-btn" onClick={() => navigate("/register")}>Open Account</button>
         </div>
       </header>
 
@@ -38,8 +38,8 @@ export default function Home() {
             owners, staff, and customers to connect seamlessly.
           </p>
           <div className="home-hero-actions">
-            <button className="home-btn-primary" onClick={() => navigate("/register")}>Start for free</button>
-            <button className="home-btn-outline" onClick={() => navigate("/demo-shop")}>View Demo</button>
+            <button className="premium-btn" onClick={() => navigate("/register")}>Start for free</button>
+            <button className="premium-btn-outline" onClick={() => navigate("/demo-shop")}>View Demo</button>
           </div>
         </div>
       </section>

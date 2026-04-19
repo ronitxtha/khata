@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
-import "../styles/otp.css";
+import "../styles/auth.css";
 
 export default function OTP() {
   const navigate = useNavigate();
@@ -42,20 +42,31 @@ export default function OTP() {
   };
 
   return (
-  <div className="otp-page-wrapper">
-    <div className="otp-container">
+  <div className="auth-wrapper" style={{ justifyContent: "center", alignItems: "center" }}>
+    <div className="auth-form-container glass-card" style={{ maxWidth: "500px", borderRadius: "1.5rem" }}>
       <h2>Verify OTP</h2>
-      {error && <p className="error">{error}</p>}
-      {success && <p className="success">{success}</p>}
-      <form onSubmit={handleVerify}>
-        <input
-          type="text"
-          placeholder="Enter OTP"
-          value={otp}
-          onChange={(e) => setOtp(e.target.value)}
-        />
-        <button type="submit">Verify OTP</button>
+      <p className="form-subtitle">We sent a 6-digit code to {email}</p>
+
+      {error && <div className="error-box">{error}</div>}
+      {success && <div className="success-box">{success}</div>}
+      
+      <form onSubmit={handleVerify} className="auth-form-content animate-fade-in">
+        <div className="auth-form-group">
+          <label className="input-label">6-Digit Code</label>
+          <input
+            type="text"
+            className="input-field"
+            placeholder="Enter OTP"
+            value={otp}
+            onChange={(e) => setOtp(e.target.value)}
+          />
+        </div>
+        <button type="submit" className="premium-btn auth-submit-btn">Verify OTP</button>
       </form>
+
+      <div className="form-links">
+        <span onClick={() => navigate("/login")}>Back to login</span>
+      </div>
     </div>
   </div>
 );

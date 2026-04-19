@@ -2,6 +2,7 @@ import express from "express";
 import { Product } from "../models/productModel.js";
 import { isAuthenticated } from "../middleware/isAuthenticated.js";
 import { User } from "../models/userModel.js";
+import { Shop } from "../models/shopModel.js";
 
 const router = express.Router();
 
@@ -23,7 +24,8 @@ router.get("/products", async (req, res) => {
 // ✅ NEW: Get single product by ID (needed for Product Details page)
 router.get("/products/:id", async (req, res) => {
   try {
-    const product = await Product.findById(req.params.id);
+    const product = await Product.findById(req.params.id)
+      .populate("shopId", "ownerId name");
 
     if (!product || product.deleted) {
       return res.status(404).json({ error: "Product not found" });

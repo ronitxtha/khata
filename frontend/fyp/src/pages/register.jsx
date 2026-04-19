@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import "../styles/register.css";
+import "../styles/auth.css";
 
 export default function Register() {
   const navigate = useNavigate();
@@ -71,66 +71,69 @@ export default function Register() {
   };
 
   return (
-    <div className="register-wrapper">
+    <div className="auth-wrapper">
       {/* LEFT IMAGE SECTION */}
-      <div className="register-image">
+      <div className="auth-image">
         <h1>Smart Khata</h1>
         <p>Create your account and manage business with confidence</p>
 
         <img
-          src="https://images.unsplash.com/photo-1523958203904-cdcb402031fd"
+          src="https://images.unsplash.com/photo-1523958203904-cdcb402031fd?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80"
           alt="Business registration"
         />
       </div>
 
       {/* RIGHT FORM SECTION */}
-      <div className="register-form">
+      <div className="auth-form-container glass-card" style={{borderRadius: 0}}>
         <h2>Create Account</h2>
         <p className="form-subtitle">Start using Smart Khata</p>
 
         {error && <div className="error-box">{error}</div>}
         {success && <div className="success-box">{success}</div>}
 
-        <form onSubmit={handleRegister} className="register-form-content">
-          <div className="register-form-group">
-            <label>Full Name *</label>
+        <form onSubmit={handleRegister} className="auth-form-content animate-fade-in">
+          <div className="auth-form-group">
+            <label className="input-label">Full Name *</label>
             <input
               type="text"
+              className="input-field"
               placeholder="Your Full Name"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
             />
           </div>
 
-          <div className="register-form-group">
-            <label>Email Address *</label>
+          <div className="auth-form-group">
+            <label className="input-label">Email Address *</label>
             <input
               type="email"
+              className="input-field"
               placeholder="abcd@gmail.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
             />
           </div>
 
-          <div className="register-form-group">
-            <label>Password *</label>
+          <div className="auth-form-group">
+            <label className="input-label">Password *</label>
             <input
               type="password"
+              className="input-field"
               placeholder="Create a strong password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
           </div>
 
-          <div className="register-form-group">
-            <label>Select Role *</label>
-            <select value={role} onChange={(e) => setRole(e.target.value)}>
+          <div className="auth-form-group">
+            <label className="input-label">Select Role *</label>
+            <select value={role} onChange={(e) => setRole(e.target.value)} className="input-field">
               <option value="customer">Customer</option>
               <option value="owner">Owner</option>
             </select>
           </div>
 
-          <button type="submit" className="register-submit-btn">Create Account</button>
+          <button type="submit" className="premium-btn auth-submit-btn">Create Account</button>
         </form>
 
         <div className="form-links">

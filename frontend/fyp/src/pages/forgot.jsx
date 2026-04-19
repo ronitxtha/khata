@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import "../styles/ForgotPassword.css";
+import "../styles/auth.css";
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState("");
@@ -33,22 +33,34 @@ export default function ForgotPassword() {
   };
 
   return (
-    <div className="forgot-wrapper">
-      <div className="forgot-card">
+    <div className="auth-wrapper" style={{ justifyContent: "center", alignItems: "center" }}>
+      <div className="auth-form-container glass-card" style={{ maxWidth: "500px", borderRadius: "1.5rem" }}>
         <h2>Forgot Password</h2>
+        <p className="form-subtitle">Enter your email to receive an OTP.</p>
+        
         {message && <div className="success-box">{message}</div>}
         {error && <div className="error-box">{error}</div>}
 
-        <form onSubmit={handleForgot}>
-          <input
-            type="email"
-            placeholder="Enter your registered email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
-          <button type="submit">Send OTP</button>
+        <form onSubmit={handleForgot} className="auth-form-content animate-fade-in">
+          <div className="auth-form-group">
+            <label className="input-label">Email Address</label>
+            <input
+              type="email"
+              className="input-field"
+              placeholder="Enter your registered email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+          </div>
+          <button type="submit" className="premium-btn auth-submit-btn">Send OTP</button>
         </form>
+
+        <div className="form-links">
+          <span onClick={() => navigate("/login")}>
+            Back to login
+          </span>
+        </div>
       </div>
     </div>
   );

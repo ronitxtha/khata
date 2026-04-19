@@ -111,7 +111,7 @@ const AddressModal = ({ initial, onSave, onClose }) => {
           </div>
           <div className="cp-modal-actions">
             <button type="button" className="show-all-btn" onClick={onClose}>Cancel</button>
-            <button type="submit" className="buy-btn" style={{ padding: '10px 24px' }} disabled={!form.province || !form.district || !form.municipality || !form.ward}>
+            <button type="submit" className="premium-btn" style={{ padding: '10px 24px' }} disabled={!form.province || !form.district || !form.municipality || !form.ward}>
               {initial?._id ? "Save Changes" : "Add Address"}
             </button>
           </div>
@@ -387,7 +387,7 @@ const CustomerProfile = () => {
                 </div>
                 {imageFile && (
                   <div className="cp-upload-actions">
-                    <button className="buy-btn mini" onClick={handleImageUpload} disabled={uploadingImage}>
+                    <button className="premium-btn mini" onClick={handleImageUpload} disabled={uploadingImage}>
                       {uploadingImage ? "..." : "UPLOAD"}
                     </button>
                     <button className="show-all-btn mini" onClick={() => { setImageFile(null); setImagePreview(null); }}>✕</button>
@@ -428,7 +428,7 @@ const CustomerProfile = () => {
                     <button className="show-all-btn" onClick={() => setIsEditing(true)}>Edit Details</button>
                   ) : (
                     <div className="cp-edit-actions">
-                      <button className="buy-btn" onClick={handleSaveProfile} disabled={savingProfile}>
+                      <button className="premium-btn" onClick={handleSaveProfile} disabled={savingProfile}>
                          {savingProfile ? "SAVING..." : "SAVE CHANGES"}
                       </button>
                       <button className="show-all-btn" onClick={() => setIsEditing(false)}>CANCEL</button>
@@ -469,7 +469,7 @@ const CustomerProfile = () => {
               <div className="si-ledger-table-wrap" style={{ padding: '40px' }}>
                 <div className="cp-section-header">
                   <h3>Delivery Addresses</h3>
-                  <button className="buy-btn mini" onClick={() => setAddressModal({})}>+ ADD NEW</button>
+                  <button className="premium-btn mini" onClick={() => setAddressModal({})}>+ ADD NEW</button>
                 </div>
 
                 {addresses.length === 0 ? (
@@ -565,7 +565,7 @@ const CustomerProfile = () => {
                       required
                     />
                   </div>
-                  <button type="submit" className="buy-btn" disabled={savingPw} style={{ marginTop: '12px' }}>
+                  <button type="submit" className="premium-btn" disabled={savingPw} style={{ marginTop: '12px' }}>
                     {savingPw ? "UPDATING..." : "UPDATE PASSWORD"}
                   </button>
                 </form>

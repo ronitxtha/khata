@@ -154,7 +154,7 @@ const OrderHistory = () => {
                 <h2 style={{ fontSize: '24px', fontWeight: 800, color: '#0f172a', marginBottom: '8px' }}>No Orders Yet</h2>
                 <p style={{ color: '#64748b', fontSize: '15px', marginBottom: '32px' }}>Explore the marketplace to start your first order.</p>
                 <button 
-                  className="buy-btn" 
+                  className="premium-btn" 
                   style={{ maxWidth: '240px', margin: '0 auto' }}
                   onClick={() => navigate('/customer-dashboard')}
                 >
