@@ -61,7 +61,24 @@ const productSchema = new mongoose.Schema({
     required: true,
     default: 0,
   },
+  views: {
+    type: Number,
+    default: 0
+  },
+  totalSold: {
+    type: Number,
+    default: 0
+  },
   deleted: { type: Boolean, default: false }
 }, { timestamps: true });
+
+// ============ INDEXES FOR RECOMMENDATIONS ============
+productSchema.index({ views: -1, createdAt: -1 });
+productSchema.index({ totalSold: -1 });
+productSchema.index({ category: 1 });
+productSchema.index({ category: 1, views: -1 });
+productSchema.index({ category: 1, totalSold: -1 });
+productSchema.index({ deleted: 1 });
+productSchema.index({ shopId: 1, deleted: 1 });
 
 export const Product = mongoose.model("Product", productSchema);

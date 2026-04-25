@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { imgUrl } from "../utils/imageUrl";
 import CustomerSidebar from "../components/CustomerSidebar";
+import RecommendedProducts from "../components/RecommendedProducts";
 import "../styles/customerLayout.css";
 import "../styles/customerDashboard.css";
 import Rating from "../components/Rating";
@@ -145,6 +146,9 @@ const CustomerDashboard = () => {
               ))}
             </div>
           </div>
+
+          {/* RECOMMENDED PRODUCTS SECTION */}
+          <RecommendedProducts />
 
           {/* SHOPS GRID */}
           {(shops || []).map((shop) => {

@@ -21,6 +21,7 @@ import http from "http";
 import { Server } from "socket.io";
 import messageRoutes from "./routes/messageRoute.js";
 import { Message } from "./models/messageModel.js";
+import recommendationRoutes from "./routes/recommendationRoutes.js";
 
 const app = express();
 const PORT = process.env.PORT || 8000;
@@ -143,6 +144,7 @@ app.use("/api/notifications", notificationRoutes);
 app.use("/api/customer", customerProfileRoutes);
 app.use("/api/suppliers", supplierRoutes);
 app.use("/api/messages", messageRoutes);
+app.use("/api/recommendations", recommendationRoutes);
 
 /* ================= START SERVER ================= */
 

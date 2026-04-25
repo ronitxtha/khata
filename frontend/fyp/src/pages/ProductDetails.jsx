@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { imgUrl } from "../utils/imageUrl";
+import { trackProductView } from "../utils/interactionTracking";
 import nepalLocations from "../data/nepalLocations.json";
 import "../styles/productDetails.css";
 import { useCart } from "../context/CartContext";
@@ -53,6 +54,9 @@ const ProductDetails = () => {
         const res = await axios.get(`${API_BASE}/api/products/${id}`);
         const p = res.data.product;
         setProduct(p);
+
+        // Track product view for personalized recommendations
+        trackProductView(id, p.category);
 
         // Detect logged-in customer
         const stored = localStorage.getItem("user");
