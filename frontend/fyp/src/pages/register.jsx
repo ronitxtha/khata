@@ -76,20 +76,23 @@ export default function Register() {
       <div className="auth-image">
         <h1>Smart Khata</h1>
         <p>Create your account and manage business with confidence</p>
-
-        <img
-          src="https://images.unsplash.com/photo-1523958203904-cdcb402031fd?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80"
-          alt="Business registration"
-        />
+        <div className="auth-image-card">
+          <img
+            src="https://images.unsplash.com/photo-1523958203904-cdcb402031fd?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80"
+            alt="Business registration"
+          />
+        </div>
+        <div className="auth-image-dots" />
       </div>
 
       {/* RIGHT FORM SECTION */}
-      <div className="auth-form-container glass-card" style={{borderRadius: 0}}>
+      <div className="auth-form-container">
+        
         <h2>Create Account</h2>
         <p className="form-subtitle">Start using Smart Khata</p>
 
-        {error && <div className="error-box">{error}</div>}
-        {success && <div className="success-box">{success}</div>}
+        {error && <div className="error-box">⚠ {error}</div>}
+        {success && <div className="success-box">✓ {success}</div>}
 
         <form onSubmit={handleRegister} className="auth-form-content animate-fade-in">
           <div className="auth-form-group">
@@ -133,13 +136,11 @@ export default function Register() {
             </select>
           </div>
 
-          <button type="submit" className="premium-btn auth-submit-btn">Create Account</button>
+          <button type="submit" className="auth-submit-btn">Create Account →</button>
         </form>
 
         <div className="form-links">
-          <span onClick={() => navigate("/login")}>
-            Already have an account? Login
-          </span>
+          <span onClick={() => navigate("/login")}>Already have an account? Login</span>
         </div>
       </div>
     </div>

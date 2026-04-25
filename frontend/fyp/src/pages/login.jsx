@@ -58,20 +58,24 @@ export default function Login() {
       {/* LEFT IMAGE SECTION */}
       <div className="auth-image">
         <h1>Smart Khata</h1>
-        <p>Manage your accounts smarter & faster</p>
-        <img
-          src="https://images.unsplash.com/photo-1554224155-6726b3ff858f?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80"
-          alt="Business"
-        />
+        <p>Manage your accounts smarter &amp; faster</p>
+        <div className="auth-image-card">
+          <img
+            src="https://images.unsplash.com/photo-1554224155-6726b3ff858f?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80"
+            alt="Business"
+          />
+        </div>
+        <div className="auth-image-dots" />
       </div>
 
       {/* RIGHT FORM SECTION */}
-      <div className="auth-form-container glass-card" style={{borderRadius: 0}}>
+      <div className="auth-form-container">
+        
         <h2>Welcome Back</h2>
         <p className="form-subtitle">Login to your account</p>
 
-        {error && <div className="error-box">{error}</div>}
-        {success && <div className="success-box">{success}</div>}
+        {error && <div className="error-box">⚠ {error}</div>}
+        {success && <div className="success-box">✓ {success}</div>}
 
         <form onSubmit={handleLogin} className="auth-form-content animate-fade-in">
           <div className="auth-form-group">
@@ -96,16 +100,12 @@ export default function Login() {
             />
           </div>
 
-          <button type="submit" className="premium-btn auth-submit-btn">Login</button>
+          <button type="submit" className="auth-submit-btn">Login →</button>
         </form>
 
         <div className="form-links">
-          <span onClick={() => navigate("/forgot-password")}>
-            Forgot password?
-          </span>
-          <span onClick={() => navigate("/register")}>
-            Create account
-          </span>
+          <span onClick={() => navigate("/forgot-password")}>Forgot password?</span>
+          <span onClick={() => navigate("/register")}>Create account</span>
         </div>
       </div>
     </div>
