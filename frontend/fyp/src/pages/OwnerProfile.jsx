@@ -1,17 +1,17 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
 import "../styles/ownerProfile.css";
-import OwnerSidebar from "../components/OwnerSidebar";
+import "../styles/ownerDashboard.css";
+import "../styles/orderManagement.css";
 import { imgUrl } from "../utils/imageUrl";
 
 const API_BASE = "http://localhost:8000";
 
 const OwnerProfile = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const token = localStorage.getItem("accessToken");
-
-  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [toast, setToast] = useState({ message: "", type: "success", visible: false });
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -192,54 +192,78 @@ const OwnerProfile = () => {
   const memberSinceDate = profile?.createdAt ? new Date(profile.createdAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : "January 12, 2023";
   const memberDuration = " (14 months)";
 
-  return (
-    <div className="sd-layout od-modern-layout">
-      {/* Shared Owner Sidebar */}
-      <OwnerSidebar 
-        sidebarOpen={sidebarOpen} 
-        setSidebarOpen={setSidebarOpen} 
-        owner={profile} 
-        handleLogout={handleLogout} 
-      />
+  const sideLinks = [
+    { label: "Dashboard", path: "/owner-dashboard", d: "M3 12l9-9 9 9M5 10v10a1 1 0 001 1h4v-5h4v5h4a1 1 0 001-1V10" },
+    { label: "Orders", path: "/order-management", d: "M9 17H7A5 5 0 017 7h2M15 7h2a5 5 0 010 10h-2M8 12h8" },
+    { label: "Products", path: "/products", d: "M20 7H4a2 2 0 00-2 2v6a2 2 0 002 2h16a2 2 0 002-2V9a2 2 0 00-2-2z" },
+    { label: "Staff", path: "/add-staff", d: "M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 7a4 4 0 100 8 4 4 0 000-8z" },
+    { label: "Suppliers", path: "/supplier-management", d: "M3 3h18v4H3zM3 11h18v4H3zM3 19h18v4H3z" },
+    { label: "Attendance", path: "/attendance", d: "M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" },
+    { label: "Messages", path: "/owner-messages", d: "M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" },
+    { label: "Reviews", path: "/owner-reviews", d: "M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" },
+    { label: "Profile", path: "/owner-profile", d: "M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2M12 3a4 4 0 100 8 4 4 0 000-8z" },
+  ];
 
-      {/* ========== MAIN ========== */}
-      <div className={`sd-main od-main-content ${sidebarOpen ? "sd-main--shifted" : ""}`}>
-        
-        {/* Global Navbar */}
-        <header className="sd-navbar">
-          <div className="sd-navbar__left">
-            <button className="sd-navbar__hamburger" onClick={() => setSidebarOpen((v) => !v)} onMouseEnter={() => { if (window.sidebarTimer) clearTimeout(window.sidebarTimer); setSidebarOpen(true); }} onMouseLeave={() => { window.sidebarTimer = setTimeout(() => setSidebarOpen(false), 300); }}>☰</button>
-            <div className="sd-navbar__title">
-              <h1>Owner Profile</h1>
-              <span className="sd-navbar__subtitle">Manage your personal and shop credentials</span>
+  return (
+    <div className="od-shell">
+      <aside className="od-sidebar">
+        <div className="od-sidebar__brand">
+          <div className="od-sidebar__logo">
+            <span className="od-sidebar__logo-icon">K</span>
+            <span className="od-sidebar__logo-text">SmartKhata</span>
+          </div>
+        </div>
+        <nav className="od-sidebar__nav">
+          {sideLinks.map(link => (
+            <button key={link.path}
+              className={`od-sidebar__link ${location.pathname === link.path ? "od-sidebar__link--active" : ""}`}
+              onClick={() => navigate(link.path)}>
+              <span className="od-sidebar__icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d={link.d}/></svg>
+              </span>
+              <span className="od-sidebar__label">{link.label}</span>
+            </button>
+          ))}
+        </nav>
+        <div className="od-sidebar__footer">
+          <div className="od-sidebar__user" onClick={() => navigate("/owner-profile")}>
+            <div className="od-sidebar__avatar">
+              {profile?.profileImage ? <img src={imgUrl(profile.profileImage)} alt="avatar"/> : <span>{(profile?.username||"U")[0].toUpperCase()}</span>}
+            </div>
+            <div>
+              <div className="od-sidebar__user-name">{profile?.username||"Owner"}</div>
+              <div className="od-sidebar__user-role" style={{textTransform:"capitalize"}}>Owner</div>
             </div>
           </div>
-          
-          <div className="sd-navbar__right">
-            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-              <div className="sd-avatar">
-                {profile?.profileImage ? (
-                  <img src={imgUrl(profile.profileImage)} alt="avatar" />
-                ) : (
-                  <span>{(profile?.username || "O")[0].toUpperCase()}</span>
-                )}
-              </div>
-              <div className="sd-navbar__staff-info">
-                <span className="sd-navbar__name">{profile?.username || "Owner"}</span>
-                <span className="sd-navbar__role">Owner</span>
+        </div>
+      </aside>
+
+      <div className="od-main">
+        <header className="od-topbar">
+          <div className="od-topbar__left">
+            <h1 className="od-topbar__title">Owner Profile</h1>
+            <div className="od-topbar__date">Manage your personal and shop credentials</div>
+          </div>
+          <div className="od-topbar__right">
+            <div className="od-topbar__profile" onClick={() => navigate("/owner-profile")}>
+              <div className="od-topbar__avatar">
+                {profile?.profileImage ? <img src={imgUrl(profile.profileImage)} alt="avatar"/> : <span>{(profile?.username||"U")[0].toUpperCase()}</span>}
               </div>
             </div>
+            <button className="od-topbar__logout" onClick={handleLogout} title="Logout">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+            </button>
           </div>
         </header>
-        
 
-        <div className="op-container">
+        <main className="od-content">
+          <div className="op-container">
           
           {/* Consolidated Header with Profile Card */}
           <header className="op-page-header">
             <div className="op-header-text">
               <span className="op-breadcrumb">Settings / Account</span>
-              <h2 className="op-title">Account Overview</h2>
+              <h2 className="op-title">Account Workspace</h2>
               <p className="op-subtitle">Manage your personal information and shop credentials</p>
             </div>
 
@@ -262,33 +286,26 @@ const OwnerProfile = () => {
               </div>
             </div>
           </header>
+          
 
           {/* Stats Bar */}
-          <div className="op-stats-grid">
-            <div className="op-stat-card">
-              <span className="op-stat-label">Total Products</span>
-              <div className="op-stat-value-group">
-                <span className="op-stat-num">{statistics.totalProducts?.toLocaleString() || "0"}</span>
+          <div className="om-stat-row" style={{ marginTop: '24px', marginBottom: '24px' }}>
+            {[
+              { label:"Total Products", val: statistics.totalProducts?.toLocaleString() || "0", color:"#6366f1", icon:"M20 7H4a2 2 0 00-2 2v6a2 2 0 002 2h16a2 2 0 002-2V9a2 2 0 00-2-2z" },
+              { label:"Total Orders", val: statistics.totalOrders?.toLocaleString() || "0", color:"#10b981", icon:"M9 17H7A5 5 0 017 7h2M15 7h2a5 5 0 010 10h-2M8 12h8" },
+              { label:"Low Stock", val: statistics.lowStockProducts || "0", color:"#f59e0b", icon:"M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" },
+              { label:"Out of Stock", val: Number(statistics.outOfStockProducts || 0).toLocaleString(), color:"#ef4444", icon:"M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" }
+            ].map(c => (
+              <div key={c.label} className="om-stat-card" style={{"--card-color":c.color}}>
+                <div className="om-stat-card__icon" style={{background:c.color+"18",color:c.color}}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d={c.icon}/></svg>
+                </div>
+                <div>
+                  <div className="om-stat-card__label">{c.label}</div>
+                  <div className="om-stat-card__value" style={{color: c.label === "Out of Stock" ? "#ef4444" : c.label === "Low Stock" ? "#f59e0b" : ""}}>{c.val}</div>
+                </div>
               </div>
-            </div>
-            <div className="op-stat-card">
-              <span className="op-stat-label">Total Orders</span>
-              <div className="op-stat-value-group">
-                <span className="op-stat-num">{statistics.totalOrders?.toLocaleString() || "0"}</span>
-              </div>
-            </div>
-            <div className="op-stat-card op-stat-card--danger">
-              <span className="op-stat-label">Low Stock</span>
-              <div className="op-stat-value-group" style={{ justifyContent: 'space-between', width: '100%' }}>
-                <span className="op-stat-num">{statistics.lowStockProducts || "0"}</span>
-              </div>
-            </div>
-            <div className="op-stat-card op-stat-card--dark">
-              <span className="op-stat-label">Out of Stock</span>
-              <div className="op-stat-value-group">
-                <span className="op-stat-num">{Number(statistics.outOfStockProducts || 0).toLocaleString()}</span>
-              </div>
-            </div>
+            ))}
           </div>
 
           {/* Main Grid */}
@@ -298,9 +315,9 @@ const OwnerProfile = () => {
             <div className="op-col-left">
               <section style={{ marginBottom: '40px' }}>
                 <div className="op-section-header">
-                  <h2 className="op-section-title">Profile Details</h2>
+                  <h2 className="op-section-title">Identity Details</h2>
                   {!isEditingProfile && (
-                    <button className="op-edit-link" onClick={() => setIsEditingProfile(true)}>Edit Details</button>
+                    <button className="op-edit-link" onClick={() => setIsEditingProfile(true)}>Edit Identity</button>
                   )}
                 </div>
                 <div className="op-details-card">
@@ -353,24 +370,24 @@ const OwnerProfile = () => {
               </section>
 
               <section>
-                <h2 className="op-section-title" style={{ marginBottom: '24px' }}>Security</h2>
+                <h2 className="op-section-title" style={{ marginBottom: '24px' }}>Security Key</h2>
                 <div className="op-security-card">
                   <form className="op-form-grid" onSubmit={handlePasswordChange}>
                     <div className="op-input-group">
-                       <label className="op-input-label">Current Password</label>
+                       <label className="op-input-label">Current Key</label>
                        <input className="op-input" type="password" placeholder="••••••••••••" value={passwordData.currentPassword} onChange={(e) => setPasswordData({...passwordData, currentPassword: e.target.value})} />
                     </div>
                     <div className="op-form-row">
                        <div className="op-input-group">
-                          <label className="op-input-label">New Password</label>
+                          <label className="op-input-label">New Secret Key</label>
                           <input className="op-input" type="password" placeholder="••••••••••••" value={passwordData.newPassword} onChange={(e) => setPasswordData({...passwordData, newPassword: e.target.value})} />
                        </div>
                        <div className="op-input-group">
-                          <label className="op-input-label">Confirm Password</label>
+                          <label className="op-input-label">Confirm Key</label>
                           <input className="op-input" type="password" placeholder="••••••••••••" value={passwordData.confirmPassword} onChange={(e) => setPasswordData({...passwordData, confirmPassword: e.target.value})} />
                        </div>
                     </div>
-                    <button type="submit" className="op-submit-btn">Update Password</button>
+                    <button type="submit" className="op-submit-btn" style={{ width: '100%' }}>Update New Key</button>
                   </form>
                 </div>
               </section>
@@ -461,13 +478,14 @@ const OwnerProfile = () => {
               </div>
             </div>
 
-          </div>
-        </div>
+          </div> {/* op-main-grid */}
+          </div> {/* op-container */}
+        </main>
       </div>
 
       {/* TOAST */}
       {toast.visible && (
-        <div className={`sd-toast sd-toast--${toast.type}`}>{toast.message}</div>
+        <div className={`od-toast od-toast--${toast.type}`}>{toast.message}</div>
       )}
     </div>
   );

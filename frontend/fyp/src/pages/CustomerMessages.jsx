@@ -4,14 +4,13 @@ import axios from "axios";
 import io from "socket.io-client";
 import CustomerSidebar from "../components/CustomerSidebar";
 import { imgUrl } from "../utils/imageUrl";
-import "../styles/customerLayout.css";
+import "../styles/ownerDashboard.css";
 
 const API_BASE = "http://localhost:8000";
 
 const CustomerMessages = () => {
   const navigate = useNavigate();
   const [customer, setCustomer] = useState({});
-  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const [conversations, setConversations] = useState([]);
   const [activeChat, setActiveChat] = useState(null); // { user, productId }
@@ -120,31 +119,23 @@ const CustomerMessages = () => {
 
   // ── Render ────────────────────────────────────────────────────
   return (
-    <div className="sd-layout od-modern-layout">
-      <CustomerSidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} />
+    <div className="od-shell">
+      <CustomerSidebar customer={customer} />
 
-      <div className={`sd-main od-main-content ${sidebarOpen ? "sd-main--shifted" : ""}`}>
+      <div className="od-main">
         {/* Navbar */}
-        <header className="sd-navbar">
-          <div className="sd-navbar__left">
-            <button
-              className="sd-navbar__hamburger"
-              onClick={() => setSidebarOpen(v => !v)}
-              onMouseEnter={() => { if (window.sidebarTimer) clearTimeout(window.sidebarTimer); setSidebarOpen(true); }}
-              onMouseLeave={() => { window.sidebarTimer = setTimeout(() => setSidebarOpen(false), 300); }}
-            >☰</button>
-            <div className="sd-navbar__title">
-              <h1>My Messages</h1>
-              <span className="sd-navbar__subtitle">Chat history with all your stores</span>
-            </div>
+        <header className="od-topbar">
+          <div className="od-topbar__left">
+            <h1 className="od-topbar__title">My Messages</h1>
+            <div className="od-topbar__date">Chat history with all your stores</div>
           </div>
-          <div className="sd-navbar__right">
-            <div className="sd-avatar">
-              <span>{customer?.username?.[0]?.toUpperCase() || "C"}</span>
-            </div>
-            <div className="sd-navbar__staff-info">
-              <span className="sd-navbar__name">{customer?.username || "Customer"}</span>
-              <span className="sd-navbar__role">Customer Account</span>
+          <div className="od-topbar__right">
+            <div className="od-topbar__profile" onClick={() => navigate("/customer-profile")}>
+              <div className="od-topbar__avatar">
+                {customer?.profileImage
+                  ? <img src={imgUrl(customer.profileImage)} alt="avatar" />
+                  : <span>{(customer?.username || "C")[0].toUpperCase()}</span>}
+              </div>
             </div>
           </div>
         </header>
@@ -152,8 +143,8 @@ const CustomerMessages = () => {
         {/* Chat Layout */}
         <main style={{
           display: "flex",
-          height: "calc(100vh - 72px)",
-          background: "var(--color-bg-main)",
+          height: "calc(100vh - 64px)",
+          background: "#f8fafc",
           overflow: "hidden",
         }}>
           {/* ── LEFT PANEL: Store List ── */}
@@ -530,6 +521,7 @@ const CustomerMessages = () => {
 
       <style>{`
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .od-main { overflow: hidden; }
       `}</style>
     </div>
   );

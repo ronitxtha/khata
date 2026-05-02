@@ -1,12 +1,18 @@
 import { Message } from "../models/messageModel.js";
 import { User } from "../models/userModel.js";
 
+import { Shop } from "../models/shopModel.js";
+
 // @desc    Get all conversations for the logged in user
 // @route   GET /api/messages/conversations
 // @access  Private
 export const getConversations = async (req, res) => {
     try {
-        const currentUserId = req.userId;
+        let currentUserId = req.userId;
+        if (req.user && req.user.role === "staff") {
+            const shop = await Shop.findById(req.user.shopId);
+            if (shop) currentUserId = shop.ownerId;
+        }
 
         // Find all messages where current user is sender or receiver
         const messages = await Message.find({
@@ -62,7 +68,11 @@ export const getConversations = async (req, res) => {
 export const getChatHistory = async (req, res) => {
     try {
         const { userId: otherUserId } = req.params;
-        const currentUserId = req.userId;
+        let currentUserId = req.userId;
+        if (req.user && req.user.role === "staff") {
+            const shop = await Shop.findById(req.user.shopId);
+            if (shop) currentUserId = shop.ownerId;
+        }
 
         const messages = await Message.find({
             $or: [

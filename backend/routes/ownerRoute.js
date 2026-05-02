@@ -65,7 +65,14 @@ router.get("/statistics", isAuthenticated, getOwnerStatistics);
 router.get("/me", isAuthenticated, async (req, res) => {
   try {
     const owner = await User.findById(req.userId);
-    res.json({ owner });
+    let ownerId = req.userId;
+
+    if (owner && owner.role === "staff") {
+      const shop = await import("../models/shopModel.js").then(m => m.Shop.findById(owner.shopId));
+      if (shop) ownerId = shop.ownerId;
+    }
+
+    res.json({ owner, ownerId });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }

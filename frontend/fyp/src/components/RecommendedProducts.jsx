@@ -93,17 +93,17 @@ const RecommendedProducts = () => {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '32px', marginBottom: '32px' }}>
-      <div className="shop-container" style={{ marginBottom: 0 }}>
-        <div className="shop-header">
+      <div style={{ marginBottom: '40px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '20px' }}>
           <div>
-            <h2>{title || "✨ Recommended for You"}</h2>
-            <p>Based on your browsing history</p>
+            <h2 style={{ fontSize: '20px', fontWeight: 800, color: '#0f172a', margin: '0 0 4px' }}>{title || "✨ Recommended for You"}</h2>
+            <p style={{ fontSize: '13px', color: '#64748b', margin: 0, fontWeight: 500 }}>Based on your browsing history</p>
           </div>
         </div>
 
         {recommendations.length > 0 ? (
           <div 
-            className="product-row horizontal-scroll" 
+            className="horizontal-scroll" 
             style={{ 
               display: "flex", 
               overflowX: "auto", 
@@ -115,49 +115,32 @@ const RecommendedProducts = () => {
             {recommendations.map((p) => (
               <div 
                 key={p._id} 
-                className="product-card" 
-                style={{ minWidth: "280px", flex: "0 0 auto" }}
+                className="od-panel" 
+                style={{ minWidth: "280px", flex: "0 0 auto", display: 'flex', flexDirection: 'column', cursor: 'pointer', transition: 'transform 0.2s, box-shadow 0.2s' }}
+                onClick={() => handleProductClick(p._id)}
               >
-                <div 
-                  className="product-card-image-wrap"
-                  onClick={() => handleProductClick(p._id)}
-                  style={{ cursor: "pointer" }}
-                >
+                <div style={{ height: '220px', background: '#f8fafc', padding: '16px', borderBottom: '1px solid #f1f5f9' }}>
                   <img
                     src={imgUrl(p.image)}
                     alt={p.name}
+                    style={{ width: '100%', height: '100%', objectFit: 'contain', mixBlendMode: 'darken' }}
                     onError={(e) => { e.target.src = "https://via.placeholder.com/300?text=No+Image"; }}
                   />
                 </div>
-                <div className="product-card-content">
-                  <h3 
-                    onClick={() => handleProductClick(p._id)}
-                    style={{ cursor: "pointer" }}
-                  >
-                    {p.name.length > 40 ? p.name.substring(0, 40) + "..." : p.name}
-                  </h3>
-                  <div className="price-row">
-                    <span className="price">NPR {p.price?.toLocaleString()}</span>
-                    <span className="stock-pill stock-green">Available</span>
-                  </div>
-                  <p className="desc" style={{ WebkitLineClamp: 2 }}>{p.category}</p>
+                <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', flex: 1 }}>
+                  <h3 style={{ margin: '0 0 8px', fontSize: '16px', fontWeight: 700, color: '#0f172a', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{p.name}</h3>
                   
-                  <div className="store-row">
-                    <div className="store-name">
-                       {p.shopName || "Store"}
-                    </div>
-                    <div className="store-rating">
-                      <Rating value={p.rating || 0} text={`(${p.numReviews || 0})`} fontSize="12px" />
-                    </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'auto', paddingTop: '16px' }}>
+                    <span style={{ fontSize: '18px', fontWeight: 800, color: '#6366f1' }}>NPR {p.price?.toLocaleString()}</span>
+                    <span className="od-badge od-badge--green">
+                      Available
+                    </span>
                   </div>
-
-                  <button
-                    className="premium-btn"
-                    style={{ width: "100%", marginTop: "4px", padding: "10px" }}
-                    onClick={() => handleProductClick(p._id)}
-                  >
-                    View Details
-                  </button>
+                  
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '16px', paddingTop: '16px', borderTop: '1px dashed #e2e8f0' }}>
+                    <span style={{ fontSize: '12px', fontWeight: 600, color: '#64748b' }}>🏪 {p.shopName || "Store"}</span>
+                    <Rating value={p.rating || 0} text={`(${p.numReviews || 0})`} fontSize="11px" />
+                  </div>
                 </div>
               </div>
             ))}

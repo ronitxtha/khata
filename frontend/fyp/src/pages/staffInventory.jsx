@@ -2,8 +2,8 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { imgUrl } from "../utils/imageUrl";
-import "../styles/staffDashboard.css";
 import "../styles/staffInventory.css";
+import "../styles/ownerDashboard.css";
 import StaffSidebar from "../components/StaffSidebar";
 import QRScanner from "./QRScanner";
 
@@ -319,135 +319,119 @@ const StaffInventory = () => {
   ];
 
   return (
-    <div className="sd-layout od-modern-layout">
+    <div className="od-shell">
       {/* Shared Staff Sidebar */}
-      <StaffSidebar 
-        sidebarOpen={sidebarOpen} 
-        setSidebarOpen={setSidebarOpen} 
-        staff={staff} 
-        handleLogout={handleLogout} 
-      />
+      <StaffSidebar staff={staff} />
 
       {/* ========== MAIN AREA ========== */}
-      <div className={`sd-main od-main-content ${sidebarOpen ? "sd-main--shifted" : ""}`}>
+      <div className="od-main">
         {/* ---- TOP NAVBAR ---- */}
-        <header className="sd-navbar">
-          <div className="sd-navbar__left">
-            <button className="sd-navbar__hamburger" onClick={() => setSidebarOpen((v) => !v)} onMouseEnter={() => { if (window.sidebarTimer) clearTimeout(window.sidebarTimer); setSidebarOpen(true); }} onMouseLeave={() => { window.sidebarTimer = setTimeout(() => setSidebarOpen(false), 300); }}>☰</button>
-            <div className="sd-navbar__title">
-              <h1>Product Management</h1>
-              <span className="sd-navbar__subtitle">Manage your inventory</span>
+        <header className="od-topbar">
+          <div className="od-topbar__left">
+            <h1 className="od-topbar__title">Product Management</h1>
+            <div className="od-topbar__date">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+              {new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
             </div>
           </div>
-          <div className="sd-navbar__right">
-            <div
-              onClick={() => navigate("/staff-profile")}
-              style={{ display: "flex", alignItems: "center", gap: "12px", cursor: "pointer" }}
-            >
-              <div className="sd-avatar">
+          <div className="od-topbar__right">
+            <button className="od-pill od-pill--active" onClick={() => setShowAddForm(true)} style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+              <span>+</span> Add Product
+            </button>
+            <button className="od-pill" onClick={() => setScannerOpen(true)} style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+              <span>🔍</span> Scan QR
+            </button>
+
+            <div className="od-topbar__profile" onClick={() => navigate("/staff-profile")}>
+              <div className="od-topbar__avatar">
                 {staff?.profileImage ? (
                   <img src={imgUrl(staff.profileImage)} alt="avatar" />
                 ) : (
                   <span>{(staff?.username || "S")[0].toUpperCase()}</span>
                 )}
               </div>
-              <div className="sd-navbar__staff-info">
-                <span className="sd-navbar__name">{staff?.username || "Staff"}</span>
-                <span className="sd-navbar__role">Staff</span>
-              </div>
             </div>
+
+            <button className="od-topbar__logout" onClick={handleLogout} title="Logout">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+            </button>
           </div>
         </header>
 
         {/* ---- CONTENT ---- */}
-        <main className="sd-content od-content">
+        <main className="od-content">
 
-          {/* 1. Header Section */}
-          <div className="si-header-section">
-            <div className="si-header-info">
-              <h2>Inventory</h2>
-              <p>Manage and update your product catalog for your SmartKhata.</p>
-            </div>
-            <div className="si-header-actions">
-              <button className="si-btn-primary si-btn-primary--light" onClick={() => setScannerOpen(true)} style={{ background: '#f1f5f9', color: '#0f172a', border: '1px solid #e2e8f0', marginRight: '12px' }}>
-                <span></span> Scan QR
-              </button>
-              <button className="si-btn-primary si-btn-primary--dark" onClick={() => setShowAddForm(true)}>
-                <span>+</span> Add Product
-              </button>
-            </div>
-          </div>
-
-          {/* 2. Summary Metrics */}
-          <div className="si-ledger-cards">
-            <div className="si-ledger-card">
-              <span className="si-ledger-card__label">Total Products</span>
-              <div className="si-ledger-card__content">
-                <span className="si-ledger-card__num">{products.length.toLocaleString()}</span>
+          {/* ── Stat cards ── */}
+          <div className="od-stat-grid">
+            {[
+              { label: "Total Products", value: products.length.toLocaleString(), color: "#8b5cf6", icon: "M20 7H4a2 2 0 00-2 2v6a2 2 0 002 2h16a2 2 0 002-2V9a2 2 0 00-2-2z" },
+              { label: "In Stock", value: products.filter((p) => p.quantity > 4).length.toLocaleString(), color: "#10b981", icon: "M5 13l4 4L19 7" },
+              { label: "Low Stock", value: lowStockCount, color: "#f59e0b", icon: "M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" },
+              { label: "Out of Stock", value: outOfStockCount, color: "#ef4444", icon: "M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" },
+            ].map(card => (
+              <div className="od-stat-card" key={card.label}>
+                <div className="od-stat-card__icon" style={{ background: card.color + "18", color: card.color }}>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d={card.icon} />
+                  </svg>
+                </div>
+                <div>
+                  <div className="od-stat-card__label">{card.label}</div>
+                  <div className="od-stat-card__value">{card.value}</div>
+                </div>
               </div>
-            </div>
-            <div className="si-ledger-card">
-              <span className="si-ledger-card__label">In Stock</span>
-              <div className="si-ledger-card__content">
-                <span className="si-ledger-card__num">{products.filter((p) => p.quantity > 4).length.toLocaleString()}</span>
-              </div>
-            </div>
-            <div className="si-ledger-card">
-              <span className="si-ledger-card__label">Low Stock</span>
-              <div className="si-ledger-card__content">
-                <span className="si-ledger-card__num" style={{ color: '#f59e0b' }}>{lowStockCount}</span>
-              </div>
-            </div>
-            <div className="si-ledger-card">
-              <span className="si-ledger-card__label">Out of Stock</span>
-              <div className="si-ledger-card__content">
-                <span className="si-ledger-card__num" style={{ color: '#ef4444' }}>{outOfStockCount}</span>
-              </div>
-            </div>
+            ))}
           </div>
 
           {/* 3. Filter Row */}
-          <div className="si-filter-row">
-            <div className="si-filters-left">
-              <div className="si-search-input-wrap">
+          <div className="od-panel" style={{ marginBottom: "16px", padding: "16px" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <div style={{ display: "flex", gap: "12px" }}>
                 <input
                   type="text"
                   placeholder="Search product..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="si-ledger-select"
-                  style={{ width: '280px', paddingLeft: '36px' }}
+                  style={{ width: '280px', padding: '8px 12px', border: '1px solid #e2e8f0', borderRadius: '8px', outline: 'none' }}
                 />
+                <select
+                  value={filterCategory}
+                  onChange={(e) => setFilterCategory(e.target.value)}
+                  style={{ padding: '8px 12px', border: '1px solid #e2e8f0', borderRadius: '8px', outline: 'none', background: '#fff' }}
+                >
+                  <option value="All">All Categories</option>
+                  {CATEGORY_LIST.map((c) => <option key={c}>{c}</option>)}
+                </select>
               </div>
-              <select
-                className="si-ledger-select"
-                value={filterCategory}
-                onChange={(e) => setFilterCategory(e.target.value)}
-              >
-                <option value="All">All Categories</option>
-                {CATEGORY_LIST.map((c) => <option key={c}>{c}</option>)}
-              </select>
-            </div>
-            <div className="si-filters-right">
-               <span style={{ fontSize: '12px', fontWeight: 600 }}>{filteredProducts.length} Results</span>
+              <div>
+                <span style={{ fontSize: '12px', fontWeight: 600, color: '#64748b' }}>{filteredProducts.length} Results</span>
+              </div>
             </div>
           </div>
 
           {/* 4. The Ledger Table */}
-          <div className="si-ledger-table-wrap">
-            <table className="si-ledger-table">
-              <thead>
-                <tr>
-                  <th style={{ width: '30%' }}>Product</th>
-                  <th>Category</th>
-                  <th>Price (NPR)</th>
-                  <th>Inventory</th>
-                  <th>Status</th>
-                  <th style={{ textAlign: 'center' }}>QR Code</th>
-                  <th style={{ textAlign: 'right' }}>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
+          <div className="od-panel od-panel--table" style={{ marginBottom: "40px" }}>
+            <div className="od-panel__head" style={{ paddingBottom: '16px' }}>
+              <div>
+                <div className="od-panel__title">Inventory Ledger</div>
+                <div className="od-panel__sub">All available products</div>
+              </div>
+            </div>
+
+            <div style={{ overflowX: "auto" }}>
+              <table className="od-table">
+                <thead>
+                  <tr>
+                    <th style={{ width: '30%' }}>Product</th>
+                    <th>Category</th>
+                    <th>Price (NPR)</th>
+                    <th>Inventory</th>
+                    <th>Status</th>
+                    <th style={{ textAlign: 'center' }}>QR Code</th>
+                    <th style={{ textAlign: 'right' }}>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
                 {filteredProducts.length > 0 ? (
                   filteredProducts.map((p) => {
                     const isOutOfStock = (p.quantity || 0) === 0;
@@ -481,12 +465,9 @@ const StaffInventory = () => {
                           {p.quantity ?? 0} units
                         </td>
                         <td>
-                          <div className="si-status-wrap">
-                            <span className={`si-dot ${isOutOfStock ? 'si-dot--red' : isLowStock ? 'si-dot--orange' : 'si-dot--green'}`}></span>
-                            <span className="si-status-text">
-                              {isOutOfStock ? "Out of Stock" : isLowStock ? "Low Stock" : "In Stock"}
-                            </span>
-                          </div>
+                          <span className={`od-badge od-badge--${isOutOfStock ? 'red' : isLowStock ? 'amber' : 'green'}`}>
+                            {isOutOfStock ? "Out of Stock" : isLowStock ? "Low Stock" : "In Stock"}
+                          </span>
                         </td>
                         <td style={{ textAlign: 'center' }}>
                           {p.qrCode ? (
@@ -527,7 +508,8 @@ const StaffInventory = () => {
                   </tr>
                 )}
               </tbody>
-            </table>
+              </table>
+            </div>
           </div>
         </main>
       </div>
@@ -674,7 +656,7 @@ const StaffInventory = () => {
 
       {/* ========== TOAST ========== */}
       {toast.visible && (
-        <div className={`sd-toast sd-toast--${toast.type}`}>{toast.message}</div>
+        <div className={`od-toast od-toast--${toast.type}`}>{toast.message}</div>
       )}
     </div>
   );

@@ -280,7 +280,7 @@ const ProductDetails = () => {
             ← Back
           </button>
           <div className="pd-logo" onClick={() => navigate("/customer-dashboard")}>
-            Khata<span>.</span>
+            Khata
           </div>
         </div>
         <div className="pd-header__right">

@@ -1,18 +1,19 @@
 import React, { useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
 import io from "socket.io-client";
-import OwnerSidebar from "../components/OwnerSidebar";
-import StaffSidebar from "../components/StaffSidebar";
 import { imgUrl } from "../utils/imageUrl";
-import "../styles/ownerDashboard.css"; // Reuse dashboard layouts where possible
+import "../styles/ownerDashboard.css";
+
+import StaffSidebar from "../components/StaffSidebar";
 
 const API_BASE = "http://localhost:8000";
 
 const OwnerMessages = () => {
   const navigate = useNavigate();
-  const [owner, setOwner] = useState({});
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const location = useLocation();
+  const [user, setUser] = useState({});
+  const [effectiveOwnerId, setEffectiveOwnerId] = useState(null);
   
   // Chat Data
   const [conversations, setConversations] = useState([]);
@@ -24,20 +25,33 @@ const OwnerMessages = () => {
   const messagesEndRef = useRef(null);
 
   useEffect(() => {
-    const user = JSON.parse(localStorage.getItem("user") || "{}");
-    if (!user || user.role !== "owner") {
+    const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
+    const token = localStorage.getItem("accessToken");
+    if (!currentUser || !token || (currentUser.role !== "owner" && currentUser.role !== "staff")) {
       navigate("/login");
       return;
     }
-    setOwner(user);
-    fetchConversations();
+    setUser(currentUser);
+
+    // Fetch effective owner id from backend
+    axios.get(`${API_BASE}/api/owner/me`, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+    .then((res) => {
+      setEffectiveOwnerId(res.data.ownerId || currentUser._id);
+      fetchConversations();
+    })
+    .catch((err) => {
+      console.error("Failed to get effective owner ID", err);
+    });
+
   }, [navigate]);
 
   useEffect(() => {
-    if (owner._id) {
+    if (effectiveOwnerId) {
       const newSocket = io(API_BASE);
       setSocket(newSocket);
-      newSocket.emit("register", owner._id);
+      newSocket.emit("register", effectiveOwnerId);
 
       newSocket.on("receive_message", (msg) => {
         // Update current chat if it's open
@@ -45,7 +59,7 @@ const OwnerMessages = () => {
           if (prevActiveChat && msg.senderId._id === prevActiveChat._id) {
             setMessages(prevMsgs => [...prevMsgs, msg]);
             // Tell server we read it immediately
-            newSocket.emit("mark_read", { senderId: msg.senderId._id, receiverId: owner._id });
+            newSocket.emit("mark_read", { senderId: msg.senderId._id, receiverId: effectiveOwnerId });
           }
           return prevActiveChat;
         });
@@ -61,7 +75,7 @@ const OwnerMessages = () => {
 
       return () => newSocket.close();
     }
-  }, [owner._id]);
+  }, [effectiveOwnerId]);
 
   useEffect(() => {
     if (messagesEndRef.current) {
@@ -96,7 +110,7 @@ const OwnerMessages = () => {
       ));
 
       if (socket) {
-        socket.emit("mark_read", { senderId: user._id, receiverId: owner._id });
+        socket.emit("mark_read", { senderId: user._id, receiverId: effectiveOwnerId });
       }
     } catch (err) {
       console.error("Error fetching messages:", err);
@@ -108,7 +122,7 @@ const OwnerMessages = () => {
     if (!chatInput.trim() || !activeChat || !socket) return;
     
     socket.emit("send_message", {
-      senderId: owner._id,
+      senderId: effectiveOwnerId,
       receiverId: activeChat._id,
       text: chatInput,
     });
@@ -121,52 +135,75 @@ const OwnerMessages = () => {
     navigate("/login");
   };
 
-  return (
-    <div className="sd-layout od-modern-layout">
-      {owner?.role === "owner" ? (
-        <OwnerSidebar 
-          sidebarOpen={sidebarOpen} 
-          setSidebarOpen={setSidebarOpen} 
-          owner={owner} 
-          handleLogout={handleLogout} 
-        />
-      ) : (
-        <StaffSidebar 
-          sidebarOpen={sidebarOpen} 
-          setSidebarOpen={setSidebarOpen} 
-          staff={owner} 
-          handleLogout={handleLogout} 
-        />
-      )}
+  const sideLinks = [
+    { label: "Dashboard", path: "/owner-dashboard", d: "M3 12l9-9 9 9M5 10v10a1 1 0 001 1h4v-5h4v5h4a1 1 0 001-1V10" },
+    { label: "Orders", path: "/order-management", d: "M9 17H7A5 5 0 017 7h2M15 7h2a5 5 0 010 10h-2M8 12h8" },
+    { label: "Products", path: "/products", d: "M20 7H4a2 2 0 00-2 2v6a2 2 0 002 2h16a2 2 0 002-2V9a2 2 0 00-2-2z" },
+    { label: "Staff", path: "/add-staff", d: "M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 7a4 4 0 100 8 4 4 0 000-8z" },
+    { label: "Suppliers", path: "/supplier-management", d: "M3 3h18v4H3zM3 11h18v4H3zM3 19h18v4H3z" },
+    { label: "Attendance", path: "/attendance", d: "M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" },
+    { label: "Messages", path: "/owner-messages", d: "M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" },
+    { label: "Reviews", path: "/owner-reviews", d: "M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" },
+    { label: "Profile", path: "/owner-profile", d: "M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2M12 3a4 4 0 100 8 4 4 0 000-8z" },
+  ];
 
-      {/* Main Content */}
-      <div className={`sd-main od-main-content ${sidebarOpen ? "sd-main--shifted" : ""}`}>
-        <header className="sd-navbar">
-          <div className="sd-navbar__left">
-            <button className="sd-navbar__hamburger" onClick={() => setSidebarOpen((v) => !v)}>☰</button>
-            <div className="sd-navbar__title">
-              <h1>Messages</h1>
-              <span className="sd-navbar__subtitle">Chat directly with your customers</span>
+  return (
+    <div className="od-shell">
+      {user?.role === "staff" ? (
+        <StaffSidebar staff={user} />
+      ) : (
+        <aside className="od-sidebar">
+          <div className="od-sidebar__brand">
+            <div className="od-sidebar__logo">
+              <span className="od-sidebar__logo-icon">K</span>
+              <span className="od-sidebar__logo-text">SmartKhata</span>
             </div>
           </div>
-          <div className="sd-navbar__right">
-            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-              <div className="sd-avatar">
-                {owner?.profileImage ? (
-                  <img src={imgUrl(owner.profileImage)} alt="avatar" />
-                ) : (
-                  <span>O</span>
-                )}
+          <nav className="od-sidebar__nav">
+            {sideLinks.map(link => (
+              <button key={link.path}
+                className={`od-sidebar__link ${location.pathname === link.path ? "od-sidebar__link--active" : ""}`}
+                onClick={() => navigate(link.path)}>
+                <span className="od-sidebar__icon">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d={link.d}/></svg>
+                </span>
+                <span className="od-sidebar__label">{link.label}</span>
+              </button>
+            ))}
+          </nav>
+          <div className="od-sidebar__footer">
+            <div className="od-sidebar__user" onClick={() => navigate("/owner-profile")}>
+              <div className="od-sidebar__avatar">
+                {user?.profileImage ? <img src={imgUrl(user.profileImage)} alt="avatar"/> : <span>{(user?.username||"U")[0].toUpperCase()}</span>}
               </div>
-              <div className="sd-navbar__staff-info">
-                <span className="sd-navbar__name">{owner?.username}</span>
-                <span className="sd-navbar__role">Owner</span>
+              <div>
+                <div className="od-sidebar__user-name">{user?.username||"Owner"}</div>
+                <div className="od-sidebar__user-role" style={{textTransform:"capitalize"}}>Owner</div>
               </div>
             </div>
+          </div>
+        </aside>
+      )}
+
+      <div className="od-main">
+        <header className="od-topbar">
+          <div className="od-topbar__left">
+            <h1 className="od-topbar__title">Messages</h1>
+            <div className="od-topbar__date">Chat directly with your customers</div>
+          </div>
+          <div className="od-topbar__right">
+            <div className="od-topbar__profile" onClick={() => navigate(user?.role === "staff" ? "/staff-profile" : "/owner-profile")}>
+              <div className="od-topbar__avatar">
+                {user?.profileImage ? <img src={imgUrl(user.profileImage)} alt="avatar"/> : <span>{(user?.username||"U")[0].toUpperCase()}</span>}
+              </div>
+            </div>
+            <button className="od-topbar__logout" onClick={handleLogout} title="Logout">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+            </button>
           </div>
         </header>
 
-        <main className="sd-content od-content" style={{ padding: '0', display: 'flex', height: 'calc(100vh - 72px)', background: '#fff' }}>
+        <main style={{ padding: '0', display: 'flex', flexDirection: 'row', height: 'calc(100vh - 64px)', background: '#fff', margin: '24px', borderRadius: '16px', overflow: 'hidden', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
           
           {/* Sidebar Conversations List */}
           <div style={{ width: '350px', borderRight: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', background: '#f8fafc' }}>
@@ -276,7 +313,7 @@ const OwnerMessages = () => {
 
                 <div style={{ flex: 1, overflowY: 'auto', padding: '30px', display: 'flex', flexDirection: 'column', gap: '20px', background: '#f1f5f9' }}>
                   {messages.map((msg, idx) => {
-                    const isMine = msg.senderId === owner._id || msg.senderId?._id === owner._id;
+                    const isMine = msg.senderId === effectiveOwnerId || msg.senderId?._id === effectiveOwnerId;
                     return (
                       <div key={idx} style={{ alignSelf: isMine ? 'flex-end' : 'flex-start', maxWidth: '60%' }}>
                         <div style={{ 

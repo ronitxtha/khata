@@ -1,18 +1,16 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
 import { imgUrl } from "../utils/imageUrl";
+import "../styles/ownerDashboard.css";
 import "../styles/supplierManagement.css";
-import "../styles/staffDashboard.css";
-import "../styles/staffInventory.css";
-import OwnerSidebar from "../components/OwnerSidebar";
 
 const API_BASE = "http://localhost:8000";
 
 const SupplierManagement = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [owner, setOwner] = useState({});
-  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Data states
   const [suppliers, setSuppliers] = useState([]);
@@ -269,8 +267,8 @@ const SupplierManagement = () => {
     if (!productSearchTerm) return false;
     const q = productSearchTerm.toLowerCase();
     return (
-      p.name?.toLowerCase().includes(q) ||
-      p.category?.toLowerCase().includes(q)
+      (p.name || "").toLowerCase().includes(q) ||
+      (p.category || "").toLowerCase().includes(q)
     );
   });
 
@@ -290,8 +288,8 @@ const SupplierManagement = () => {
     if (!supplierSearchTerm) return false;
     const q = supplierSearchTerm.toLowerCase();
     return (
-      s.supplierName?.toLowerCase().includes(q) ||
-      s.companyName?.toLowerCase().includes(q)
+      (s.supplierName || "").toLowerCase().includes(q) ||
+      (s.companyName || "").toLowerCase().includes(q)
     );
   });
 
@@ -299,10 +297,10 @@ const SupplierManagement = () => {
   const filteredSuppliers = suppliers.filter((s) => {
     const q = searchQuery.toLowerCase();
     return (
-      s.supplierName?.toLowerCase().includes(q) ||
-      s.companyName?.toLowerCase().includes(q) ||
-      s.phone?.toLowerCase().includes(q) ||
-      s.productsSupplied?.toLowerCase().includes(q)
+      (s.supplierName || "").toLowerCase().includes(q) ||
+      (s.companyName || "").toLowerCase().includes(q) ||
+      (s.phone || "").toLowerCase().includes(q) ||
+      (s.productsSupplied || "").toLowerCase().includes(q)
     );
   });
 
@@ -311,92 +309,107 @@ const SupplierManagement = () => {
   const fmt = (n) =>
     `NPR ${Number(n || 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
-  return (
-    <div className="sd-layout">
-      {/* ───────── SIDEBAR ───────── */}
-      <OwnerSidebar 
-        sidebarOpen={sidebarOpen} 
-        setSidebarOpen={setSidebarOpen} 
-        owner={owner} 
-        handleLogout={handleLogout} 
-      />
+  const sideLinks = [
+    { label: "Dashboard", path: "/owner-dashboard", d: "M3 12l9-9 9 9M5 10v10a1 1 0 001 1h4v-5h4v5h4a1 1 0 001-1V10" },
+    { label: "Orders", path: "/order-management", d: "M9 17H7A5 5 0 017 7h2M15 7h2a5 5 0 010 10h-2M8 12h8" },
+    { label: "Products", path: "/products", d: "M20 7H4a2 2 0 00-2 2v6a2 2 0 002 2h16a2 2 0 002-2V9a2 2 0 00-2-2z" },
+    { label: "Staff", path: "/add-staff", d: "M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 7a4 4 0 100 8 4 4 0 000-8z" },
+    { label: "Suppliers", path: "/supplier-management", d: "M3 3h18v4H3zM3 11h18v4H3zM3 19h18v4H3z" },
+    { label: "Attendance", path: "/attendance", d: "M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" },
+    { label: "Messages", path: "/owner-messages", d: "M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" },
+    { label: "Reviews", path: "/owner-reviews", d: "M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" },
+    { label: "Profile", path: "/owner-profile", d: "M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2M12 3a4 4 0 100 8 4 4 0 000-8z" },
+  ];
 
-      {/* ───────── MAIN ───────── */}
-      <div className={`sd-main od-main-content ${sidebarOpen ? "sd-main--shifted" : ""}`}>
-        {/* Navbar */}
-        <header className="sd-navbar">
-          <div className="sd-navbar__left">
-            <button className="sd-navbar__hamburger" onClick={() => setSidebarOpen((v) => !v)} onMouseEnter={() => { if (window.sidebarTimer) clearTimeout(window.sidebarTimer); setSidebarOpen(true); }} onMouseLeave={() => { window.sidebarTimer = setTimeout(() => setSidebarOpen(false), 300); }}>☰</button>
-            <div className="sd-navbar__title">
-              <h1>Supplier Management</h1>
-              <span className="sd-navbar__subtitle">Oversee your supply chain and payments</span>
+  return (
+    <div className="od-shell">
+      <aside className="od-sidebar">
+        <div className="od-sidebar__brand">
+          <div className="od-sidebar__logo">
+            <span className="od-sidebar__logo-icon">K</span>
+            <span className="od-sidebar__logo-text">SmartKhata</span>
+          </div>
+        </div>
+        <nav className="od-sidebar__nav">
+          {sideLinks.map(link => (
+            <button key={link.path}
+              className={`od-sidebar__link ${location.pathname === link.path ? "od-sidebar__link--active" : ""}`}
+              onClick={() => navigate(link.path)}>
+              <span className="od-sidebar__icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d={link.d}/></svg>
+              </span>
+              <span className="od-sidebar__label">{link.label}</span>
+            </button>
+          ))}
+        </nav>
+        <div className="od-sidebar__footer">
+          <div className="od-sidebar__user" onClick={() => navigate("/owner-profile")}>
+            <div className="od-sidebar__avatar">
+              {owner?.profileImage ? <img src={imgUrl(owner.profileImage)} alt="avatar"/> : <span>{(owner?.username||"U")[0].toUpperCase()}</span>}
+            </div>
+            <div>
+              <div className="od-sidebar__user-name">{owner?.username||"Owner"}</div>
+              <div className="od-sidebar__user-role" style={{textTransform:"capitalize"}}>Owner</div>
             </div>
           </div>
-          <div className="sd-navbar__right">
-            <div
-              onClick={() => navigate("/owner-profile")}
-              style={{ display: "flex", alignItems: "center", gap: "12px", cursor: "pointer" }}
-            >
-              <div className="sd-avatar">
-                {owner?.profileImage ? (
-                  <img src={imgUrl(owner.profileImage)} alt="avatar" />
-                ) : (
-                  <span>{(owner?.username || "O")[0].toUpperCase()}</span>
-                )}
-              </div>
-              <div className="sd-navbar__staff-info">
-                <span className="sd-navbar__name">{owner?.username || "Owner"}</span>
-                <span className="sd-navbar__role">Owner</span>
+        </div>
+      </aside>
+
+      <div className="od-main">
+        <header className="od-topbar">
+          <div className="od-topbar__left">
+            <h1 className="od-topbar__title">Supplier Management</h1>
+            <div className="od-topbar__date">{suppliers.length} partners</div>
+          </div>
+          <div className="od-topbar__right">
+            <div className="od-topbar__profile" onClick={() => navigate("/owner-profile")}>
+              <div className="od-topbar__avatar">
+                {owner?.profileImage ? <img src={imgUrl(owner.profileImage)} alt="avatar"/> : <span>{(owner?.username||"U")[0].toUpperCase()}</span>}
               </div>
             </div>
+            <button className="od-topbar__logout" onClick={handleLogout} title="Logout">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+            </button>
           </div>
         </header>
 
-        {/* Content */}
-        <main className="sd-content">
+        <main className="od-content" style={{ display: 'block', overflowY: 'auto' }}>
           
-          {/* 1. Header Section */}
-          <div className="si-header-section">
-            <div className="si-header-info">
-              <h2>Partners & Logistics</h2>
-              <p>Manage supplier relationships, track purchases, and monitor outstanding dues.</p>
+          {/* Page Head */}
+          <div className="sm-page-head">
+            <div>
+              <h2 className="sm-page-head__title">Partners & Logistics</h2>
+              <p className="sm-page-head__sub">Manage supplier relationships, track purchases, and monitor outstanding dues.</p>
             </div>
-            <div className="si-header-actions">
-              <button className="si-btn-primary si-btn-primary--light" onClick={() => setShowRecordPayment(true)}>
+            <div className="sm-page-head__actions">
+              <button className="sm-btn-ghost" onClick={() => setShowRecordPayment(true)}>
                  Record Payment
               </button>
-              <button className="si-btn-primary si-btn-primary--dark" onClick={() => setShowAddSupplier(true)}>
-                <span>+</span> Add Supplier
+              <button className="sm-btn-primary" onClick={() => setShowAddSupplier(true)}>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 5v14M5 12h14"/></svg>
+                Add Supplier
               </button>
             </div>
           </div>
 
-          {/* 2. Summary Stats Cards */}
-          <div className="si-ledger-cards">
-            <div className="si-ledger-card">
-              <span className="si-ledger-card__label">Total Suppliers</span>
-              <div className="si-ledger-card__content">
-                <span className="si-ledger-card__num">{stats.totalSuppliers || 0}</span>
+          {/* Stat cards */}
+          <div className="om-stat-row">
+            {[
+              { label:"Total Suppliers",  val: stats.totalSuppliers || 0, color:"#6366f1", icon:"M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 7a4 4 0 100 8 4 4 0 000-8z" },
+              { label:"Total Purchases",val: fmt(stats.totalPurchases),     color:"#10b981", icon:"M3 3h18v4H3zM3 11h18v4H3zM3 19h18v4H3z" },
+              { label:"Amount Paid", val: fmt(stats.totalAmountPaid),      color:"#8b5cf6", icon:"M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" },
+              { label:"Outstanding Due",   val: fmt(stats.totalOutstandingDue),   color:"#ef4444", icon:"M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" },
+            ].map(c=>(
+              <div key={c.label} className="om-stat-card" style={{"--card-color":c.color}}>
+                <div className="om-stat-card__icon" style={{background:c.color+"18",color:c.color}}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d={c.icon}/></svg>
+                </div>
+                <div>
+                  <div className="om-stat-card__label">{c.label}</div>
+                  <div className="om-stat-card__value" style={{color: c.label === "Outstanding Due" ? "#ef4444" : ""}}>{c.val}</div>
+                </div>
               </div>
-            </div>
-            <div className="si-ledger-card">
-              <span className="si-ledger-card__label">Total Purchases</span>
-              <div className="si-ledger-card__content">
-                <span className="si-ledger-card__num sm-card-amount">{fmt(stats.totalPurchases)}</span>
-              </div>
-            </div>
-            <div className="si-ledger-card">
-              <span className="si-ledger-card__label">Amount Paid</span>
-              <div className="si-ledger-card__content">
-                <span className="si-ledger-card__num sm-card-amount">{fmt(stats.totalAmountPaid)}</span>
-              </div>
-            </div>
-            <div className="si-ledger-card si-ledger-card--danger">
-              <span className="si-ledger-card__label">Outstanding Due</span>
-              <div className="si-ledger-card__content">
-                <span className="si-ledger-card__num sm-card-amount" style={{ color: '#ef4444' }}>{fmt(stats.totalOutstandingDue)}</span>
-              </div>
-            </div>
+            ))}
           </div>
 
           {/* 3. Outstanding Alert Card */}
@@ -982,10 +995,7 @@ const SupplierManagement = () => {
         </div>
       )}
 
-      {/* Toast */}
-      {toast.visible && (
-        <div className={`sd-toast sd-toast--${toast.type}`}>{toast.message}</div>
-      )}
+      {toast.visible && <div className={`od-toast od-toast--${toast.type}`}>{toast.message}</div>}
     </div>
   );
 };

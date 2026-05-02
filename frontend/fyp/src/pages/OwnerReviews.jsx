@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
 import { imgUrl } from "../utils/imageUrl";
-import OwnerSidebar from "../components/OwnerSidebar";
-import "../styles/staffDashboard.css";
 import "../styles/ownerDashboard.css";
+import "../styles/orderManagement.css";
 import "../styles/ownerReviews.css";
+
+import StaffSidebar from "../components/StaffSidebar";
 
 const API_BASE = "http://localhost:8000";
 
@@ -124,9 +125,10 @@ const ProductReviewCard = ({ product }) => {
 /* ─── Main Page ─────────────────────────────────────────── */
 const OwnerReviews = () => {
   const navigate = useNavigate();
+  const location = useLocation();
 
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [owner, setOwner] = useState({});
+  const [user, setUser] = useState({});
+  const [ownerData, setOwnerData] = useState({});
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -142,13 +144,19 @@ const OwnerReviews = () => {
   /* ── Fetch owner info ── */
   useEffect(() => {
     const token = localStorage.getItem("accessToken");
-    if (!token) { navigate("/login"); return; }
+    const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
+    
+    if (!token || !currentUser || (currentUser.role !== "owner" && currentUser.role !== "staff")) { 
+      navigate("/login"); 
+      return; 
+    }
+    setUser(currentUser);
 
     axios
       .get(`${API_BASE}/api/owner/me`, {
         headers: { Authorization: `Bearer ${token}` },
       })
-      .then((r) => setOwner(r.data.owner || {}))
+      .then((r) => setOwnerData(r.data.owner || {}))
       .catch(console.error);
   }, [navigate]);
 
@@ -213,146 +221,103 @@ const OwnerReviews = () => {
     return list;
   }, [products, search, filterRating, sortBy]);
 
+  const sideLinks = [
+    { label: "Dashboard", path: "/owner-dashboard", d: "M3 12l9-9 9 9M5 10v10a1 1 0 001 1h4v-5h4v5h4a1 1 0 001-1V10" },
+    { label: "Orders", path: "/order-management", d: "M9 17H7A5 5 0 017 7h2M15 7h2a5 5 0 010 10h-2M8 12h8" },
+    { label: "Products", path: "/products", d: "M20 7H4a2 2 0 00-2 2v6a2 2 0 002 2h16a2 2 0 002-2V9a2 2 0 00-2-2z" },
+    { label: "Staff", path: "/add-staff", d: "M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 7a4 4 0 100 8 4 4 0 000-8z" },
+    { label: "Suppliers", path: "/supplier-management", d: "M3 3h18v4H3zM3 11h18v4H3zM3 19h18v4H3z" },
+    { label: "Attendance", path: "/attendance", d: "M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" },
+    { label: "Messages", path: "/owner-messages", d: "M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" },
+    { label: "Reviews", path: "/owner-reviews", d: "M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" },
+    { label: "Profile", path: "/owner-profile", d: "M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2M12 3a4 4 0 100 8 4 4 0 000-8z" },
+  ];
+
   /* ── Render ── */
   return (
-    <div className="sd-layout od-modern-layout">
-      <OwnerSidebar
-        sidebarOpen={sidebarOpen}
-        setSidebarOpen={setSidebarOpen}
-        owner={owner}
-        handleLogout={handleLogout}
-      />
-
-      <div
-        className={`sd-main od-main-content ${
-          sidebarOpen ? "sd-main--shifted" : ""
-        }`}
-      >
-        {/* ── Navbar ── */}
-        <header className="sd-navbar">
-          <div className="sd-navbar__left">
-            <button
-              className="sd-navbar__hamburger"
-              onClick={() => setSidebarOpen((v) => !v)}
-              onMouseEnter={() => {
-                if (window.sidebarTimer) clearTimeout(window.sidebarTimer);
-                setSidebarOpen(true);
-              }}
-              onMouseLeave={() => {
-                window.sidebarTimer = setTimeout(
-                  () => setSidebarOpen(false),
-                  300
-                );
-              }}
-            >
-              ☰
-            </button>
-            <div className="sd-navbar__title">
-              <h1>Ratings &amp; Reviews</h1>
-              <span className="sd-navbar__subtitle">
-                Customer feedback across all your products
-              </span>
+    <div className="od-shell">
+      {user?.role === "staff" ? (
+        <StaffSidebar staff={user} />
+      ) : (
+        <aside className="od-sidebar">
+          <div className="od-sidebar__brand">
+            <div className="od-sidebar__logo">
+              <span className="od-sidebar__logo-icon">K</span>
+              <span className="od-sidebar__logo-text">SmartKhata</span>
             </div>
           </div>
-
-          <div className="sd-navbar__right">
-            <div
-              onClick={() => navigate("/owner-profile")}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "12px",
-                cursor: "pointer",
-              }}
-            >
-              <div className="sd-avatar">
-                {owner?.profileImage ? (
-                  <img src={imgUrl(owner.profileImage)} alt="avatar" />
-                ) : (
-                  <span>{(owner?.username || "O")[0].toUpperCase()}</span>
-                )}
-              </div>
-              <div className="sd-navbar__staff-info">
-                <span className="sd-navbar__name">
-                  {owner?.username || "Owner"}
+          <nav className="od-sidebar__nav">
+            {sideLinks.map(link => (
+              <button key={link.path}
+                className={`od-sidebar__link ${location.pathname === link.path ? "od-sidebar__link--active" : ""}`}
+                onClick={() => navigate(link.path)}>
+                <span className="od-sidebar__icon">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d={link.d}/></svg>
                 </span>
-                <span className="sd-navbar__role">Owner</span>
+                <span className="od-sidebar__label">{link.label}</span>
+              </button>
+            ))}
+          </nav>
+          <div className="od-sidebar__footer">
+            <div className="od-sidebar__user" onClick={() => navigate("/owner-profile")}>
+              <div className="od-sidebar__avatar">
+                {user?.profileImage ? <img src={imgUrl(user.profileImage)} alt="avatar"/> : <span>{(user?.username||"U")[0].toUpperCase()}</span>}
+              </div>
+              <div>
+                <div className="od-sidebar__user-name">{user?.username||"Owner"}</div>
+                <div className="od-sidebar__user-role" style={{textTransform:"capitalize"}}>Owner</div>
               </div>
             </div>
+          </div>
+        </aside>
+      )}
+
+      <div className="od-main">
+        <header className="od-topbar">
+          <div className="od-topbar__left">
+            <h1 className="od-topbar__title">Ratings &amp; Reviews</h1>
+            <div className="od-topbar__date">Customer feedback across all your products</div>
+          </div>
+          <div className="od-topbar__right">
+            <div className="od-topbar__profile" onClick={() => navigate(user?.role === "staff" ? "/staff-profile" : "/owner-profile")}>
+              <div className="od-topbar__avatar">
+                {user?.profileImage ? <img src={imgUrl(user.profileImage)} alt="avatar"/> : <span>{(user?.username||"U")[0].toUpperCase()}</span>}
+              </div>
+            </div>
+            <button className="od-topbar__logout" onClick={handleLogout} title="Logout">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+            </button>
           </div>
         </header>
 
-        {/* ── Content ── */}
-        <main className="sd-content">
+        <main className="od-content">
           <div className="rv-page">
-            {/* Header */}
-            <div className="rv-header">
-              <div className="rv-header__info">
-                <h2>Product Ratings &amp; Reviews</h2>
-                <p>
-                  Monitor what your customers are saying about every product in
-                  your shop.
-                </p>
+            
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <div>
+                <h2 style={{ fontSize: '1.3rem', fontWeight: 800, color: '#0f172a', margin: '0 0 2px', letterSpacing: '-0.4px' }}>Product Ratings &amp; Reviews</h2>
+                <p style={{ fontSize: '0.82rem', color: '#64748b', margin: 0 }}>Monitor what your customers are saying about every product in your shop.</p>
               </div>
             </div>
 
             {/* Summary cards */}
-            <div className="rv-summary">
-              <div className="rv-summary-card">
-                <span className="rv-summary-card__label">Total Products</span>
-                <span className="rv-summary-card__value">
-                  {stats.totalProducts}
-                </span>
-                <span className="rv-summary-card__sub">in your shop</span>
-              </div>
-
-              <div className="rv-summary-card">
-                <span className="rv-summary-card__label">Total Reviews</span>
-                <span className="rv-summary-card__value">
-                  {stats.totalReviews}
-                </span>
-                <span className="rv-summary-card__sub">from customers</span>
-              </div>
-
-              <div className="rv-summary-card">
-                <span className="rv-summary-card__label">
-                  Shop Avg. Rating
-                </span>
-                <span
-                  className="rv-summary-card__value"
-                  style={{ color: "#f59e0b" }}
-                >
-                  {stats.avgRating > 0
-                    ? stats.avgRating.toFixed(1)
-                    : "—"}
-                </span>
-                <span className="rv-summary-card__sub">
-                  {stats.avgRating > 0 ? (
-                    <StarRow rating={stats.avgRating} size={12} />
-                  ) : (
-                    "no ratings yet"
-                  )}
-                </span>
-              </div>
-
-              <div className="rv-summary-card">
-                <span className="rv-summary-card__label">
-                  Top Rated Product
-                </span>
-                <span
-                  className="rv-summary-card__value"
-                  style={{ fontSize: "16px", fontWeight: 800 }}
-                >
-                  {stats.topProduct?.numReviews > 0
-                    ? stats.topProduct.name
-                    : "—"}
-                </span>
-                <span className="rv-summary-card__sub">
-                  {stats.topProduct?.numReviews > 0
-                    ? `${stats.topProduct.rating.toFixed(1)} ★`
-                    : "no reviews yet"}
-                </span>
-              </div>
+            <div className="om-stat-row">
+              {[
+                { label:"Total Products", val: stats.totalProducts,                                color:"#6366f1", icon:"M20 7H4a2 2 0 00-2 2v6a2 2 0 002 2h16a2 2 0 002-2V9a2 2 0 00-2-2z" },
+                { label:"Total Reviews",  val: stats.totalReviews,                                 color:"#10b981", icon:"M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" },
+                { label:"Avg Rating",     val: stats.avgRating > 0 ? stats.avgRating.toFixed(1) : "—", color:"#f59e0b", icon:"M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" },
+                { label:"Top Rated",      val: stats.topProduct?.numReviews > 0 ? stats.topProduct.name : "—", color:"#8b5cf6", icon:"M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" },
+              ].map(c=>(
+                <div key={c.label} className="om-stat-card" style={{"--card-color":c.color}}>
+                  <div className="om-stat-card__icon" style={{background:c.color+"18",color:c.color}}>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d={c.icon}/></svg>
+                  </div>
+                  <div>
+                    <div className="om-stat-card__label">{c.label}</div>
+                    <div className="om-stat-card__value" style={{ fontSize: c.label === "Top Rated" && c.val !== "—" ? '1.1rem' : '', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '140px' }}>{c.val}</div>
+                  </div>
+                </div>
+              ))}
             </div>
 
             {/* Controls */}
