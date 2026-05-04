@@ -26,9 +26,11 @@ const userSchema = new mongoose.Schema({
 
     role: { 
         type: String, 
-        enum: ["customer", "owner", "staff"],
+        enum: ["admin", "customer", "owner", "staff"],
         default: "customer"
     },
+
+    isActive: { type: Boolean, default: true },
 
     shopId: {
         type: mongoose.Schema.Types.ObjectId,

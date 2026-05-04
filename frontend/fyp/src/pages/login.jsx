@@ -42,7 +42,8 @@ export default function Login() {
   localStorage.setItem("accessToken", res.data.accessToken);
   localStorage.setItem("user", JSON.stringify(user)); // <-- ADD THIS
 
-  if (user.role === "owner") navigate("/owner-dashboard");
+  if (user.role === "admin") navigate("/admin-dashboard");
+  else if (user.role === "owner") navigate("/owner-dashboard");
   else if (user.role === "staff") navigate("/staff-dashboard");
   else navigate("/customer-dashboard");
       } else {

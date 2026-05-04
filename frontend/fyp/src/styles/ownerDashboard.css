@@ -404,6 +404,22 @@
 .od-notif-item small { color: var(--od-muted); }
 .od-notif-item--warn { background: #fff7ed; }
 .od-notif-item--info { background: #fff; }
+.od-notif-item--read { opacity: 0.6; }
+.od-notif-item__unread-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #6366f1;
+  flex-shrink: 0;
+  margin-top: 4px;
+}
+.od-notif-panel__clear--danger {
+  color: #ef4444 !important;
+  border: 1px solid #ef444430;
+  border-radius: 4px;
+  padding: 2px 8px;
+}
+.od-notif-panel__clear--danger:hover { background: #fef2f2; }
 
 /* ── Content area ───────────────────────────────────────────── */
 .od-content {

@@ -24,6 +24,11 @@ const CustomerDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [expandedShop, setExpandedShop] = useState(null);
+  const [modalSearch, setModalSearch] = useState("");
+  const [reportModal, setReportModal] = useState(false);
+  const [reportReason, setReportReason] = useState("");
+  const [reportSent, setReportSent] = useState(false);
+  const [submittingReport, setSubmittingReport] = useState(false);
 
   // Filter states
   const [categoryFilter, setCategoryFilter] = useState("");
@@ -57,6 +62,27 @@ const CustomerDashboard = () => {
   const shopMatchesSearch = (shop) => {
     if (!searchTerm.trim()) return true;
     return shop.name.toLowerCase().includes(searchTerm.toLowerCase());
+  };
+
+  const submitReport = async () => {
+    if (!reportReason || !expandedShop) return;
+    try {
+      setSubmittingReport(true);
+      const token = localStorage.getItem("accessToken");
+      await axios.post(`${API_BASE}/api/admin/reports`, {
+        targetType: "shop",
+        targetId: expandedShop,
+        reason: reportReason
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setReportSent(true);
+    } catch (err) {
+      console.error("Failed to submit report", err);
+      alert("Failed to submit report. Please try again.");
+    } finally {
+      setSubmittingReport(false);
+    }
   };
 
   const getFilteredProducts = (products, shop) => {
@@ -200,14 +226,26 @@ const CustomerDashboard = () => {
                     <h2 style={{ fontSize: '20px', fontWeight: 800, color: '#0f172a', margin: '0 0 4px' }}>{shop.name}</h2>
                     <p style={{ fontSize: '13px', color: '#64748b', margin: 0, fontWeight: 500 }}>Trending products from this verified store</p>
                   </div>
-                  {hasMore && (
+                  <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
+                    {hasMore && (
+                      <button
+                        onClick={() => setExpandedShop(shop._id)}
+                        style={{ background: 'none', border: 'none', color: '#6366f1', fontSize: '14px', fontWeight: 700, cursor: 'pointer' }}
+                      >
+                        View All {filteredProducts.length} Items →
+                      </button>
+                    )}
                     <button
-                      onClick={() => setExpandedShop(shop._id)}
-                      style={{ background: 'none', border: 'none', color: '#6366f1', fontSize: '14px', fontWeight: 700, cursor: 'pointer' }}
+                      onClick={() => {
+                        setExpandedShop(shop._id);
+                        setReportModal(true);
+                      }}
+                      style={{ background: '#fee2e2', border: 'none', color: '#ef4444', fontSize: '13px', fontWeight: 700, padding: '6px 12px', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
                     >
-                      View All {filteredProducts.length} Items →
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path><line x1="4" y1="22" x2="4" y2="15"></line></svg>
+                      Report Store
                     </button>
-                  )}
+                  </div>
                 </div>
 
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '20px' }}>
@@ -245,34 +283,175 @@ const CustomerDashboard = () => {
         </main>
       </div>
 
-      {/* Modal for showing all products of a shop */}
-      {expandedShop && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(15, 23, 42, 0.4)', backdropFilter: 'blur(4px)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 9999, padding: '20px' }} onClick={() => setExpandedShop(null)}>
-          <div className="od-panel" style={{ width: '100%', maxWidth: '1100px', maxHeight: '90vh', display: 'flex', flexDirection: 'column' }} onClick={(e) => e.stopPropagation()}>
-            <div style={{ padding: '24px 32px', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#fff' }}>
-              <div>
-                <h2 style={{ fontSize: '24px', fontWeight: 800, color: '#0f172a', margin: '0 0 4px' }}>{shops.find((s) => s._id === expandedShop)?.name || "Store Products"}</h2>
-                <p style={{ fontSize: '14px', color: '#64748b', margin: 0, fontWeight: 500 }}>All items available in this store</p>
+      {/* ─── Shop Products Modal ─────────────────────────────── */}
+      {expandedShop && (() => {
+        const activeShop = shops.find((s) => s._id === expandedShop);
+        const allProducts = getFilteredProducts(activeShop?.products);
+        const modalFiltered = modalSearch.trim()
+          ? allProducts.filter(p =>
+              p.name.toLowerCase().includes(modalSearch.toLowerCase()) ||
+              (p.category || "").toLowerCase().includes(modalSearch.toLowerCase())
+            )
+          : allProducts;
+
+        return (
+          <div
+            style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.6)', backdropFilter: 'blur(6px)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 9999, padding: '20px' }}
+            onClick={() => { setExpandedShop(null); setModalSearch(""); }}
+          >
+            <div
+              onClick={e => e.stopPropagation()}
+              style={{ width: '100%', maxWidth: '1140px', maxHeight: '92vh', display: 'flex', flexDirection: 'column', background: '#fff', borderRadius: '20px', overflow: 'hidden', boxShadow: '0 32px 80px rgba(15,23,42,0.25)' }}
+            >
+              {/* ── Header ── */}
+              <div style={{ padding: '24px 32px 20px', background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)', display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
+                {/* Shop avatar */}
+                <div style={{ width: 52, height: 52, borderRadius: '14px', background: 'rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px', flexShrink: 0 }}>🏪</div>
+
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <h2 style={{ fontSize: '22px', fontWeight: 800, color: '#fff', margin: '0 0 2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {activeShop?.name || "Store Products"}
+                  </h2>
+                  <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.75)', margin: 0 }}>
+                    {allProducts.length} item{allProducts.length !== 1 ? 's' : ''} available
+                  </p>
+                </div>
+
+                <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexShrink: 0 }}>
+                  {/* Report shop button */}
+                  <button
+                    onClick={() => setReportModal(true)}
+                    style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.3)', color: '#fff', padding: '8px 16px', borderRadius: '10px', fontSize: '13px', fontWeight: 600, cursor: 'pointer', backdropFilter: 'blur(4px)', transition: 'background 0.2s' }}
+                    onMouseEnter={e => e.currentTarget.style.background = 'rgba(239,68,68,0.3)'}
+                    onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.15)'}
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
+                    Report Shop
+                  </button>
+                  {/* Close */}
+                  <button
+                    onClick={() => { setExpandedShop(null); setModalSearch(""); }}
+                    style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'rgba(255,255,255,0.2)', border: '1px solid rgba(255,255,255,0.3)', color: '#fff', fontSize: '18px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                  >
+                    ✕
+                  </button>
+                </div>
               </div>
-              <button onClick={() => setExpandedShop(null)} style={{ background: '#f1f5f9', border: 'none', width: '36px', height: '36px', borderRadius: '8px', fontSize: '16px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748b' }}>
-                ✕
-              </button>
-            </div>
-            
-            <div style={{ padding: '32px', overflowY: 'auto', background: '#f8fafc', flex: 1 }}>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '20px' }}>
-                {getFilteredProducts(shops.find((s) => s._id === expandedShop)?.products).map((p) => (
-                  <div key={p._id} className="od-panel" style={{ display: 'flex', flexDirection: 'column', cursor: 'pointer', transition: 'transform 0.2s, box-shadow 0.2s' }} onClick={() => { navigate(`/product/${p._id}`); setExpandedShop(null); }}>
-                    <div style={{ height: '200px', background: '#fff', padding: '16px', borderBottom: '1px solid #f1f5f9' }}>
-                      <img src={imgUrl(p.image)} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'contain', mixBlendMode: 'darken' }} onError={(e) => { e.target.src = "https://via.placeholder.com/300?text=No+Image"; }} />
-                    </div>
-                    <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', flex: 1 }}>
-                      <h3 style={{ margin: '0 0 8px', fontSize: '14px', fontWeight: 700, color: '#0f172a', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{p.name}</h3>
-                      <span style={{ fontSize: '16px', fontWeight: 800, color: '#6366f1', marginTop: 'auto' }}>NPR {p.price.toLocaleString()}</span>
-                    </div>
+
+              {/* ── Search bar ── */}
+              <div style={{ padding: '16px 32px', background: '#f8fafc', borderBottom: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div style={{ position: 'relative', flex: 1 }}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2" style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)' }}><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                  <input
+                    type="text"
+                    placeholder={`Search products in ${activeShop?.name || 'this store'}...`}
+                    value={modalSearch}
+                    onChange={e => setModalSearch(e.target.value)}
+                    autoFocus
+                    style={{ width: '100%', padding: '10px 16px 10px 42px', borderRadius: '10px', border: '1px solid #e2e8f0', fontSize: '14px', background: '#fff', outline: 'none', boxSizing: 'border-box', color: '#0f172a' }}
+                  />
+                  {modalSearch && (
+                    <button onClick={() => setModalSearch('')} style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8', fontSize: '16px' }}>✕</button>
+                  )}
+                </div>
+                <span style={{ fontSize: '13px', color: '#64748b', whiteSpace: 'nowrap', fontWeight: 600 }}>
+                  {modalFiltered.length} result{modalFiltered.length !== 1 ? 's' : ''}
+                </span>
+              </div>
+
+              {/* ── Product grid ── */}
+              <div style={{ flex: 1, overflowY: 'auto', padding: '28px 32px', background: '#f8fafc' }}>
+                {modalFiltered.length === 0 ? (
+                  <div style={{ padding: '60px', textAlign: 'center' }}>
+                    <div style={{ fontSize: '48px', marginBottom: '16px' }}>🔍</div>
+                    <p style={{ color: '#64748b', fontWeight: 600, fontSize: '16px' }}>No products match "{modalSearch}"</p>
+                    <button onClick={() => setModalSearch('')} style={{ marginTop: '12px', background: '#6366f1', color: '#fff', border: 'none', padding: '8px 20px', borderRadius: '8px', cursor: 'pointer', fontWeight: 600 }}>Clear search</button>
                   </div>
-                ))}
+                ) : (
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '20px' }}>
+                    {modalFiltered.map((p) => (
+                      <div
+                        key={p._id}
+                        onClick={() => { navigate(`/product/${p._id}`); setExpandedShop(null); setModalSearch(''); }}
+                        style={{ background: '#fff', borderRadius: '16px', border: '1px solid #e2e8f0', overflow: 'hidden', cursor: 'pointer', display: 'flex', flexDirection: 'column', transition: 'transform 0.2s, box-shadow 0.2s' }}
+                        onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-4px)'; e.currentTarget.style.boxShadow = '0 12px 32px rgba(99,102,241,0.15)'; }}
+                        onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none'; }}
+                      >
+                        <div style={{ height: '180px', background: '#f8fafc', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}>
+                          <img
+                            src={imgUrl(p.image)}
+                            alt={p.name}
+                            style={{ width: '100%', height: '100%', objectFit: 'contain', mixBlendMode: 'darken' }}
+                            onError={e => { e.target.src = "https://via.placeholder.com/300?text=No+Image"; }}
+                          />
+                        </div>
+                        <div style={{ padding: '16px', flex: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                          <h3 style={{ margin: 0, fontSize: '14px', fontWeight: 700, color: '#0f172a', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', lineHeight: 1.4 }}>{p.name}</h3>
+                          {p.category && <span style={{ fontSize: '11px', color: '#6366f1', fontWeight: 600, background: '#eef2ff', padding: '2px 8px', borderRadius: '6px', alignSelf: 'flex-start' }}>{p.category}</span>}
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'auto', paddingTop: '12px', borderTop: '1px dashed #e2e8f0' }}>
+                            <span style={{ fontSize: '16px', fontWeight: 800, color: '#6366f1' }}>NPR {p.price.toLocaleString()}</span>
+                            <span style={{ fontSize: '11px', fontWeight: 700, padding: '3px 8px', borderRadius: '6px', background: p.quantity > 5 ? '#ecfdf5' : '#fef2f2', color: p.quantity > 5 ? '#059669' : '#dc2626' }}>
+                              {p.quantity > 5 ? 'In Stock' : p.quantity > 0 ? 'Low Stock' : 'Out of Stock'}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* ─── Report Shop Modal ────────────────────────────────── */}
+      {reportModal && (
+        <div
+          style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.7)', backdropFilter: 'blur(8px)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 10000, padding: '20px' }}
+          onClick={() => { setReportModal(false); setReportSent(false); setReportReason(''); }}
+        >
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{ background: '#fff', borderRadius: '20px', width: '100%', maxWidth: '480px', overflow: 'hidden', boxShadow: '0 32px 80px rgba(15,23,42,0.25)' }}
+          >
+            <div style={{ padding: '20px 24px', background: 'linear-gradient(135deg, #ef4444, #dc2626)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#fff' }}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
+                <strong style={{ fontSize: '18px', fontWeight: 800 }}>Report Shop</strong>
+              </div>
+              <button onClick={() => { setReportModal(false); setReportSent(false); setReportReason(''); }} style={{ background: 'rgba(255,255,255,0.2)', border: 'none', color: '#fff', width: '32px', height: '32px', borderRadius: '8px', cursor: 'pointer', fontSize: '16px' }}>✕</button>
+            </div>
+            <div style={{ padding: '28px 24px' }}>
+              {reportSent ? (
+                <div style={{ textAlign: 'center', padding: '20px 0' }}>
+                  <div style={{ fontSize: '48px', marginBottom: '12px' }}>✅</div>
+                  <h3 style={{ color: '#0f172a', fontWeight: 800, margin: '0 0 8px' }}>Report Submitted</h3>
+                  <p style={{ color: '#64748b', margin: 0, fontSize: '14px' }}>Thank you for helping keep our marketplace safe. We'll review this shop shortly.</p>
+                  <button onClick={() => { setReportModal(false); setReportSent(false); setReportReason(''); }} style={{ marginTop: '20px', background: '#6366f1', color: '#fff', border: 'none', padding: '10px 24px', borderRadius: '10px', cursor: 'pointer', fontWeight: 700 }}>Done</button>
+                </div>
+              ) : (
+                <>
+                  <p style={{ color: '#64748b', fontSize: '14px', margin: '0 0 20px', lineHeight: 1.6 }}>
+                    Reporting <strong style={{ color: '#0f172a' }}>{shops.find(s => s._id === expandedShop)?.name}</strong>. Please select a reason:
+                  </p>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '20px' }}>
+                    {['Selling counterfeit products', 'Fraudulent activity', 'Inappropriate content', 'Price gouging', 'Poor product quality', 'Other'].map(reason => (
+                      <label key={reason} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '12px 16px', borderRadius: '10px', border: `1.5px solid ${reportReason === reason ? '#ef4444' : '#e2e8f0'}`, background: reportReason === reason ? '#fef2f2' : '#f8fafc', cursor: 'pointer', fontSize: '14px', fontWeight: 500, color: '#0f172a', transition: 'all 0.15s' }}>
+                        <input type="radio" name="report" value={reason} checked={reportReason === reason} onChange={() => setReportReason(reason)} style={{ accentColor: '#ef4444' }} />
+                        {reason}
+                      </label>
+                    ))}
+                  </div>
+                  <button
+                    disabled={!reportReason || submittingReport}
+                    onClick={submitReport}
+                    style={{ width: '100%', padding: '13px', background: reportReason ? 'linear-gradient(135deg, #ef4444, #dc2626)' : '#e2e8f0', color: reportReason ? '#fff' : '#94a3b8', border: 'none', borderRadius: '12px', fontWeight: 700, fontSize: '15px', cursor: reportReason ? 'pointer' : 'not-allowed', transition: 'all 0.2s' }}
+                  >
+                    {submittingReport ? "Submitting..." : "Submit Report"}
+                  </button>
+                </>
+              )}
             </div>
           </div>
         </div>

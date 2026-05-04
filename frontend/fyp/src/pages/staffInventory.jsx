@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { imgUrl } from "../utils/imageUrl";
+import OwnerNotificationBell from "../components/OwnerNotificationBell";
 import "../styles/staffInventory.css";
 import "../styles/ownerDashboard.css";
 import StaffSidebar from "../components/StaffSidebar";
@@ -28,6 +29,7 @@ const StaffInventory = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterCategory, setFilterCategory] = useState("All");
   const [toast, setToast] = useState({ message: "", type: "success", visible: false });
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [viewQr, setViewQr] = useState(null);
 
@@ -341,6 +343,8 @@ const StaffInventory = () => {
             <button className="od-pill" onClick={() => setScannerOpen(true)} style={{ display: "flex", alignItems: "center", gap: "6px" }}>
               <span>🔍</span> Scan QR
             </button>
+
+            <OwnerNotificationBell shopId={user?.shopId} />
 
             <div className="od-topbar__profile" onClick={() => navigate("/staff-profile")}>
               <div className="od-topbar__avatar">

@@ -6,6 +6,7 @@ import "../styles/staffDashboard.css";
 import "../styles/staffInventory.css";
 import "../styles/ownerDashboard.css";
 import StaffSidebar from "../components/StaffSidebar";
+import OwnerNotificationBell from "../components/OwnerNotificationBell";
 
 const API_BASE = "http://localhost:8000";
 
@@ -14,6 +15,7 @@ const StaffAttendance = () => {
   const [attendanceList, setAttendanceList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [staff, setStaff] = useState(null);
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [toast, setToast] = useState({ message: "", type: "success", visible: false });
 
@@ -99,6 +101,7 @@ const StaffAttendance = () => {
           </div>
 
           <div className="od-topbar__right">
+            <OwnerNotificationBell shopId={user?.shopId} />
             {/* Avatar */}
             <div className="od-topbar__profile" onClick={() => navigate("/staff-profile")}>
               <div className="od-topbar__avatar">

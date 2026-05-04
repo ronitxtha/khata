@@ -16,6 +16,8 @@ const shopSchema = new mongoose.Schema({
     description: { type: String, default: "" },
     address: { type: String, default: "" },
     logoUrl: { type: String, default: "" },
+    status: { type: String, enum: ["active", "suspended"], default: "active" },
+    suspendedReason: { type: String, default: "" },
 
 }, { timestamps: true });
 

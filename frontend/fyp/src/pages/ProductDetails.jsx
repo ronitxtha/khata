@@ -8,6 +8,7 @@ import "../styles/productDetails.css";
 import { useCart } from "../context/CartContext";
 import Rating from "../components/Rating";
 import io from "socket.io-client";
+import CustomerSidebar from "../components/CustomerSidebar";
 
 const API_BASE = "http://localhost:8000";
 
@@ -36,6 +37,13 @@ const ProductDetails = () => {
   const [hoverRating, setHoverRating] = useState(0);
   const [comment, setComment] = useState("");
   const [submittingReview, setSubmittingReview] = useState(false);
+
+  // Report state
+  const [reportModal, setReportModal] = useState(false);
+  const [reportReason, setReportReason] = useState("");
+  const [reportSent, setReportSent] = useState(false);
+  const [submittingReport, setSubmittingReport] = useState(false);
+
   const [reviewError, setReviewError] = useState("");
   const [reviewSuccess, setReviewSuccess] = useState("");
   const [editMode, setEditMode] = useState(false);
@@ -265,6 +273,27 @@ const ProductDetails = () => {
     }
   };
 
+  const submitReport = async () => {
+    if (!reportReason || !product) return;
+    try {
+      setSubmittingReport(true);
+      const token = localStorage.getItem("accessToken");
+      await axios.post(`${API_BASE}/api/admin/reports`, {
+        targetType: "product",
+        targetId: product._id,
+        reason: reportReason
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setReportSent(true);
+    } catch (err) {
+      console.error("Failed to submit report", err);
+      alert("Failed to submit report. Please try again.");
+    } finally {
+      setSubmittingReport(false);
+    }
+  };
+
   if (loading) return <div className="pd-page"><div style={{ padding: "100px", textAlign: "center" }}>Loading product...</div></div>;
   if (!product) return <div className="pd-page"><div style={{ padding: "100px", textAlign: "center" }}>Product not found</div></div>;
 
@@ -272,33 +301,33 @@ const ProductDetails = () => {
   const isDeliveryComplete = isDropdownComplete || locationAdded;
 
   return (
-    <div className="pd-page">
-      {/* ===== HEADER ===== */}
-      <header className="pd-header">
-        <div className="pd-header__left">
-          <button className="pd-back-btn" onClick={() => navigate(-1)}>
-            ← Back
-          </button>
-          <div className="pd-logo" onClick={() => navigate("/customer-dashboard")}>
-            Khata
+    <div className="od-shell">
+      <CustomerSidebar customer={currentUser || {}} />
+
+      <div className="od-main">
+        <header className="od-topbar">
+          <div className="od-topbar__left">
+            <h1 className="od-topbar__title" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <button onClick={() => navigate(-1)} style={{ background: '#f1f5f9', border: 'none', cursor: 'pointer', fontSize: '18px', width: '36px', height: '36px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748b' }}>←</button>
+              Product Details
+            </h1>
           </div>
-        </div>
-        <div className="pd-header__right">
-          <button className="pd-cart-btn" onClick={() => navigate("/cart")}>
-            🛒 Cart {totalQuantity > 0 && <span className="pd-cart-badge">{totalQuantity}</span>}
-          </button>
-        </div>
-      </header>
+          <div className="od-topbar__right">
+            <button className="pd-cart-btn" onClick={() => navigate("/cart")} style={{ background: '#f1f5f9', border: 'none' }}>
+              🛒 Cart {totalQuantity > 0 && <span className="pd-cart-badge">{totalQuantity}</span>}
+            </button>
+          </div>
+        </header>
 
-      {/* ===== BREADCRUMB ===== */}
-      <div className="pd-breadcrumb">
-        <span onClick={() => navigate("/customer-dashboard")}>Home</span>
-        <span style={{ margin: '0 8px' }}>/</span>
-        <span className="pd-breadcrumb__current">{product.name}</span>
-      </div>
+        <main className="od-content">
+          <div className="pd-page">
+            <div className="pd-breadcrumb" style={{ padding: '0 0 1rem 0' }}>
+              <span onClick={() => navigate("/customer-dashboard")}>Home</span>
+              <span style={{ margin: '0 8px' }}>/</span>
+              <span className="pd-breadcrumb__current">{product.name}</span>
+            </div>
 
-      {/* ===== PRODUCT SECTION ===== */}
-      <main className="pd-product-section">
+            <main className="pd-product-section" style={{ padding: 0 }}>
         <div className="pd-image-section">
           <div className="pd-image-card">
             <img src={imgUrl(product.image)} alt={product.name} />
@@ -330,7 +359,6 @@ const ProductDetails = () => {
             </div>
           </div>
 
-          {/* Delivery Section */}
           <div className="pd-delivery-card" style={{ marginTop: '1.5rem' }}>
             <h3 className="pd-delivery-title">📍 Delivery Address</h3>
 
@@ -384,8 +412,15 @@ const ProductDetails = () => {
             </div>
           </div>
 
-          {/* Action Buttons */}
-          <div className="pd-actions">
+          <div className="pd-actions" style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
+            <button
+              onClick={() => setReportModal(true)}
+              style={{ background: '#fee2e2', border: 'none', color: '#ef4444', fontSize: '13px', fontWeight: 700, padding: '12px 16px', borderRadius: '12px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', height: '50px' }}
+              title="Report this product"
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path><line x1="4" y1="22" x2="4" y2="15"></line></svg>
+              Report
+            </button>
             <button
               className="pd-buy-now"
               disabled={!isDeliveryComplete}
@@ -409,14 +444,12 @@ const ProductDetails = () => {
         </div>
       </main>
 
-      {/* ===== REVIEWS SECTION ===== */}
-      <section className="pd-reviews-section">
-        <div className="pd-reviews-header">
+            <section className="pd-reviews-section" style={{ padding: '0 0 3rem 0' }}>
+              <div className="pd-reviews-header">
           <h2>Customer Reviews</h2>
         </div>
         
         <div className="pd-reviews-grid">
-          {/* Review List */}
           <div className="pd-reviews-list">
             <div className="pd-avg-box" style={{ marginBottom: "2rem" }}>
               <span className="pd-avg-num">{(product.rating || 0).toFixed(1)}</span>
@@ -461,7 +494,6 @@ const ProductDetails = () => {
             )}
           </div>
 
-          {/* Write Review Section */}
           <div className="pd-write-review" id="pd-review-form-section">
             <div className="pd-write-card">
               <h3 style={{ fontSize: "1.2rem", fontWeight: "700", marginBottom: "1.5rem" }}>
@@ -509,47 +541,101 @@ const ProductDetails = () => {
         </div>
       </section>
 
-      {/* ===== FLOATING CHAT WIDGET ===== */}
-      <button className="pd-chat-widget-btn" onClick={toggleChat} title="Chat with Shop Owner">
-        💬
-      </button>
+            <button className="pd-chat-widget-btn" onClick={toggleChat} title="Chat with Shop Owner">
+              💬
+            </button>
 
-      {chatOpen && (
-        <div className="pd-chat-window">
-          <div className="pd-chat-header">
-            <h3>💬 Chat with Shop</h3>
-            <button className="pd-chat-close" onClick={() => setChatOpen(false)}>✕</button>
-          </div>
-          
-          <div className="pd-chat-body" ref={chatBodyRef}>
-            {chatMessages.length === 0 ? (
-              <div style={{ textAlign: 'center', color: '#94a3b8', fontSize: '0.85rem', marginTop: '2rem' }}>
-                Start a conversation with the shop owner!
+            {chatOpen && (
+              <div className="pd-chat-window">
+                <div className="pd-chat-header">
+                  <h3>💬 Chat with Shop</h3>
+                  <button className="pd-chat-close" onClick={() => setChatOpen(false)}>✕</button>
+                </div>
+                
+                <div className="pd-chat-body" ref={chatBodyRef}>
+                  {chatMessages.length === 0 ? (
+                    <div style={{ textAlign: 'center', color: '#94a3b8', fontSize: '0.85rem', marginTop: '2rem' }}>
+                      Start a conversation with the shop owner!
+                    </div>
+                  ) : (
+                    chatMessages.map(msg => {
+                      const isMine = msg.senderId === currentUser._id || msg.senderId?._id === currentUser._id;
+                      return (
+                        <div key={msg._id} className={`pd-message ${isMine ? 'pd-message-outgoing' : 'pd-message-incoming'}`}>
+                          {msg.text}
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+                
+                <form className="pd-chat-footer" onSubmit={handleSendMessage}>
+                  <input 
+                    type="text" 
+                    className="pd-chat-input" 
+                    placeholder="Type a message..." 
+                    value={chatInput}
+                    onChange={(e) => setChatInput(e.target.value)}
+                  />
+                  <button type="submit" className="pd-chat-send" disabled={!chatInput.trim()}>
+                    ➤
+                  </button>
+                </form>
               </div>
-            ) : (
-              chatMessages.map(msg => {
-                const isMine = msg.senderId === currentUser._id || msg.senderId?._id === currentUser._id;
-                return (
-                  <div key={msg._id} className={`pd-message ${isMine ? 'pd-message-outgoing' : 'pd-message-incoming'}`}>
-                    {msg.text}
-                  </div>
-                );
-              })
             )}
           </div>
-          
-          <form className="pd-chat-footer" onSubmit={handleSendMessage}>
-            <input 
-              type="text" 
-              className="pd-chat-input" 
-              placeholder="Type a message..." 
-              value={chatInput}
-              onChange={(e) => setChatInput(e.target.value)}
-            />
-            <button type="submit" className="pd-chat-send" disabled={!chatInput.trim()}>
-              ➤
-            </button>
-          </form>
+        </main>
+      </div>
+
+      {/* ─── Report Product Modal ────────────────────────────────── */}
+      {reportModal && (
+        <div
+          style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.7)', backdropFilter: 'blur(8px)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 10000, padding: '20px' }}
+          onClick={() => { setReportModal(false); setReportSent(false); setReportReason(''); }}
+        >
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{ background: '#fff', borderRadius: '20px', width: '100%', maxWidth: '480px', overflow: 'hidden', boxShadow: '0 32px 80px rgba(15,23,42,0.25)' }}
+          >
+            <div style={{ padding: '20px 24px', background: 'linear-gradient(135deg, #ef4444, #dc2626)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#fff' }}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
+                <strong style={{ fontSize: '18px', fontWeight: 800 }}>Report Product</strong>
+              </div>
+              <button onClick={() => { setReportModal(false); setReportSent(false); setReportReason(''); }} style={{ background: 'rgba(255,255,255,0.2)', border: 'none', color: '#fff', width: '32px', height: '32px', borderRadius: '8px', cursor: 'pointer', fontSize: '16px' }}>✕</button>
+            </div>
+            <div style={{ padding: '28px 24px' }}>
+              {reportSent ? (
+                <div style={{ textAlign: 'center', padding: '20px 0' }}>
+                  <div style={{ fontSize: '48px', marginBottom: '12px' }}>✅</div>
+                  <h3 style={{ color: '#0f172a', fontWeight: 800, margin: '0 0 8px' }}>Report Submitted</h3>
+                  <p style={{ color: '#64748b', margin: 0, fontSize: '14px' }}>Thank you for helping keep our marketplace safe. We'll review this product shortly.</p>
+                  <button onClick={() => { setReportModal(false); setReportSent(false); setReportReason(''); }} style={{ marginTop: '20px', background: '#6366f1', color: '#fff', border: 'none', padding: '10px 24px', borderRadius: '10px', cursor: 'pointer', fontWeight: 700 }}>Done</button>
+                </div>
+              ) : (
+                <>
+                  <p style={{ color: '#64748b', fontSize: '14px', margin: '0 0 20px', lineHeight: 1.6 }}>
+                    Reporting <strong style={{ color: '#0f172a' }}>{product?.name}</strong>. Please select a reason:
+                  </p>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '20px' }}>
+                    {['Counterfeit product', 'Inappropriate or offensive content', 'Misleading description', 'Defective or broken item', 'Other'].map(reason => (
+                      <label key={reason} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '12px 16px', borderRadius: '10px', border: `1.5px solid ${reportReason === reason ? '#ef4444' : '#e2e8f0'}`, background: reportReason === reason ? '#fef2f2' : '#f8fafc', cursor: 'pointer', fontSize: '14px', fontWeight: 500, color: '#0f172a', transition: 'all 0.15s' }}>
+                        <input type="radio" name="report" value={reason} checked={reportReason === reason} onChange={() => setReportReason(reason)} style={{ accentColor: '#ef4444' }} />
+                        {reason}
+                      </label>
+                    ))}
+                  </div>
+                  <button
+                    disabled={!reportReason || submittingReport}
+                    onClick={submitReport}
+                    style={{ width: '100%', padding: '13px', background: reportReason ? 'linear-gradient(135deg, #ef4444, #dc2626)' : '#e2e8f0', color: reportReason ? '#fff' : '#94a3b8', border: 'none', borderRadius: '12px', fontWeight: 700, fontSize: '15px', cursor: reportReason ? 'pointer' : 'not-allowed', transition: 'all 0.2s' }}
+                  >
+                    {submittingReport ? "Submitting..." : "Submit Report"}
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
         </div>
       )}
 

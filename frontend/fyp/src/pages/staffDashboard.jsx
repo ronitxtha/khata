@@ -18,6 +18,7 @@ import "../styles/staffDashboard.css";
 import "../styles/staffInventory.css";
 import "../styles/ownerDashboard.css";
 import StaffSidebar from "../components/StaffSidebar";
+import OwnerNotificationBell from "../components/OwnerNotificationBell";
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
@@ -30,10 +31,6 @@ const StaffDashboard = () => {
   const [staff, setStaff] = useState({});
   const [products, setProducts] = useState([]);
   const [orders, setOrders] = useState([]);
-
-  // Notifications
-  const [notifications, setNotifications] = useState([]);
-  const [showNotifications, setShowNotifications] = useState(false);
 
   // Toast
   const [toast, setToast] = useState({ message: "", type: "success", visible: false });
@@ -75,7 +72,6 @@ const StaffDashboard = () => {
         setProducts(resProducts.data.products || []);
 
         if (shopId) {
-          fetchNotifications(shopId);
           try {
             const resOrders = await axios.get(`${API_BASE}/api/orders/shop/${shopId}`, {
               headers: { Authorization: `Bearer ${token}` },
@@ -111,14 +107,12 @@ const StaffDashboard = () => {
 
     socket.on("lowStockAlert", (data) => {
       showToast(data.message, "error");
-      fetchNotifications(staff.shopId);
       setProducts((prev) => prev.map((p) => p._id === data.productId ? { ...p, quantity: data.quantity } : p));
     });
 
     socket.on("newOrder", (data) => {
       if (data.shopId === staff.shopId) {
         showToast(data.message, "success");
-        fetchNotifications(staff.shopId);
         fetchOrdersBackground();
       }
     });
@@ -128,44 +122,6 @@ const StaffDashboard = () => {
       socket.off("newOrder");
     };
   }, [staff?.shopId]);
-
-  // Close notification dropdown on outside click
-  useEffect(() => {
-    const handleOutsideClick = (e) => {
-      if (notifRef.current && !notifRef.current.contains(e.target)) {
-        setShowNotifications(false);
-      }
-    };
-    document.addEventListener("mousedown", handleOutsideClick);
-    return () => document.removeEventListener("mousedown", handleOutsideClick);
-  }, []);
-
-  const fetchNotifications = async (shopId) => {
-    try {
-      const token = localStorage.getItem("accessToken");
-      const res = await axios.get(`${API_BASE}/api/notifications/${shopId}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (res.data) setNotifications(res.data);
-    } catch (err) {
-      console.error("Failed to fetch notifications:", err);
-    }
-  };
-
-  const handleMarkAllRead = async () => {
-    try {
-      const token = localStorage.getItem("accessToken");
-      await axios.put(`${API_BASE}/api/notifications/mark-all-read/${staff.shopId}`, {}, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setNotifications([]);
-      setShowNotifications(false);
-      showToast("Notifications cleared", "success");
-    } catch (err) {
-      console.error(err);
-      showToast("Failed to clear notifications", "error");
-    }
-  };
 
   const showToast = (message, type = "success", duration = 3000) => {
     setToast({ message, type, visible: true });
@@ -411,8 +367,6 @@ const StaffDashboard = () => {
     return "";
   };
 
-  const unreadCount = notifications.filter((n) => !n.read).length;
-
   // ===================== Sidebar nav =====================
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const navLinks = [
@@ -447,41 +401,7 @@ const StaffDashboard = () => {
             </button>
 
             {/* Notification Bell */}
-            <div style={{ position: "relative" }} ref={notifRef}>
-              <button 
-                className="od-topbar__icon-btn" 
-                onClick={() => setShowNotifications(!showNotifications)}
-              >
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
-                {notifications.length > 0 && <span className="od-topbar__notif-dot">{notifications.length}</span>}
-              </button>
-              
-              {showNotifications && (
-                <div className="od-notif-panel">
-                  <div className="od-notif-panel__head">
-                    <strong>Notifications ({notifications.length})</strong>
-                    {notifications.length > 0 && (
-                      <button onClick={handleMarkAllRead} className="od-notif-panel__clear">Mark all read</button>
-                    )}
-                  </div>
-                  <div className="od-notif-panel__body">
-                    {notifications.length === 0 ? (
-                      <p className="od-notif-panel__empty">All caught up! 🎉</p>
-                    ) : (
-                      notifications.map(noti => (
-                        <div key={noti._id} className={`od-notif-item od-notif-item--${noti.type === "low_stock" ? "warn" : "info"}`}>
-                          <span>{noti.type === "low_stock" ? "🚨" : "📦"}</span>
-                          <div>
-                            <p>{noti.message}</p>
-                            <small>{new Date(noti.createdAt).toLocaleString()}</small>
-                          </div>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
+            <OwnerNotificationBell shopId={staff?.shopId} />
 
             {/* Avatar */}
             <div className="od-topbar__profile" onClick={() => navigate("/staff-profile")}>

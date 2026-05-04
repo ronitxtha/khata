@@ -22,6 +22,9 @@ import { Server } from "socket.io";
 import messageRoutes from "./routes/messageRoute.js";
 import { Message } from "./models/messageModel.js";
 import recommendationRoutes from "./routes/recommendationRoutes.js";
+import adminRoutes from "./routes/adminRoutes.js";
+import { User } from "./models/userModel.js";
+import bcrypt from "bcryptjs";
 
 const app = express();
 const PORT = process.env.PORT || 8000;
@@ -145,10 +148,34 @@ app.use("/api/customer", customerProfileRoutes);
 app.use("/api/suppliers", supplierRoutes);
 app.use("/api/messages", messageRoutes);
 app.use("/api/recommendations", recommendationRoutes);
+app.use("/api/admin", adminRoutes);
 
 /* ================= START SERVER ================= */
 
-connectDB();
+// ── Seed admin user on startup ───────────────────────────────────────────────
+const seedAdmin = async () => {
+  try {
+    const exists = await User.findOne({ role: "admin" });
+    if (!exists) {
+      const hashed = await bcrypt.hash(process.env.ADMIN_PASSWORD, 12);
+      await User.create({
+        username: "Admin",
+        email: process.env.ADMIN_EMAIL,
+        password: hashed,
+        role: "admin",
+        isVerified: true,
+        isActive: true,
+      });
+      console.log(`✅ Admin seeded: ${process.env.ADMIN_EMAIL}`);
+    } else {
+      console.log(`ℹ️  Admin already exists: ${exists.email}`);
+    }
+  } catch (err) {
+    console.error("❌ Admin seed failed:", err.message);
+  }
+};
+
+connectDB().then(seedAdmin);
 
 server.listen(PORT, () => {
     console.log(`🚀 Server running on port ${PORT}`);

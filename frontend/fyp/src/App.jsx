@@ -32,6 +32,7 @@ import OrderReceipt from "./pages/OrderReceipt.jsx";
 import OwnerReviews from "./pages/OwnerReviews.jsx";
 import OwnerMessages from "./pages/OwnerMessages.jsx";
 import CustomerMessages from "./pages/CustomerMessages.jsx";
+import AdminDashboard from "./pages/AdminDashboard.jsx";
 
 export default function App() {
   return (
@@ -44,6 +45,7 @@ export default function App() {
         <Route path="/otp/:email" element={<OTP />} />
         <Route path="/change-password/:email" element={<ChangePassword />} />
         <Route path="/verify/:token" element={<VerifyEmail />} />
+        <Route path="/admin-dashboard" element={<AdminDashboard />} />
         <Route path="/owner-dashboard" element={<OwnerDashboard />} />
         <Route path="/owner-profile" element={<OwnerProfile />} />
         <Route path="/staff-dashboard" element={<StaffDashboard />} />

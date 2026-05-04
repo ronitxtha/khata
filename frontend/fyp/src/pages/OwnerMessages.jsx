@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
 import io from "socket.io-client";
 import { imgUrl } from "../utils/imageUrl";
+import OwnerNotificationBell from "../components/OwnerNotificationBell";
 import "../styles/ownerDashboard.css";
 
 import StaffSidebar from "../components/StaffSidebar";
@@ -192,6 +193,7 @@ const OwnerMessages = () => {
             <div className="od-topbar__date">Chat directly with your customers</div>
           </div>
           <div className="od-topbar__right">
+            <OwnerNotificationBell shopId={user?.shopId} />
             <div className="od-topbar__profile" onClick={() => navigate(user?.role === "staff" ? "/staff-profile" : "/owner-profile")}>
               <div className="od-topbar__avatar">
                 {user?.profileImage ? <img src={imgUrl(user.profileImage)} alt="avatar"/> : <span>{(user?.username||"U")[0].toUpperCase()}</span>}

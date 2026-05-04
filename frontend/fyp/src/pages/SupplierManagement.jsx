@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
 import { imgUrl } from "../utils/imageUrl";
+import OwnerNotificationBell from "../components/OwnerNotificationBell";
 import "../styles/ownerDashboard.css";
 import "../styles/supplierManagement.css";
 
@@ -362,6 +363,7 @@ const SupplierManagement = () => {
             <div className="od-topbar__date">{suppliers.length} partners</div>
           </div>
           <div className="od-topbar__right">
+            <OwnerNotificationBell shopId={owner?.shopId} />
             <div className="od-topbar__profile" onClick={() => navigate("/owner-profile")}>
               <div className="od-topbar__avatar">
                 {owner?.profileImage ? <img src={imgUrl(owner.profileImage)} alt="avatar"/> : <span>{(owner?.username||"U")[0].toUpperCase()}</span>}

@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
 import QRScanner from "./QRScanner";
 import { imgUrl } from "../utils/imageUrl";
+import OwnerNotificationBell from "../components/OwnerNotificationBell";
 import "../styles/ownerDashboard.css";
 import "../styles/staffDashboard.css";
 import "../styles/productManagement.css";
@@ -375,6 +376,7 @@ const ProductManagement = () => {
             <div className="od-topbar__date">{products.length} items</div>
           </div>
           <div className="od-topbar__right">
+            <OwnerNotificationBell shopId={owner?.shopId} />
             <div className="od-topbar__profile" onClick={() => navigate(profilePath)}>
               <div className="od-topbar__avatar">
                 {owner?.profileImage ? <img src={imgUrl(owner.profileImage)} alt="avatar"/> : <span>{(owner?.username||"U")[0].toUpperCase()}</span>}

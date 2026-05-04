@@ -5,6 +5,9 @@ import { imgUrl } from "../utils/imageUrl";
 import socket from "../socket";
 import "../styles/ownerDashboard.css";
 import "../styles/orderManagement.css";
+import OwnerSidebar from "../components/OwnerSidebar";
+import StaffSidebar from "../components/StaffSidebar";
+import OwnerNotificationBell from "../components/OwnerNotificationBell";
 
 const API_BASE = "http://localhost:8000";
 
@@ -17,27 +20,6 @@ const Icon = ({ d, size = 18 }) => (
     <path d={d} />
   </svg>
 );
-
-const NAV_LINKS = [
-  { label: "Dashboard",  path: "/owner-dashboard",      d: "M3 12l9-9 9 9M5 10v10a1 1 0 001 1h4v-5h4v5h4a1 1 0 001-1V10" },
-  { label: "Orders",     path: "/order-management",     d: "M9 17H7A5 5 0 017 7h2M15 7h2a5 5 0 010 10h-2M8 12h8" },
-  { label: "Products",   path: "/products",             d: "M20 7H4a2 2 0 00-2 2v6a2 2 0 002 2h16a2 2 0 002-2V9a2 2 0 00-2-2z" },
-  { label: "Staff",      path: "/add-staff",            d: "M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 7a4 4 0 100 8 4 4 0 000-8zM23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" },
-  { label: "Suppliers",  path: "/supplier-management",  d: "M3 3h18v4H3zM3 11h18v4H3zM3 19h18v4H3z" },
-  { label: "Attendance", path: "/attendance",           d: "M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" },
-  { label: "Messages",   path: "/owner-messages",       d: "M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" },
-  { label: "Reviews",    path: "/owner-reviews",        d: "M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" },
-  { label: "Profile",    path: "/owner-profile",        d: "M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2M12 3a4 4 0 100 8 4 4 0 000-8z" },
-];
-
-/* Staff nav (subset) */
-const STAFF_NAV = [
-  { label: "Dashboard",  path: "/staff-dashboard",     d: "M3 12l9-9 9 9M5 10v10a1 1 0 001 1h4v-5h4v5h4a1 1 0 001-1V10" },
-  { label: "Orders",     path: "/order-management",    d: "M9 17H7A5 5 0 017 7h2M15 7h2a5 5 0 010 10h-2M8 12h8" },
-  { label: "Inventory",  path: "/staff-inventory",     d: "M20 7H4a2 2 0 00-2 2v6a2 2 0 002 2h16a2 2 0 002-2V9a2 2 0 00-2-2z" },
-  { label: "Attendance", path: "/staff-attendance",    d: "M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" },
-  { label: "Profile",    path: "/staff-profile",       d: "M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2M12 3a4 4 0 100 8 4 4 0 000-8z" },
-];
 
 /* ── Status colour map ───────────────────────────────────── */
 const STATUS_COLORS = {
@@ -60,8 +42,6 @@ const OrderManagement = () => {
   const user   = JSON.parse(localStorage.getItem("user") || "{}");
   const role   = user?.role || "staff";
   const shopId = user?.shopId;
-
-  const navLinks = role === "owner" ? NAV_LINKS : STAFF_NAV;
   const profilePath = role === "owner" ? "/owner-profile" : "/staff-profile";
 
   /* ── Fetch ── */
@@ -124,41 +104,7 @@ const OrderManagement = () => {
     <div className="od-shell">
 
       {/* ══════════════ SIDEBAR ══════════════ */}
-      <aside className="od-sidebar">
-        <div className="od-sidebar__brand">
-          <div className="od-sidebar__logo">
-            <span className="od-sidebar__logo-icon">K</span>
-            <span className="od-sidebar__logo-text">SmartKhata</span>
-          </div>
-        </div>
-
-        <nav className="od-sidebar__nav">
-          {navLinks.map(link => (
-            <button
-              key={link.path}
-              className={`od-sidebar__link ${location.pathname === link.path ? "od-sidebar__link--active" : ""}`}
-              onClick={() => navigate(link.path)}
-            >
-              <span className="od-sidebar__icon"><Icon d={link.d} /></span>
-              <span className="od-sidebar__label">{link.label}</span>
-            </button>
-          ))}
-        </nav>
-
-        <div className="od-sidebar__footer">
-          <div className="od-sidebar__user" onClick={() => navigate(profilePath)}>
-            <div className="od-sidebar__avatar">
-              {user?.profileImage
-                ? <img src={imgUrl(user.profileImage)} alt="avatar" />
-                : <span>{(user?.username || "U")[0].toUpperCase()}</span>}
-            </div>
-            <div>
-              <div className="od-sidebar__user-name">{user?.username || "User"}</div>
-              <div className="od-sidebar__user-role" style={{ textTransform: "capitalize" }}>{role}</div>
-            </div>
-          </div>
-        </div>
-      </aside>
+      {role === "owner" ? <OwnerSidebar owner={user} /> : <StaffSidebar staff={user} />}
 
       {/* ══════════════ MAIN ══════════════ */}
       <div className="od-main">
@@ -174,6 +120,7 @@ const OrderManagement = () => {
           </div>
 
           <div className="od-topbar__right">
+            <OwnerNotificationBell shopId={shopId} />
             <div className="od-topbar__profile" onClick={() => navigate(profilePath)}>
               <div className="od-topbar__avatar">
                 {user?.profileImage

@@ -5,22 +5,18 @@ import CustomerSidebar from "../components/CustomerSidebar";
 import axios from "axios";
 import { imgUrl } from "../utils/imageUrl";
 import nepalLocations from "../data/nepalLocations.json";
-import "../styles/customerLayout.css";
-import "../styles/cart.css";
+import "../styles/ownerDashboard.css";
 
 const API_BASE = "http://localhost:8000";
 
 const Cart = () => {
   const { cart, totalQuantity, totalPrice, removeFromCart, updateQuantity } = useCart();
   const navigate = useNavigate();
-  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [customerInfo, setCustomerInfo] = useState(null);
 
-  // Geographic state
   const [location, setLocation] = useState("");
   const [locationAdded, setLocationAdded] = useState(false);
   const [geoLoading, setGeoLoading] = useState(false);
-
   const [province, setProvince] = useState("");
   const [district, setDistrict] = useState("");
   const [municipality, setMunicipality] = useState("");
@@ -30,7 +26,6 @@ const Cart = () => {
   const isDropdownComplete = province && district && municipality && ward && exactLocation.trim() !== "";
   const isDeliveryComplete = isDropdownComplete || locationAdded;
 
-  // Get user's location if not already added
   const handleAddLocation = () => {
     if (navigator.geolocation) {
       setGeoLoading(true);
@@ -41,21 +36,15 @@ const Cart = () => {
             const res = await axios.get(`https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`);
             const addr = res.data.address;
             const city = addr.city || addr.town || addr.village || "Unknown place";
-            const fullAddress = res.data.display_name || city;
-            setLocation(fullAddress);
+            setLocation(res.data.display_name || city);
             setLocationAdded(true);
           } catch (err) {
-            console.error(err);
             setLocation("Location not available");
           } finally {
             setGeoLoading(false);
           }
         },
-        (err) => {
-          console.error(err);
-          setLocation("Location not available");
-          setGeoLoading(false);
-        },
+        () => { setLocation("Location not available"); setGeoLoading(false); },
         { enableHighAccuracy: true, maximumAge: 0, timeout: 15000 }
       );
     } else {
@@ -63,7 +52,6 @@ const Cart = () => {
     }
   };
 
-  // Fetch customer info for navbar
   useEffect(() => {
     const fetchProfile = async () => {
       try {
@@ -80,213 +68,175 @@ const Cart = () => {
     fetchProfile();
   }, []);
 
-  const avatarSrc = customerInfo?.profileImage ? imgUrl(customerInfo.profileImage) : null;
+  const sel = {
+    width: '100%', padding: '10px 14px', borderRadius: '8px',
+    border: '1px solid #e2e8f0', fontSize: '13px', fontFamily: 'inherit',
+    color: '#0f172a', background: '#fff', marginBottom: '10px',
+    outline: 'none', cursor: 'pointer'
+  };
+
+  const currentUser = customerInfo || JSON.parse(localStorage.getItem("user") || "{}");
 
   return (
-    <div className="sd-layout od-modern-layout">
-      <CustomerSidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} />
-      
-      <div className={`sd-main od-main-content ${sidebarOpen ? "sd-main--shifted" : ""}`}>
-        {/* TOP NAVBAR */}
-        <header className="sd-navbar">
-          <div className="sd-navbar__left">
-            <button 
-              className="sd-navbar__hamburger" 
-              onClick={() => setSidebarOpen((v) => !v)}
-              onMouseEnter={() => {
-                if (window.sidebarTimer) clearTimeout(window.sidebarTimer);
-                setSidebarOpen(true);
-              }}
-              onMouseLeave={() => {
-                window.sidebarTimer = setTimeout(() => setSidebarOpen(false), 300);
-              }}
-            >
-              ☰
-            </button>
-            <div className="sd-navbar__title">
-              <h1>Shopping Cart</h1>
-              <span className="sd-navbar__subtitle">Review and checkout your selected items</span>
-            </div>
+    <div className="od-shell">
+      <CustomerSidebar customer={currentUser} />
+
+      <div className="od-main">
+        <header className="od-topbar">
+          <div className="od-topbar__left">
+            <h1 className="od-topbar__title">Shopping Cart</h1>
+            <div className="od-topbar__date">Review and checkout your selected items</div>
           </div>
-          
-          <div className="sd-navbar__right">
-            <button className="od-nav-icon-btn" style={{ marginRight: '16px' }}>🔔</button>
-            <div className="sd-avatar">
-              {avatarSrc ? (
-                <img 
-                  src={avatarSrc} 
-                  alt="Profile" 
-                  style={{ width: "32px", height: "32px", borderRadius: "50%", objectFit: "cover" }} 
-                />
-              ) : (
-                <span>C</span>
-              )}
+          <div className="od-topbar__right">
+            <div className="od-topbar__profile" onClick={() => navigate("/customer-profile")}>
+              <div className="od-topbar__avatar">
+                {currentUser?.profileImage
+                  ? <img src={imgUrl(currentUser.profileImage)} alt="avatar" />
+                  : <span>{(currentUser?.username || "C")[0].toUpperCase()}</span>}
+              </div>
             </div>
-            <div className="sd-navbar__staff-info">
-              <span className="sd-navbar__name">{customerInfo?.user?.name || "Customer"}</span>
-              <span className="sd-navbar__role">Verified Account</span>
-            </div>
+            <button className="od-topbar__logout" onClick={() => navigate("/customer-dashboard")} title="Continue Shopping">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+            </button>
           </div>
         </header>
 
-        <main className="sd-content od-content">
-          <div className="si-header-section" style={{ marginBottom: '32px' }}>
-            <div className="si-header-info">
-              <h2>My Cart</h2>
-              <p>You have {totalQuantity} item{totalQuantity !== 1 ? "s" : ""} in your bag.</p>
+        <main className="od-content">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '28px' }}>
+            <div>
+              <h2 style={{ fontSize: '20px', fontWeight: 800, color: '#0f172a', margin: '0 0 4px' }}>My Cart</h2>
+              <p style={{ fontSize: '13px', color: '#64748b', margin: 0, fontWeight: 500 }}>
+                {totalQuantity} item{totalQuantity !== 1 ? "s" : ""} in your bag
+              </p>
             </div>
             {cart.length > 0 && (
-              <Link to="/customer-dashboard" className="show-all-btn" style={{ textDecoration: 'none' }}>
+              <Link to="/customer-dashboard" style={{ color: '#6366f1', fontWeight: 700, fontSize: '14px', textDecoration: 'none' }}>
                 ← Continue Shopping
               </Link>
             )}
           </div>
 
           {cart.length === 0 ? (
-            <div className="si-ledger-table-wrap" style={{ padding: '80px 40px', textAlign: 'center', marginBottom: '32px' }}>
-              <div className="empty-icon" style={{ fontSize: '48px', marginBottom: '16px' }}>🛒</div>
-              <h2 style={{ fontSize: '24px', fontWeight: 800, color: '#0f172a', marginBottom: '8px' }}>Your Cart is Empty</h2>
-              <p style={{ color: '#64748b', fontSize: '15px', marginBottom: '32px' }}>Explore our collection to add something special.</p>
-              <Link to="/customer-dashboard" className="buy-btn" style={{ maxWidth: '240px', margin: '0 auto', display: 'block', textDecoration: 'none' }}>Start Shopping</Link>
+            <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: '14px', padding: '80px 40px', textAlign: 'center', boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
+              <div style={{ fontSize: '52px', marginBottom: '16px' }}>🛒</div>
+              <h2 style={{ fontSize: '22px', fontWeight: 800, color: '#0f172a', marginBottom: '8px' }}>Your Cart is Empty</h2>
+              <p style={{ color: '#64748b', fontSize: '14px', marginBottom: '28px' }}>Explore our collection to add something special.</p>
+              <Link to="/customer-dashboard" style={{ background: '#6366f1', color: '#fff', padding: '12px 28px', borderRadius: '8px', fontSize: '14px', fontWeight: 700, textDecoration: 'none', display: 'inline-block' }}>
+                Browse Marketplace →
+              </Link>
             </div>
           ) : (
-            <div className="cart-grid-system">
-              <div className="cart-items-column">
-                <div className="cart-list-header">
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 380px', gap: '24px', alignItems: 'start' }}>
+
+              {/* CART ITEMS */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', padding: '10px 20px', background: '#f8fafc', borderRadius: '10px', fontSize: '11px', fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                   <span>Product Details</span>
-                  <span>Quantity & Actions</span>
+                  <span>Qty & Actions</span>
                 </div>
-                
+
                 {cart.map((item) => (
-                  <div key={item._id} className="cart-item-card">
-                    <div className="cart-item-image-wrap">
-                      <img 
-                        src={item.image ? imgUrl(item.image) : "https://via.placeholder.com/100"} 
-                        alt={item.name} 
-                      />
+                  <div key={item._id} style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '16px', padding: '16px 20px', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
+                    <div style={{ width: '72px', height: '72px', borderRadius: '10px', background: '#f8fafc', flexShrink: 0, overflow: 'hidden', border: '1px solid #f1f5f9' }}>
+                      <img src={item.image ? imgUrl(item.image) : "https://via.placeholder.com/100"} alt={item.name}
+                        style={{ width: '100%', height: '100%', objectFit: 'contain', mixBlendMode: 'darken' }} />
                     </div>
-                    
-                    <div className="cart-item-info">
-                      <div className="item-main-details">
-                        <h3>{item.name}</h3>
-                        <div className="price-tag">NPR {item.price.toLocaleString()}</div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <h3 style={{ margin: '0 0 4px', fontSize: '15px', fontWeight: 700, color: '#0f172a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.name}</h3>
+                      <div style={{ fontSize: '16px', fontWeight: 800, color: '#6366f1' }}>NPR {item.price.toLocaleString()}</div>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexShrink: 0 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', border: '1px solid #e2e8f0', borderRadius: '8px', overflow: 'hidden' }}>
+                        <button onClick={() => updateQuantity(item._id, item.quantity - 1)} style={{ width: '32px', height: '32px', border: 'none', background: '#f8fafc', cursor: 'pointer', fontSize: '16px', fontWeight: 700, color: '#64748b' }}>−</button>
+                        <span style={{ padding: '0 14px', fontWeight: 800, fontSize: '14px', color: '#0f172a', borderLeft: '1px solid #e2e8f0', borderRight: '1px solid #e2e8f0', lineHeight: '32px' }}>{item.quantity}</span>
+                        <button onClick={() => updateQuantity(item._id, item.quantity + 1)} style={{ width: '32px', height: '32px', border: 'none', background: '#f8fafc', cursor: 'pointer', fontSize: '16px', fontWeight: 700, color: '#64748b' }}>+</button>
                       </div>
-                      
-                      <div className="cart-item-bottom-actions">
-                        <div className="si-ledger-qty-wrap">
-                          <button 
-                            className="qty-control-btn" 
-                            onClick={() => updateQuantity(item._id, item.quantity - 1)}
-                          >
-                            -
-                          </button>
-                          <span className="qty-count">{item.quantity}</span>
-                          <button 
-                            className="qty-control-btn" 
-                            onClick={() => updateQuantity(item._id, item.quantity + 1)}
-                          >
-                            +
-                          </button>
-                        </div>
-                        
-                        <button 
-                          className="remove-link-btn" 
-                          onClick={() => removeFromCart(item._id)}
-                        >
-                          🗑️ REMOVE
-                        </button>
+                      <div style={{ fontSize: '14px', fontWeight: 800, color: '#0f172a', minWidth: '90px', textAlign: 'right' }}>
+                        NPR {(item.price * item.quantity).toLocaleString()}
                       </div>
+                      <button onClick={() => removeFromCart(item._id)} title="Remove"
+                        style={{ background: '#fef2f2', border: '1px solid #fecaca', color: '#ef4444', width: '32px', height: '32px', borderRadius: '8px', cursor: 'pointer', fontSize: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        🗑
+                      </button>
                     </div>
                   </div>
                 ))}
               </div>
 
-              <div className="cart-summary-column">
-                <div className="si-ledger-table-wrap" style={{ padding: '24px' }}>
-                  <h2 style={{ fontSize: '16px', fontWeight: 800, color: '#0f172a', marginBottom: '20px', borderBottom: '1px solid #f1f5f9', paddingBottom: '12px' }}>Order Summary</h2>
-                  
-                  <div className="summary-data-row">
-                    <span>Subtotal:</span>
-                    <span>NPR {totalPrice.toLocaleString()}</span>
+              {/* ORDER SUMMARY */}
+              <div style={{ position: 'sticky', top: '24px' }}>
+                <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: '14px', overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
+                  <div style={{ padding: '18px 24px', borderBottom: '1px solid #f1f5f9' }}>
+                    <h2 style={{ fontSize: '15px', fontWeight: 800, color: '#0f172a', margin: 0 }}>Order Summary</h2>
                   </div>
-                  
-                  <div className="summary-data-row" style={{ paddingBottom: '20px', borderBottom: '1px solid #f8fafc' }}>
-                    <span>Shipping:</span>
-                    <span style={{ color: '#94a3b8' }}>Calculated later</span>
-                  </div>
+                  <div style={{ padding: '20px 24px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px', fontSize: '14px', color: '#64748b', fontWeight: 500 }}>
+                      <span>Subtotal ({totalQuantity} items)</span>
+                      <span style={{ color: '#0f172a', fontWeight: 700 }}>NPR {totalPrice.toLocaleString()}</span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px', fontSize: '14px', color: '#64748b', fontWeight: 500, paddingBottom: '16px', borderBottom: '1px dashed #e2e8f0' }}>
+                      <span>Shipping</span>
+                      <span style={{ color: '#94a3b8' }}>Calculated later</span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px', fontSize: '17px', fontWeight: 800, color: '#0f172a' }}>
+                      <span>Payable Total</span>
+                      <span style={{ color: '#6366f1' }}>NPR {totalPrice.toLocaleString()}</span>
+                    </div>
 
-                  <div className="total-data-row">
-                    <span>Payable Total:</span>
-                    <span>NPR {totalPrice.toLocaleString()}</span>
-                  </div>
-
-                  <div className="delivery-step-box">
-                    <h3 className="section-mini-title">📍 Delivery Address <span style={{ color: '#ef4444' }}>*</span></h3>
-                    
-                    <button
-                      className={`geo-modern-btn ${locationAdded ? "selected" : ""}`}
-                      onClick={handleAddLocation}
-                      disabled={geoLoading || locationAdded}
-                    >
-                       {geoLoading ? "⏳ DETECTING..." : locationAdded ? "✅ LOCATION DETECTED" : "📍 USE MY LOCATION"}
-                    </button>
-                    
-                    {locationAdded && (
-                      <div className="detected-location-badge">
-                        <p>{location}</p>
-                        <button onClick={() => { setLocation(""); setLocationAdded(false); }}>✕</button>
+                    {/* Delivery */}
+                    <div style={{ borderTop: '1px solid #f1f5f9', paddingTop: '16px' }}>
+                      <div style={{ fontSize: '11px', fontWeight: 800, color: '#0f172a', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '12px' }}>
+                        📍 Delivery Address <span style={{ color: '#ef4444' }}>*</span>
                       </div>
-                    )}
-                    
-                    <div className="selection-divider">
-                      <span>OR SELECT MANUALLY</span>
-                    </div>
+                      <button onClick={handleAddLocation} disabled={geoLoading || locationAdded}
+                        style={{ width: '100%', padding: '10px', borderRadius: '8px', marginBottom: '12px', background: locationAdded ? '#f0fdf4' : '#ede9fe', color: locationAdded ? '#15803d' : '#6366f1', border: `1px solid ${locationAdded ? '#bbf7d0' : '#ddd6fe'}`, fontWeight: 700, fontSize: '13px', cursor: locationAdded ? 'default' : 'pointer', fontFamily: 'inherit' }}>
+                        {geoLoading ? "⏳ Detecting..." : locationAdded ? "✅ Location Detected" : "📍 Use My Location"}
+                      </button>
 
-                    <select value={province} onChange={(e) => { setProvince(e.target.value); setDistrict(""); setMunicipality(""); setWard(""); setExactLocation(""); }} className="modern-select">
-                      <option value="">Select Province</option>
-                      {Object.keys(nepalLocations).map((prov) => <option key={prov} value={prov}>{prov}</option>)}
-                    </select>
+                      {locationAdded && (
+                        <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '8px', padding: '10px 12px', marginBottom: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '8px' }}>
+                          <p style={{ fontSize: '12px', color: '#166534', margin: 0, flex: 1, lineHeight: 1.5 }}>{location}</p>
+                          <button onClick={() => { setLocation(""); setLocationAdded(false); }} style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', fontSize: '14px' }}>✕</button>
+                        </div>
+                      )}
 
-                    <select value={district} onChange={(e) => { setDistrict(e.target.value); setMunicipality(""); setWard(""); setExactLocation(""); }} disabled={!province} className="modern-select">
-                      <option value="">Select District</option>
-                      {province && Object.keys(nepalLocations[province]).map((dist) => <option key={dist} value={dist}>{dist}</option>)}
-                    </select>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px', color: '#94a3b8', fontSize: '10px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                        <div style={{ flex: 1, height: '1px', background: '#e2e8f0' }} />
+                        <span>OR SELECT MANUALLY</span>
+                        <div style={{ flex: 1, height: '1px', background: '#e2e8f0' }} />
+                      </div>
 
-                    <select value={municipality} onChange={(e) => { setMunicipality(e.target.value); setWard(""); setExactLocation(""); }} disabled={!district} className="modern-select">
-                      <option value="">Select Municipality</option>
-                      {province && district && Object.keys(nepalLocations[province][district]).map((mun) => <option key={mun} value={mun}>{mun}</option>)}
-                    </select>
-
-                    <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
-                      <select value={ward} onChange={(e) => setWard(e.target.value)} disabled={!municipality} className="modern-select" style={{ flex: '0 0 90px', marginBottom: 0 }}>
-                        <option value="">Ward</option>
-                        {province && district && municipality && nepalLocations[province][district][municipality].map((w, i) => <option key={i} value={w}>{w}</option>)}
+                      <select value={province} onChange={(e) => { setProvince(e.target.value); setDistrict(""); setMunicipality(""); setWard(""); setExactLocation(""); }} style={sel}>
+                        <option value="">Select Province</option>
+                        {Object.keys(nepalLocations).map((p) => <option key={p} value={p}>{p}</option>)}
                       </select>
-                      <input type="text" placeholder="Street Address" value={exactLocation} onChange={(e) => setExactLocation(e.target.value)} disabled={!ward} className="modern-input" style={{ flex: 1 }} />
+                      <select value={district} onChange={(e) => { setDistrict(e.target.value); setMunicipality(""); setWard(""); setExactLocation(""); }} disabled={!province} style={sel}>
+                        <option value="">Select District</option>
+                        {province && Object.keys(nepalLocations[province]).map((d) => <option key={d} value={d}>{d}</option>)}
+                      </select>
+                      <select value={municipality} onChange={(e) => { setMunicipality(e.target.value); setWard(""); setExactLocation(""); }} disabled={!district} style={sel}>
+                        <option value="">Select Municipality</option>
+                        {province && district && Object.keys(nepalLocations[province][district]).map((m) => <option key={m} value={m}>{m}</option>)}
+                      </select>
+                      <div style={{ display: 'flex', gap: '8px', marginBottom: '10px' }}>
+                        <select value={ward} onChange={(e) => setWard(e.target.value)} disabled={!municipality} style={{ ...sel, flex: '0 0 90px', marginBottom: 0 }}>
+                          <option value="">Ward</option>
+                          {province && district && municipality && nepalLocations[province][district][municipality].map((w, i) => <option key={i} value={w}>{w}</option>)}
+                        </select>
+                        <input type="text" placeholder="Street Address" value={exactLocation} onChange={(e) => setExactLocation(e.target.value)} disabled={!ward}
+                          style={{ flex: 1, padding: '10px 14px', borderRadius: '8px', border: '1px solid #e2e8f0', fontSize: '13px', fontFamily: 'inherit', color: '#0f172a', background: '#fff', outline: 'none' }} />
+                      </div>
                     </div>
-                  </div>
 
-                  <button 
-                    className="premium-btn" 
-                    disabled={!isDeliveryComplete}
-                    style={{ width: '100%', opacity: isDeliveryComplete ? 1 : 0.4 }}
-                    onClick={() => {
-                      navigate("/checkout", { 
-                        state: { 
-                          fromCart: true, 
-                          cartItems: cart, 
-                          totalAmount: totalPrice,
-                          deliveryAddress: locationAdded
-                            ? { fullAddress: location }
-                            : { province, district, municipality, ward, exactLocation }
-                        } 
-                      });
-                    }}
-                  >
-                    PROCEED TO CHECKOUT
-                  </button>
+                    <button disabled={!isDeliveryComplete}
+                      onClick={() => navigate("/checkout", { state: { fromCart: true, cartItems: cart, totalAmount: totalPrice, deliveryAddress: locationAdded ? { fullAddress: location } : { province, district, municipality, ward, exactLocation } } })}
+                      style={{ width: '100%', padding: '14px', borderRadius: '10px', border: 'none', background: isDeliveryComplete ? '#6366f1' : '#e2e8f0', color: isDeliveryComplete ? '#fff' : '#94a3b8', fontWeight: 800, fontSize: '14px', cursor: isDeliveryComplete ? 'pointer' : 'not-allowed', fontFamily: 'inherit', letterSpacing: '0.5px', transition: 'all 0.2s', boxShadow: isDeliveryComplete ? '0 4px 14px rgba(99,102,241,0.3)' : 'none', marginTop: '4px' }}>
+                      PROCEED TO CHECKOUT →
+                    </button>
+                  </div>
                 </div>
               </div>
+
             </div>
           )}
         </main>

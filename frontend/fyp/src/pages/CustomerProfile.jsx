@@ -1,24 +1,14 @@
 import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import { imgUrl } from "../utils/imageUrl";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import CustomerSidebar from "../components/CustomerSidebar";
 import nepalLocations from "../data/nepalLocations.json";
-import "../styles/customerLayout.css";
-import "../styles/customerProfile.css";
+import "../styles/ownerProfile.css";
+import "../styles/ownerDashboard.css";
 
 const API_BASE = "http://localhost:8000";
 const getAuthHeaders = () => ({ Authorization: `Bearer ${localStorage.getItem("accessToken")}` });
-
-// ─── Toast hook ───────────────────────────────────────────────
-const useToast = () => {
-  const [toast, setToast] = useState({ message: "", visible: false });
-  const show = (message) => {
-    setToast({ message, visible: true });
-    setTimeout(() => setToast({ message: "", visible: false }), 3500);
-  };
-  return { toast, show };
-};
 
 const formatDate = (d) =>
   d ? new Date(d).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }) : "—";
@@ -28,6 +18,16 @@ const STATUS_COLOR = {
   Processing: "status-processing",
   Delivered: "status-delivered",
   Cancelled: "status-cancelled",
+};
+
+// ─── Toast hook ───────────────────────────────────────────────
+const useToast = () => {
+  const [toast, setToast] = useState({ message: "", type: "success", visible: false });
+  const show = (message, type = "success") => {
+    setToast({ message, type, visible: true });
+    setTimeout(() => setToast({ message: "", type: "success", visible: false }), 3500);
+  };
+  return { toast, show };
 };
 
 // ─── Address Modal ────────────────────────────────────────────
@@ -63,55 +63,55 @@ const AddressModal = ({ initial, onSave, onClose }) => {
   };
 
   return (
-    <div className="cp-modal-overlay" onClick={onClose}>
-      <div className="cp-modal" onClick={(e) => e.stopPropagation()}>
-        <div className="cp-modal-header">
-          <h3>{initial?._id ? "✏️ Edit Address" : "📍 Add New Address"}</h3>
-          <button className="cp-modal-close" onClick={onClose}>✕</button>
+    <div className="cp-modal-overlay" onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.6)', backdropFilter: 'blur(8px)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div className="cp-modal" onClick={(e) => e.stopPropagation()} style={{ background: '#fff', padding: '32px', borderRadius: '24px', width: '100%', maxWidth: '500px', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '24px' }}>
+          <h3 style={{ margin: 0, fontSize: '20px', fontWeight: 800 }}>{initial?._id ? "Edit Address" : "Add Address"}</h3>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: '24px', cursor: 'pointer', color: '#94a3b8' }}>✕</button>
         </div>
-        <form className="cp-modal-body" onSubmit={(e) => { e.preventDefault(); if (!form.province || !form.district || !form.municipality || !form.ward) return; onSave(form); }}>
-          <div className="modern-form-grid">
-            <div className="cp-form-group">
-              <label>Province *</label>
-              <select className="modern-select" value={form.province} onChange={(e) => set("province", e.target.value)} required>
-                <option value="">Select Province</option>
+        <form onSubmit={(e) => { e.preventDefault(); if (!form.province || !form.district || !form.municipality || !form.ward) return; onSave(form); }}>
+          <div className="op-form-grid">
+            <div className="op-input-group">
+              <label className="op-input-label">Province</label>
+              <select className="op-input" value={form.province} onChange={(e) => set("province", e.target.value)} required>
+                <option value="">Select</option>
                 {provinces.map((p) => <option key={p} value={p}>{p}</option>)}
               </select>
             </div>
-            <div className="cp-form-group">
-              <label>District *</label>
-              <select className="modern-select" value={form.district} onChange={(e) => set("district", e.target.value)} required disabled={!form.province}>
-                <option value="">Select District</option>
+            <div className="op-input-group">
+              <label className="op-input-label">District</label>
+              <select className="op-input" value={form.district} onChange={(e) => set("district", e.target.value)} required disabled={!form.province}>
+                <option value="">Select</option>
                 {districts.map((d) => <option key={d} value={d}>{d}</option>)}
               </select>
             </div>
           </div>
-          <div className="modern-form-grid">
-            <div className="cp-form-group">
-              <label>Municipality *</label>
-              <select className="modern-select" value={form.municipality} onChange={(e) => set("municipality", e.target.value)} required disabled={!form.district}>
-                <option value="">Select Municipality</option>
+          <div className="op-form-grid" style={{ marginTop: '16px' }}>
+            <div className="op-input-group">
+              <label className="op-input-label">Municipality</label>
+              <select className="op-input" value={form.municipality} onChange={(e) => set("municipality", e.target.value)} required disabled={!form.district}>
+                <option value="">Select</option>
                 {municipalities.map((m) => <option key={m} value={m}>{m}</option>)}
               </select>
             </div>
-            <div className="cp-form-group">
-              <label>Ward *</label>
-              <select className="modern-select" value={form.ward} onChange={(e) => set("ward", e.target.value)} required disabled={!form.municipality}>
-                <option value="">Select Ward</option>
+            <div className="op-input-group">
+              <label className="op-input-label">Ward</label>
+              <select className="op-input" value={form.ward} onChange={(e) => set("ward", e.target.value)} required disabled={!form.municipality}>
+                <option value="">Select</option>
                 {wards.map((w) => <option key={w} value={w}>{w}</option>)}
               </select>
             </div>
           </div>
-          <div className="cp-form-group">
-            <label>Street / House No.</label>
-            <div className="cp-input-row" style={{ display: 'flex', gap: '8px' }}>
-              <input className="modern-input" style={{ flex: 1 }} type="text" placeholder="e.g. Thamel, Near Bank" value={form.streetAddress} onChange={(e) => setForm((f) => ({ ...f, streetAddress: e.target.value }))} />
-              <button type="button" className="geo-modern-btn" style={{ width: 'auto', padding: '0 16px' }} onClick={handleGeo} title="Use Current Location">📍</button>
+          <div className="op-input-group" style={{ marginTop: '16px' }}>
+            <label className="op-input-label">Street Address</label>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <input className="op-input" style={{ flex: 1 }} type="text" placeholder="e.g. Thamel, Near Bank" value={form.streetAddress} onChange={(e) => setForm((f) => ({ ...f, streetAddress: e.target.value }))} />
+              <button type="button" onClick={handleGeo} style={{ padding: '0 16px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', cursor: 'pointer' }} title="Use Current Location">📍</button>
             </div>
           </div>
-          <div className="cp-modal-actions">
-            <button type="button" className="show-all-btn" onClick={onClose}>Cancel</button>
-            <button type="submit" className="premium-btn" style={{ padding: '10px 24px' }} disabled={!form.province || !form.district || !form.municipality || !form.ward}>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '32px' }}>
+            <button type="button" onClick={onClose} className="op-cancel-btn" style={{ padding: '10px 24px', borderRadius: '8px', border: 'none', background: '#f1f5f9', fontWeight: 700, cursor: 'pointer' }}>Cancel</button>
+            <button type="submit" className="op-submit-btn" style={{ padding: '10px 24px', borderRadius: '8px' }} disabled={!form.province || !form.district || !form.municipality || !form.ward}>
               {initial?._id ? "Save Changes" : "Add Address"}
             </button>
           </div>
@@ -122,48 +122,30 @@ const AddressModal = ({ initial, onSave, onClose }) => {
 };
 
 // ─── Main Component ───────────────────────────────────────────
-const TABS = [
-  { id: "profile",   label: "Profile"},
-  { id: "addresses", label: "Addresses"},
-  { id: "orders",    label: "Orders"},
-  { id: "password",  label: "Security"},
-];
-
 const CustomerProfile = () => {
+  const navigate = useNavigate();
   const { toast, show: showToast } = useToast();
   const fileInputRef = useRef(null);
-  const [activeTab, setActiveTab] = useState("profile");
-  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // ── State ────────────────────────────────────────────────────
   const [loading, setLoading] = useState(true);
   const [customer, setCustomer] = useState(null);
 
-  // Profile edit
+  // Profile Edit
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState("");
   const [editPhone, setEditPhone] = useState("");
   const [savingProfile, setSavingProfile] = useState(false);
 
-  // Image upload
-  const [imagePreview, setImagePreview] = useState(null);
-  const [imageFile, setImageFile] = useState(null);
-  const [uploadingImage, setUploadingImage] = useState(false);
-
-  // Addresses
-  const [addresses, setAddresses] = useState([]);
-  const [addressModal, setAddressModal] = useState(null);
-
-  // Orders
-  const [orders, setOrders] = useState([]);
-  const [cancellingId, setCancellingId] = useState(null);
-
-  // Password
+  // Password Edit
   const [pwForm, setPwForm] = useState({ currentPassword: "", newPassword: "", confirmPassword: "" });
-  const [showPw, setShowPw] = useState({ current: false, new: false, confirm: false });
   const [savingPw, setSavingPw] = useState(false);
 
-  // ── Fetch on mount ───────────────────────────────────────────
+  // Addresses & Orders
+  const [addresses, setAddresses] = useState([]);
+  const [addressModal, setAddressModal] = useState(null);
+  const [orders, setOrders] = useState([]);
+
   useEffect(() => {
     (async () => {
       try {
@@ -180,16 +162,15 @@ const CustomerProfile = () => {
         setAddresses(addressRes.data.addresses || []);
         setOrders(orderRes.data.orders || []);
       } catch (err) {
-        showToast("Failed to load profile data");
+        showToast("Failed to load profile data", "error");
       } finally {
         setLoading(false);
       }
     })();
   }, []);
 
-  // ── Profile handlers ─────────────────────────────────────────
   const handleSaveProfile = async () => {
-    if (!editName.trim()) { showToast("Name cannot be empty"); return; }
+    if (!editName.trim()) { showToast("Name cannot be empty", "error"); return; }
     try {
       setSavingProfile(true);
       const res = await axios.put(`${API_BASE}/api/customer/profile`, { name: editName.trim(), phone: editPhone.trim() }, { headers: getAuthHeaders() });
@@ -197,39 +178,42 @@ const CustomerProfile = () => {
       setIsEditing(false);
       showToast("Profile updated successfully!");
     } catch (err) {
-      showToast(err.response?.data?.message || "Update failed");
+      showToast(err.response?.data?.message || "Update failed", "error");
     } finally { setSavingProfile(false); }
   };
 
-  const handleImageSelect = (e) => {
-    const file = e.target.files[0];
+  const handleImageUpload = async (file) => {
     if (!file) return;
-    setImageFile(file);
-    const reader = new FileReader();
-    reader.onload = (ev) => setImagePreview(ev.target.result);
-    reader.readAsDataURL(file);
-  };
-
-  const handleImageUpload = async () => {
-    if (!imageFile) { showToast("Please select an image"); return; }
     try {
-      setUploadingImage(true);
+      showToast("Uploading image...", "success");
       const fd = new FormData();
-      fd.append("profileImage", imageFile);
+      fd.append("profileImage", file);
       const res = await axios.post(`${API_BASE}/api/customer/upload-profile-image`, fd, {
         headers: { ...getAuthHeaders(), "Content-Type": "multipart/form-data" },
       });
       setCustomer((c) => ({ ...c, profileImage: res.data.profileImage }));
-      setImagePreview(null);
-      setImageFile(null);
-      if (fileInputRef.current) fileInputRef.current.value = "";
       showToast("Profile image updated!");
     } catch (err) {
-      showToast(err.response?.data?.message || "Image upload failed");
-    } finally { setUploadingImage(false); }
+      showToast(err.response?.data?.message || "Image upload failed", "error");
+    }
   };
 
-  // ── Address handlers ─────────────────────────────────────────
+  const handleChangePassword = async (e) => {
+    e.preventDefault();
+    const { currentPassword, newPassword, confirmPassword } = pwForm;
+    if (!currentPassword || !newPassword || !confirmPassword) { showToast("All fields required", "error"); return; }
+    if (newPassword.length < 6) { showToast("New password must be at least 6 characters", "error"); return; }
+    if (newPassword !== confirmPassword) { showToast("Passwords do not match", "error"); return; }
+    try {
+      setSavingPw(true);
+      await axios.put(`${API_BASE}/api/customer/change-password`, { currentPassword, newPassword }, { headers: getAuthHeaders() });
+      setPwForm({ currentPassword: "", newPassword: "", confirmPassword: "" });
+      showToast("Password changed successfully!");
+    } catch (err) { showToast(err.response?.data?.message || "Password change failed", "error"); }
+    finally { setSavingPw(false); }
+  };
+
+  // Addresses
   const handleSaveAddress = async (form) => {
     try {
       if (addressModal?._id) {
@@ -242,7 +226,7 @@ const CustomerProfile = () => {
         showToast("Address added!");
       }
       setAddressModal(null);
-    } catch (err) { showToast(err.response?.data?.message || "Address save failed"); }
+    } catch (err) { showToast(err.response?.data?.message || "Address save failed", "error"); }
   };
 
   const handleDeleteAddress = async (id) => {
@@ -251,7 +235,7 @@ const CustomerProfile = () => {
       await axios.delete(`${API_BASE}/api/customer/address/${id}`, { headers: getAuthHeaders() });
       setAddresses((prev) => prev.filter((a) => a._id !== id));
       showToast("Address deleted");
-    } catch (err) { showToast("Delete failed"); }
+    } catch (err) { showToast("Delete failed", "error"); }
   };
 
   const handleSetDefault = async (id) => {
@@ -259,322 +243,242 @@ const CustomerProfile = () => {
       await axios.put(`${API_BASE}/api/customer/address/set-default/${id}`, {}, { headers: getAuthHeaders() });
       setAddresses((prev) => prev.map((a) => ({ ...a, isDefault: a._id === id })));
       showToast("Default address updated!");
-    } catch (err) { showToast("Failed to set default"); }
-  };
-
-  // ── Order handlers ───────────────────────────────────────────
-  const handleCancelOrder = async (orderId) => {
-    if (!window.confirm("Are you sure you want to cancel this order?")) return;
-    try {
-      setCancellingId(orderId);
-      const res = await axios.put(`${API_BASE}/api/customer/cancel-order/${orderId}`, { cancelReason: "Cancelled by customer" }, { headers: getAuthHeaders() });
-      setOrders((prev) => prev.map((o) => (o._id === orderId ? { ...o, status: "Cancelled", cancelReason: res.data.order.cancelReason } : o)));
-      showToast("Order cancelled");
-    } catch (err) { showToast(err.response?.data?.message || "Cancel failed"); }
-    finally { setCancellingId(null); }
-  };
-
-  // ── Password handler ─────────────────────────────────────────
-  const handleChangePassword = async (e) => {
-    e.preventDefault();
-    const { currentPassword, newPassword, confirmPassword } = pwForm;
-    if (!currentPassword || !newPassword || !confirmPassword) { showToast("All fields are required"); return; }
-    if (newPassword.length < 6) { showToast("New password must be at least 6 characters"); return; }
-    if (newPassword !== confirmPassword) { showToast("Passwords do not match"); return; }
-    try {
-      setSavingPw(true);
-      await axios.put(`${API_BASE}/api/customer/change-password`, { currentPassword, newPassword }, { headers: getAuthHeaders() });
-      setPwForm({ currentPassword: "", newPassword: "", confirmPassword: "" });
-      showToast("Password changed successfully!");
-    } catch (err) { showToast(err.response?.data?.message || "Password change failed"); }
-    finally { setSavingPw(false); }
+    } catch (err) { showToast("Failed to set default", "error"); }
   };
 
   if (loading) {
     return (
-      <div className="sd-layout od-modern-layout">
-        <CustomerSidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} />
-        <div className={`sd-main od-main-content ${sidebarOpen ? "sd-main--shifted" : ""}`}>
-          <main className="sd-content od-content">
-            <div className="cp-loading-container">
-              <div className="spinner" />
-              <p>Syncing Profile...</p>
-            </div>
-          </main>
+      <div className="od-shell">
+        <CustomerSidebar customer={customer || JSON.parse(localStorage.getItem("user") || "{}")} />
+        <div className="od-main" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <p style={{ color: '#64748b', fontWeight: 600 }}>Syncing Profile...</p>
         </div>
       </div>
     );
   }
 
-  const avatarSrc = customer?.profileImage ? imgUrl(customer.profileImage) : null;
-  const displayAvatar = imagePreview || avatarSrc;
-
   return (
-    <div className="sd-layout od-modern-layout">
-      <CustomerSidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} />
+    <div className="od-shell">
+      <CustomerSidebar customer={customer} />
 
-      {/* Toast */}
-      {toast.visible && (
-        <div className="toast">
-          {toast.message}
-        </div>
-      )}
-
-      {/* Address Modal */}
       {addressModal !== null && (
         <AddressModal initial={addressModal} onSave={handleSaveAddress} onClose={() => setAddressModal(null)} />
       )}
 
-      <div className={`sd-main od-main-content ${sidebarOpen ? "sd-main--shifted" : ""}`}>
-        {/* TOP NAVBAR */}
-        <header className="sd-navbar">
-          <div className="sd-navbar__left">
-            <button 
-              className="sd-navbar__hamburger" 
-              onClick={() => setSidebarOpen((v) => !v)}
-              onMouseEnter={() => {
-                if (window.sidebarTimer) clearTimeout(window.sidebarTimer);
-                setSidebarOpen(true);
-              }}
-              onMouseLeave={() => {
-                window.sidebarTimer = setTimeout(() => setSidebarOpen(false), 300);
-              }}
-            >
-              ☰
-            </button>
-            <div className="sd-navbar__title">
-              <h1>My Profile</h1>
-              <span className="sd-navbar__subtitle">Manage your account settings and preferences</span>
-            </div>
+      {toast.visible && (
+        <div style={{ position: 'fixed', bottom: '40px', right: '40px', background: toast.type === 'error' ? '#ef4444' : '#10b981', color: 'white', padding: '16px 24px', borderRadius: '12px', fontWeight: 700, boxShadow: '0 10px 25px rgba(0,0,0,0.2)', zIndex: 9999 }}>
+          {toast.message}
+        </div>
+      )}
+
+      <div className="od-main">
+        <header className="od-topbar">
+          <div className="od-topbar__left">
+            <h1 className="od-topbar__title">Customer Profile</h1>
+            <div className="od-topbar__date">Manage your personal info and shipping addresses</div>
           </div>
-          
-          <div className="sd-navbar__right">
-            <button className="od-nav-icon-btn" style={{ marginRight: '16px' }}>🔔</button>
-            <div className="sd-avatar">
-              {displayAvatar ? (
-                <img 
-                  src={displayAvatar} 
-                  alt="Profile" 
-                  style={{ width: "32px", height: "32px", borderRadius: "50%", objectFit: "cover" }} 
-                />
-              ) : (
-                <span>{customer?.name?.[0]?.toUpperCase() || "C"}</span>
-              )}
+          <div className="od-topbar__right">
+            <div className="od-topbar__profile">
+              <div className="od-topbar__avatar">
+                {customer?.profileImage ? <img src={imgUrl(customer.profileImage)} alt="avatar" /> : <span>{(customer?.name || "C")[0].toUpperCase()}</span>}
+              </div>
             </div>
-            <div className="sd-navbar__staff-info">
-              <span className="sd-navbar__name">{customer?.name || "Customer"}</span>
-              <span className="sd-navbar__role">Verified Account</span>
-            </div>
+            <button className="od-topbar__logout" onClick={() => { localStorage.clear(); navigate('/login'); }} title="Logout">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+            </button>
           </div>
         </header>
 
-        <main className="sd-content od-content">
-          <div className="cp-modern-hero">
-            <div className="cp-hero-card">
-              <div className="cp-hero-avatar-section">
-                <div className="cp-avatar-box">
-                  {displayAvatar ? (
-                    <img src={displayAvatar} alt="Avatar" />
+        <main className="od-content">
+          <div className="op-container" style={{ padding: '0', background: 'transparent', minHeight: 'auto' }}>
+            <header className="op-page-header" style={{ flexWrap: 'wrap' }}>
+              <div className="op-header-text">
+                <span className="op-breadcrumb">Settings / Account</span>
+                <h2 className="op-title">Account Workspace</h2>
+                <p className="op-subtitle">Manage your personal info and shipping addresses.</p>
+              </div>
+
+              <div className="op-profile-floating-card">
+                <div className="op-avatar-wrapper" onClick={() => fileInputRef.current?.click()} title="Change Profile Image">
+                  {customer?.profileImage ? (
+                    <img src={imgUrl(customer.profileImage)} alt="profile" className="op-avatar-img" />
                   ) : (
-                    <div className="cp-avatar-placeholder">
-                      {customer?.name?.[0]?.toUpperCase() || "C"}
+                    <div className="op-avatar-img" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px', fontWeight: 800, color: '#94a3b8' }}>
+                      {(customer?.name || "C")[0].toUpperCase()}
                     </div>
                   )}
-                  <label className="cp-camera-overlay" htmlFor="cp-file-input">
-                    📷
-                  </label>
-                  <input id="cp-file-input" type="file" accept="image/*" style={{ display: 'none' }} ref={fileInputRef} onChange={handleImageSelect} />
+                  {isEditing && <div className="op-avatar-edit-icon">✏️</div>}
+                  <input type="file" ref={fileInputRef} hidden onChange={(e) => handleImageUpload(e.target.files[0])} accept="image/*" />
                 </div>
-                {imageFile && (
-                  <div className="cp-upload-actions">
-                    <button className="premium-btn mini" onClick={handleImageUpload} disabled={uploadingImage}>
-                      {uploadingImage ? "..." : "UPLOAD"}
-                    </button>
-                    <button className="show-all-btn mini" onClick={() => { setImageFile(null); setImagePreview(null); }}>✕</button>
+                
+                <div className="op-profile-info">
+                  <h3>{customer?.name || "Customer"}</h3>
+                  <p style={{textTransform: 'uppercase'}}>CUSTOMER • {customer?.email}</p>
+                </div>
+              </div>
+            </header>
+
+            <div className="op-main-grid">
+              {/* LEFT COLUMN */}
+              <div className="op-col-left">
+                <section style={{ marginBottom: '40px' }}>
+                  <div className="op-section-header">
+                    <h2 className="op-section-title">Identity Details</h2>
+                    {!isEditing && (
+                      <button className="op-edit-link" onClick={() => setIsEditing(true)}>Edit Identity</button>
+                    )}
                   </div>
-                )}
-              </div>
+                  <div className="op-details-card">
+                    {!isEditing ? (
+                      <div className="op-info-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '24px' }}>
+                        <div className="op-info-field">
+                          <span className="op-info-label">Full Name</span>
+                          <span className="op-info-value">{customer?.name || "—"}</span>
+                        </div>
+                        <div className="op-info-field">
+                          <span className="op-info-label">Email Address</span>
+                          <span className="op-info-value" style={{ wordBreak: 'break-all' }}>{customer?.email || "—"}</span>
+                        </div>
+                        <div className="op-info-field">
+                          <span className="op-info-label">Phone Number</span>
+                          <span className="op-info-value">{customer?.phone || "Not provided"}</span>
+                        </div>
+                        <div className="op-info-field">
+                          <span className="op-info-label">Member Since</span>
+                          <span className="op-info-value">{formatDate(customer?.createdAt)}</span>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="op-form-grid">
+                        <div className="op-form-row" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
+                          <div className="op-input-group">
+                            <label className="op-input-label">Full Name</label>
+                            <input className="op-input" value={editName} onChange={(e) => setEditName(e.target.value)} />
+                          </div>
+                          <div className="op-input-group">
+                            <label className="op-input-label">Phone Number</label>
+                            <input className="op-input" value={editPhone} onChange={(e) => setEditPhone(e.target.value)} />
+                          </div>
+                        </div>
+                        <div style={{ display: 'flex', gap: '12px', marginTop: '12px' }}>
+                          <button className="op-submit-btn" onClick={handleSaveProfile} disabled={savingProfile}>
+                            {savingProfile ? "Saving..." : "Save Changes"}
+                          </button>
+                          <button className="op-submit-btn" style={{ background: '#f1f5f9', color: '#64748b' }} onClick={() => setIsEditing(false)}>
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </section>
 
-              <div className="cp-hero-text-section">
-                <h1 className="cp-profile-name">{customer?.name || "Customer"}</h1>
-                <p className="cp-profile-email">{customer?.email}</p>
-                <div className="cp-hero-pills">
-                  <span className="cp-pill">Joined {formatDate(customer?.createdAt)}</span>
-                  <span className="cp-pill black">{orders.length} Orders</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="cp-modern-tabs">
-              {TABS.map((t) => (
-                <button
-                  key={t.id}
-                  className={`cp-modern-tab ${activeTab === t.id ? "active" : ""}`}
-                  onClick={() => setActiveTab(t.id)}
-                >
-                  {t.label}
-                  {t.id === "addresses" && addresses.length > 0 && <span className="tab-count">{addresses.length}</span>}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="cp-tab-content-area">
-            {activeTab === "profile" && (
-              <div className="si-ledger-table-wrap" style={{ padding: '40px' }}>
-                <div className="cp-section-header">
-                  <h3>Personal Information</h3>
-                  {!isEditing ? (
-                    <button className="show-all-btn" onClick={() => setIsEditing(true)}>Edit Details</button>
-                  ) : (
-                    <div className="cp-edit-actions">
-                      <button className="premium-btn" onClick={handleSaveProfile} disabled={savingProfile}>
-                         {savingProfile ? "SAVING..." : "SAVE CHANGES"}
-                      </button>
-                      <button className="show-all-btn" onClick={() => setIsEditing(false)}>CANCEL</button>
+              <section>
+                <h2 className="op-section-title" style={{ marginBottom: '24px' }}>Security Key</h2>
+                <div className="op-security-card">
+                  <form className="op-form-grid" onSubmit={handleChangePassword}>
+                    <div className="op-input-group">
+                       <label className="op-input-label">Current Key</label>
+                       <input className="op-input" type="password" placeholder="••••••••••••" value={pwForm.currentPassword} onChange={(e) => setPwForm({...pwForm, currentPassword: e.target.value})} />
                     </div>
-                  )}
+                    <div className="op-form-row" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
+                       <div className="op-input-group">
+                          <label className="op-input-label">New Secret Key</label>
+                          <input className="op-input" type="password" placeholder="••••••••••••" value={pwForm.newPassword} onChange={(e) => setPwForm({...pwForm, newPassword: e.target.value})} />
+                       </div>
+                       <div className="op-input-group">
+                          <label className="op-input-label">Confirm Key</label>
+                          <input className="op-input" type="password" placeholder="••••••••••••" value={pwForm.confirmPassword} onChange={(e) => setPwForm({...pwForm, confirmPassword: e.target.value})} />
+                       </div>
+                    </div>
+                    <button type="submit" className="op-submit-btn" style={{ width: '100%', marginTop: '8px' }}>Update New Key</button>
+                  </form>
                 </div>
+              </section>
+            </div>
 
-                <div className="cp-info-grid">
-                  <div className="cp-info-field">
-                    <label>Full Name</label>
-                    {isEditing ? (
-                      <input className="modern-input" type="text" value={editName} onChange={(e) => setEditName(e.target.value)} />
-                    ) : (
-                      <div className="field-value">{customer?.name || "—"}</div>
-                    )}
-                  </div>
-                  <div className="cp-info-field">
-                    <label>Email Address</label>
-                    <div className="field-value readonly">{customer?.email || "—"}</div>
-                  </div>
-                  <div className="cp-info-field">
-                    <label>Phone Number</label>
-                    {isEditing ? (
-                      <input className="modern-input" type="tel" value={editPhone} onChange={(e) => setEditPhone(e.target.value)} />
-                    ) : (
-                      <div className="field-value">{customer?.phone || "Not provided"}</div>
-                    )}
-                  </div>
-                  <div className="cp-info-field">
-                    <label>Registration Date</label>
-                    <div className="field-value readonly">{formatDate(customer?.createdAt)}</div>
-                  </div>
+            {/* RIGHT COLUMN */}
+            <div className="op-col-right">
+              <section style={{ marginBottom: '40px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+                  <h2 className="op-section-title" style={{ margin: 0 }}>Delivery Addresses</h2>
+                  <button onClick={() => setAddressModal({})} style={{ background: '#6366f1', color: 'white', border: 'none', padding: '8px 16px', borderRadius: '8px', fontWeight: 700, fontSize: '13px', cursor: 'pointer' }}>+ Add New</button>
                 </div>
-              </div>
-            )}
-
-            {activeTab === "addresses" && (
-              <div className="si-ledger-table-wrap" style={{ padding: '40px' }}>
-                <div className="cp-section-header">
-                  <h3>Delivery Addresses</h3>
-                  <button className="premium-btn mini" onClick={() => setAddressModal({})}>+ ADD NEW</button>
-                </div>
-
+                
                 {addresses.length === 0 ? (
-                  <div className="cp-empty-placeholder">
-                    <p>No addresses found. Add one to speed up checkout.</p>
+                  <div className="op-shop-card" style={{ textAlign: 'center', color: '#94a3b8', padding: '40px' }}>
+                    <p style={{ margin: 0 }}>No addresses found. Add one to speed up checkout.</p>
                   </div>
                 ) : (
-                  <div className="cp-address-grid">
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                     {addresses.map((addr) => (
-                      <div key={addr._id} className={`cp-address-card ${addr.isDefault ? "is-default" : ""}`}>
-                        {addr.isDefault && <span className="default-tag">PRIMARY</span>}
-                        <div className="addr-main-text">
-                          <h4>{addr.streetAddress || "Unnamed Location"}</h4>
-                          <p>{addr.municipality}, {addr.district}</p>
-                          <p>{addr.province}, Ward {addr.ward}</p>
-                        </div>
-                        <div className="addr-card-actions">
+                      <div key={addr._id} className="op-shop-card" style={{ padding: '24px', position: 'relative', border: addr.isDefault ? '2px solid #6366f1' : '1px solid rgba(255,255,255,0.8)' }}>
+                        {addr.isDefault && <span style={{ position: 'absolute', top: '24px', right: '24px', background: '#6366f1', color: 'white', fontSize: '11px', fontWeight: 800, padding: '4px 10px', borderRadius: '20px' }}>PRIMARY</span>}
+                        <h3 style={{ margin: '0 0 8px', fontSize: '16px', fontWeight: 800, color: '#0f172a' }}>{addr.streetAddress || "Unnamed Location"}</h3>
+                        <p style={{ margin: '0 0 4px', fontSize: '14px', color: '#64748b' }}>{addr.municipality}, {addr.district}</p>
+                        <p style={{ margin: 0, fontSize: '14px', color: '#64748b' }}>{addr.province}, Ward {addr.ward}</p>
+                        
+                        <div style={{ display: 'flex', gap: '16px', marginTop: '20px', paddingTop: '16px', borderTop: '1px solid #f1f5f9', flexWrap: 'wrap' }}>
                           {!addr.isDefault && (
-                            <button className="card-action-btn" onClick={() => handleSetDefault(addr._id)}>SET PRIMARY</button>
+                            <button onClick={() => handleSetDefault(addr._id)} style={{ background: 'none', border: 'none', color: '#6366f1', fontWeight: 800, fontSize: '13px', cursor: 'pointer', padding: 0 }}>Set Primary</button>
                           )}
-                          <button className="card-action-btn" onClick={() => setAddressModal(addr)}>EDIT</button>
-                          <button className="card-action-btn delete" onClick={() => handleDeleteAddress(addr._id)}>DELETE</button>
+                          <button onClick={() => setAddressModal(addr)} style={{ background: 'none', border: 'none', color: '#6366f1', fontWeight: 800, fontSize: '13px', cursor: 'pointer', padding: 0 }}>Edit</button>
+                          <button onClick={() => handleDeleteAddress(addr._id)} style={{ background: 'none', border: 'none', color: '#94a3b8', fontWeight: 800, fontSize: '13px', cursor: 'pointer', padding: 0 }}>Delete</button>
                         </div>
                       </div>
                     ))}
                   </div>
                 )}
-              </div>
-            )}
+              </section>
 
-            {activeTab === "orders" && (
-              <div className="si-ledger-table-wrap" style={{ padding: '40px' }}>
-                <div className="cp-section-header">
-                  <h3>Recent Purchases</h3>
-                  <Link to="/order-history" className="show-all-btn">Go to Orders</Link>
+              <section>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+                  <h2 className="op-section-title" style={{ margin: 0 }}>Recent Orders</h2>
+                  <Link to="/order-history" className="op-edit-link">View All</Link>
                 </div>
-
+                
                 {orders.length === 0 ? (
-                  <div className="cp-empty-placeholder">
-                    <p>Your purchase history is empty.</p>
+                  <div className="op-shop-card" style={{ textAlign: 'center', color: '#94a3b8', padding: '40px' }}>
+                    <p style={{ margin: 0, fontWeight: 600 }}>Your purchase history is empty.</p>
                   </div>
                 ) : (
-                  <div className="cp-mini-orders-list">
-                    {orders.slice(0, 5).map((order) => (
-                      <div key={order._id} className="cp-mini-order-row">
-                        <div className="order-id-group">
-                          <span className="order-ref">#{order._id.slice(-8).toUpperCase()}</span>
-                          <span className="order-date">{formatDate(order.createdAt)}</span>
-                        </div>
-                        <div className="order-price-group">
-                          <span className="order-price">NPR {order.totalAmount?.toLocaleString()}</span>
-                          <span className={`status-badge ${STATUS_COLOR[order.status] || ""}`}>{order.status}</span>
-                        </div>
-                        <Link to="/order-history" className="view-order-link">VIEW DETAILS</Link>
-                      </div>
-                    ))}
+                  <div className="od-panel od-panel--table">
+                    <div style={{ overflowX: "auto" }}>
+                      <table className="od-table">
+                        <thead>
+                          <tr>
+                            <th>Order ID</th>
+                            <th>Date</th>
+                            <th>Total</th>
+                            <th>Status</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {orders.slice(0, 5).map((order) => (
+                            <tr key={order._id}>
+                              <td style={{ fontWeight: 600, color: '#0f172a' }}>#{order._id.slice(-8).toUpperCase()}</td>
+                              <td className="od-table__date">{formatDate(order.createdAt)}</td>
+                              <td style={{ fontWeight: 600, color: '#6366f1' }}>NPR {order.totalAmount?.toLocaleString()}</td>
+                              <td>
+                                <span className={`od-badge ${STATUS_COLOR[order.status] || "od-badge--blue"}`}>
+                                  {order.status}
+                                </span>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
                   </div>
                 )}
-              </div>
-            )}
+              </section>
 
-            {activeTab === "password" && (
-              <div className="si-ledger-table-wrap" style={{ padding: '40px', maxWidth: '600px' }}>
-                <h3 style={{ marginBottom: '24px' }}>Security Settings</h3>
-                <form className="cp-password-form" onSubmit={handleChangePassword}>
-                  <div className="cp-form-group">
-                    <label>Current Password</label>
-                    <input
-                      className="modern-input"
-                      type={showPw.current ? "text" : "password"}
-                      value={pwForm.currentPassword}
-                      onChange={(e) => setPwForm((p) => ({ ...p, currentPassword: e.target.value }))}
-                      required
-                    />
-                  </div>
-                  <div className="cp-form-group">
-                    <label>New Password</label>
-                    <input
-                      className="modern-input"
-                      type={showPw.new ? "text" : "password"}
-                      value={pwForm.newPassword}
-                      onChange={(e) => setPwForm((p) => ({ ...p, newPassword: e.target.value }))}
-                      required
-                    />
-                  </div>
-                  <div className="cp-form-group">
-                    <label>Confirm New Password</label>
-                    <input
-                      className="modern-input"
-                      type={showPw.confirm ? "text" : "password"}
-                      value={pwForm.confirmPassword}
-                      onChange={(e) => setPwForm((p) => ({ ...p, confirmPassword: e.target.value }))}
-                      required
-                    />
-                  </div>
-                  <button type="submit" className="premium-btn" disabled={savingPw} style={{ marginTop: '12px' }}>
-                    {savingPw ? "UPDATING..." : "UPDATE PASSWORD"}
-                  </button>
-                </form>
-              </div>
-            )}
+            </div>
           </div>
-        </main>
-      </div>
+        </div>
+      </main>
     </div>
+  </div>
   );
 };
 

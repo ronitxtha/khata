@@ -4,20 +4,20 @@
 :root {
   --pd-primary:       #0f172a;
   --pd-secondary:     #64748b;
-  --pd-accent:        #4f46e5;
-  --pd-accent2:       #7c3aed;
-  --pd-accent-hover:  #4338ca;
+  --pd-accent:        #6366f1;
+  --pd-accent2:       #6366f1;
+  --pd-accent-hover:  #4f46e5;
   --pd-success:       #10b981;
   --pd-danger:        #ef4444;
-  --pd-bg:            #f1f5f9;
-  --pd-surface:       rgba(255, 255, 255, 0.72);
-  --pd-border:        rgba(148, 163, 184, 0.2);
-  --pd-shadow-sm:     0 2px 8px rgba(0,0,0,0.05);
-  --pd-shadow:        0 8px 32px rgba(15,23,42,0.08);
-  --pd-shadow-lg:     0 20px 60px rgba(15,23,42,0.14);
-  --pd-glow:          0 0 28px rgba(79,70,229,0.22);
-  --pd-radius:        18px;
-  --pd-radius-sm:     10px;
+  --pd-bg:            #f8fafc;
+  --pd-surface:       #ffffff;
+  --pd-border:        #e2e8f0;
+  --pd-shadow-sm:     0 1px 3px rgba(0,0,0,0.06);
+  --pd-shadow:        0 4px 16px rgba(15,23,42,0.07);
+  --pd-shadow-lg:     0 12px 40px rgba(15,23,42,0.12);
+  --pd-glow:          0 4px 16px rgba(99,102,241,0.2);
+  --pd-radius:        14px;
+  --pd-radius-sm:     8px;
 }
 
 /* ─── Base ──────────────────────────────────────────────────── */
@@ -25,13 +25,7 @@
 
 .pd-page {
   font-family: 'Inter', system-ui, sans-serif;
-  background: var(--pd-bg);
-  background-image:
-    radial-gradient(ellipse 80% 40% at 20% 0%, rgba(79,70,229,0.07) 0%, transparent 60%),
-    radial-gradient(ellipse 60% 40% at 80% 100%, rgba(124,58,237,0.05) 0%, transparent 60%);
   color: var(--pd-primary);
-  min-height: 100vh;
-  padding-bottom: 4rem;
   margin: 0;
 }
 

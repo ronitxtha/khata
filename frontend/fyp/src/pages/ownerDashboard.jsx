@@ -4,6 +4,7 @@ import axios from "axios";
 import { imgUrl } from "../utils/imageUrl";
 import { trackProductView } from "../utils/interactionTracking";
 import socket from "../socket";
+import OwnerNotificationBell from "../components/OwnerNotificationBell";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, LineChart, Line, Area, AreaChart
@@ -43,8 +44,6 @@ const OwnerDashboard = () => {
   const [salesData, setSalesData]             = useState([]);
   const [salesTimeframe, setSalesTimeframe]   = useState("week");
   const [yearlyOrders, setYearlyOrders]       = useState([]);
-  const [notifications, setNotifications]     = useState([]);
-  const [showNotifications, setShowNotifications] = useState(false);
   const [toast, setToast]                     = useState({ message: "", type: "success", visible: false });
   const [stats, setStats] = useState({
     totalProducts: 0, totalOrders: 0, pendingOrdersCount: 0,
@@ -73,27 +72,7 @@ const OwnerDashboard = () => {
     } catch (err) { console.error(err); }
   };
 
-  const fetchNotifications = async (shopId) => {
-    try {
-      const token = localStorage.getItem("accessToken");
-      const res = await axios.get(`${API_BASE}/api/notifications/${shopId}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (res.data) setNotifications(res.data);
-    } catch (err) { console.error(err); }
-  };
 
-  const handleMarkAllRead = async () => {
-    try {
-      const token = localStorage.getItem("accessToken");
-      await axios.put(`${API_BASE}/api/notifications/mark-all-read/${owner.shopId}`, {}, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setNotifications([]);
-      setShowNotifications(false);
-      showToast("Notifications cleared");
-    } catch (err) { showToast("Failed to clear notifications", "error"); }
-  };
 
   const handleLogout = () => {
     localStorage.removeItem("accessToken");
@@ -110,7 +89,6 @@ const OwnerDashboard = () => {
         });
         setOwner(res.data.owner);
         fetchDashboardMetrics(token, salesTimeframe);
-        if (res.data.owner.shopId) fetchNotifications(res.data.owner.shopId);
       } catch (err) { console.error(err); }
     };
     init();
@@ -215,36 +193,7 @@ const OwnerDashboard = () => {
             </div>
 
             {/* Notification bell */}
-            <div style={{ position: "relative" }}>
-              <button className="od-topbar__icon-btn" onClick={() => setShowNotifications(v => !v)}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
-                {notifications.length > 0 && <span className="od-topbar__notif-dot">{notifications.length}</span>}
-              </button>
-              {showNotifications && (
-                <div className="od-notif-panel">
-                  <div className="od-notif-panel__head">
-                    <strong>Notifications ({notifications.length})</strong>
-                    {notifications.length > 0 && (
-                      <button onClick={handleMarkAllRead} className="od-notif-panel__clear">Mark all read</button>
-                    )}
-                  </div>
-                  <div className="od-notif-panel__body">
-                    {notifications.length === 0
-                      ? <p className="od-notif-panel__empty">All caught up! 🎉</p>
-                      : notifications.map(n => (
-                          <div key={n._id} className={`od-notif-item od-notif-item--${n.type === "low_stock" ? "warn" : "info"}`}>
-                            <span>{n.type === "low_stock" ? "🚨" : "📦"}</span>
-                            <div>
-                              <p>{n.message}</p>
-                              <small>{new Date(n.createdAt).toLocaleString()}</small>
-                            </div>
-                          </div>
-                        ))
-                    }
-                  </div>
-                </div>
-              )}
-            </div>
+            <OwnerNotificationBell shopId={owner?.shopId} />
 
             {/* Avatar */}
             <div className="od-topbar__profile" onClick={() => navigate("/owner-profile")}>
