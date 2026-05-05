@@ -6,11 +6,13 @@ const router = express.Router();
 
 router.get("/", async (req, res) => {
   try {
-    const shops = await Shop.find().populate("ownerId", "username");
-    console.log("Shops fetched:", shops); // log shops
+    const shops = await Shop.find().populate("ownerId", "username isActive");
+
+    const validShops = shops.filter(shop => shop.ownerId?.isActive && shop.status !== "suspended");
+    console.log("Valid Shops fetched:", validShops); // log shops
 
     const shopsWithProducts = await Promise.all(
-      shops.map(async (shop) => {
+      validShops.map(async (shop) => {
         let products = [];
         try {
           products = await Product.find({ shopId: shop._id, deleted: false });

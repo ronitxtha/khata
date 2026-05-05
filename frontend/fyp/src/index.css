@@ -2,8 +2,8 @@
 
 :root {
   /* Colors */
-  --color-primary: #2563eb;       /* Royal Blue */
-  --color-primary-hover: #1d4ed8;
+  --color-primary: #ffffff;       /* Royal Blue */
+  --color-primary-hover: #ffffff;
   --color-secondary: #0f172a;     /* Slate Dark */
   --color-accent: #f43f5e;        /* Rose */
   --color-success: #10b981;

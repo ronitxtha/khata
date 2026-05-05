@@ -342,11 +342,13 @@ export const getOwnerProducts = async (req, res) => {
 // controllers/productController.js (or same file)
 export const getAllStoresWithProducts = async (req, res) => {
   try {
-    const shops = await Shop.find();
+    const shops = await Shop.find().populate("ownerId");
 
     const result = [];
 
     for (const shop of shops) {
+      if (!shop.ownerId?.isActive || shop.status === "suspended") continue;
+
       const products = await Product.find({
         shopId: shop._id,
         deleted: false

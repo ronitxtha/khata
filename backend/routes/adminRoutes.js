@@ -12,13 +12,47 @@ const router = express.Router();
 // ── GET /api/admin/stats ─────────────────────────────────────────────────────
 router.get("/stats", isAuthenticated, isAdmin, async (req, res) => {
   try {
-    const [totalUsers, totalShops, totalProducts, totalReports, pendingReports] = await Promise.all([
+    const [totalUsers, totalShops, totalProducts] = await Promise.all([
       User.countDocuments({ role: { $ne: "admin" } }),
       Shop.countDocuments(),
       Product.countDocuments(),
-      Report.countDocuments(),
-      Report.countDocuments({ status: "pending" }),
     ]);
+
+    const validReportsAgg = await Report.aggregate([
+      {
+        $group: {
+          _id: "$targetId",
+          totalCount: { $sum: 1 },
+          reports: { $push: "$$ROOT" }
+        }
+      },
+      {
+        $project: {
+          reports: {
+            $filter: {
+              input: "$reports",
+              as: "report",
+              cond: {
+                $gte: ["$totalCount", 10]
+              }
+            }
+          }
+        }
+      },
+      { $unwind: "$reports" },
+      {
+        $group: {
+          _id: null,
+          totalReports: { $sum: 1 },
+          pendingReports: {
+            $sum: { $cond: [{ $eq: ["$reports.status", "pending"] }, 1, 0] }
+          }
+        }
+      }
+    ]);
+
+    const totalReports = validReportsAgg[0]?.totalReports || 0;
+    const pendingReports = validReportsAgg[0]?.pendingReports || 0;
 
     const recentUsers = await User.find({ role: { $ne: "admin" } })
       .sort({ createdAt: -1 })
@@ -105,6 +139,20 @@ router.patch("/shops/:id/suspend", isAuthenticated, isAdmin, async (req, res) =>
     shop.status = "suspended";
     shop.suspendedReason = reason || "Violated platform rules";
     await shop.save();
+
+    const owner = await User.findById(shop.ownerId);
+    if (owner && owner.email) {
+      const { sendSuspensionMail } = await import("../emailverify/sendSuspensionMail.js");
+      sendSuspensionMail(owner.email, shop.suspendedReason);
+    }
+
+    const { Notification } = await import("../models/notificationModel.js");
+    await Notification.create({
+      shopId: shop._id,
+      message: `Your shop has been suspended by the admin. Reason: ${shop.suspendedReason}`,
+      type: "suspension"
+    });
+
     res.json({ success: true, message: "Shop suspended", shop });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
@@ -120,6 +168,22 @@ router.patch("/shops/:id/reactivate", isAuthenticated, isAdmin, async (req, res)
     shop.suspendedReason = "";
     await shop.save();
     res.json({ success: true, message: "Shop reactivated", shop });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// ── DELETE /api/admin/shops/:id ──────────────────────────────────────────────
+router.delete("/shops/:id", isAuthenticated, isAdmin, async (req, res) => {
+  try {
+    const shop = await Shop.findById(req.params.id);
+    if (!shop) return res.status(404).json({ success: false, message: "Shop not found" });
+
+    // Delete all products associated with this shop
+    await Product.deleteMany({ shopId: req.params.id });
+
+    await Shop.findByIdAndDelete(req.params.id);
+    res.json({ success: true, message: "Shop deleted successfully" });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
@@ -175,10 +239,23 @@ router.get("/reports", isAuthenticated, isAdmin, async (req, res) => {
     const filter = {};
     if (status && status !== "all") filter.status = status;
 
-    const reports = await Report.find(filter)
+    const allReports = await Report.find(filter)
       .sort({ createdAt: -1 })
       .populate("reportedBy", "username email")
       .populate("resolvedBy", "username");
+
+    // Calculate report counts per target
+    const targetCounts = await Report.aggregate([
+      { $group: { _id: "$targetId", count: { $sum: 1 } } }
+    ]);
+    
+    const targetCountMap = {};
+    targetCounts.forEach(t => targetCountMap[t._id.toString()] = t.count);
+
+    // Apply threshold: both product and shop reports only show if count >= 10
+    const reports = allReports.filter(r => {
+      return targetCountMap[r.targetId.toString()] >= 10;
+    });
 
     // Attach target name for display
     const enriched = await Promise.all(reports.map(async r => {

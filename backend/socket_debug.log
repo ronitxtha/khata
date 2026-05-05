@@ -16,3 +16,11 @@ Sent successfully
 Sent successfully
 2026-05-02T11:53:31.013Z - {"senderId":"692e9a2860724882408c76a0","receiverId":"698a06aafbd07e2e777aba5b","text":"nice"}
 Sent successfully
+2026-05-04T16:45:42.975Z - {"senderId":"698a06aafbd07e2e777aba5b","receiverId":"692e9a2860724882408c76a0","productId":"69e6e5d6f1c130149c52f1ae","text":"hi"}
+Sent successfully
+2026-05-04T17:04:42.822Z - {"senderId":"698a06aafbd07e2e777aba5b","receiverId":"692e9a2860724882408c76a0","text":"hello"}
+Sent successfully
+2026-05-04T17:05:03.758Z - {"senderId":"692e9a2860724882408c76a0","receiverId":"698a06aafbd07e2e777aba5b","text":"how"}
+Sent successfully
+2026-05-04T17:08:01.803Z - {"senderId":"698a06aafbd07e2e777aba5b","receiverId":"692e9a2860724882408c76a0","text":"oij"}
+Sent successfully

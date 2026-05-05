@@ -41,9 +41,13 @@ export const getRecommendations = async (req, res) => {
       recommendations = combined.slice(0, limit);
       const title = "🔥 Trending Now";
 
-      const stores = await Shop.find({
+      let stores = await Shop.find({
         _id: { $in: Array.from(storeIds) }
-      }).populate("ownerId", "username");
+      }).populate("ownerId", "username isActive");
+
+      stores = stores.filter(s => s.ownerId?.isActive && s.status !== "suspended");
+      const validStoreIds = new Set(stores.map(s => s._id.toString()));
+      recommendations = recommendations.filter(p => p.shopId && validStoreIds.has(p.shopId._id.toString()));
 
       return res.json({
         success: true,
@@ -99,9 +103,13 @@ export const getRecommendations = async (req, res) => {
       recommendations = combined.slice(0, limit);
       const title = "🔥 Trending Now";
 
-      const stores = await Shop.find({
+      let stores = await Shop.find({
         _id: { $in: Array.from(storeIds) }
-      }).populate("ownerId", "username");
+      }).populate("ownerId", "username isActive");
+
+      stores = stores.filter(s => s.ownerId?.isActive && s.status !== "suspended");
+      const validStoreIds = new Set(stores.map(s => s._id.toString()));
+      recommendations = recommendations.filter(p => p.shopId && validStoreIds.has(p.shopId._id.toString()));
 
       return res.json({
         success: true,
@@ -183,9 +191,13 @@ export const getRecommendations = async (req, res) => {
 
       const title = "🔥 Trending Now";
 
-      const stores = await Shop.find({
+      let stores = await Shop.find({
         _id: { $in: Array.from(storeIds) }
-      }).populate("ownerId", "username");
+      }).populate("ownerId", "username isActive");
+
+      stores = stores.filter(s => s.ownerId?.isActive && s.status !== "suspended");
+      const validStoreIds = new Set(stores.map(s => s._id.toString()));
+      recommendations = recommendations.filter(p => p.shopId && validStoreIds.has(p.shopId._id.toString()));
 
       return res.json({
         success: true,
@@ -310,9 +322,13 @@ export const getRecommendations = async (req, res) => {
 
     const title = "✨ Recommended for You";
 
-    const stores = await Shop.find({
+    let stores = await Shop.find({
       _id: { $in: Array.from(storeIds) }
-    }).populate("ownerId", "username");
+    }).populate("ownerId", "username isActive");
+
+    stores = stores.filter(s => s.ownerId?.isActive && s.status !== "suspended");
+    const validStoreIds = new Set(stores.map(s => s._id.toString()));
+    recommendations = recommendations.filter(p => p.shopId && validStoreIds.has(p.shopId._id.toString()));
 
     res.json({
       success: true,

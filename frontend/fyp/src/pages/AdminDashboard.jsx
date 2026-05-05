@@ -15,6 +15,8 @@ const AdminDashboard = () => {
   const [products, setProducts] = useState([]);
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [searchShopTerm, setSearchShopTerm] = useState("");
+  const [searchProductTerm, setSearchProductTerm] = useState("");
 
   const fetchStats = async () => {
     try {
@@ -104,6 +106,17 @@ const AdminDashboard = () => {
         });
       }
       fetchShops();
+    } catch (err) { console.error(err); }
+  };
+
+  const deleteShop = async (id) => {
+    if (!window.confirm("Delete this shop and all its products permanently?")) return;
+    try {
+      await axios.delete(`${API_BASE}/api/admin/shops/${id}`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem("accessToken")}` },
+      });
+      fetchShops();
+      fetchProducts();
     } catch (err) { console.error(err); }
   };
 
@@ -297,7 +310,16 @@ const AdminDashboard = () => {
             <div className="od-panel" style={{ flexShrink: 0, padding: '24px' }}>
               <div className="od-panel__header" style={{ marginBottom: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <h2 className="od-panel__title" style={{ fontSize: '1.2rem', fontWeight: 800 }}>Active Shops</h2>
-                <span style={{ fontSize: '0.85rem', color: '#64748b', fontWeight: 600 }}>{shops.length} total shops</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                  <input
+                    type="text"
+                    placeholder="Search shops..."
+                    value={searchShopTerm}
+                    onChange={(e) => setSearchShopTerm(e.target.value)}
+                    style={{ padding: '8px 12px', border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: '0.9rem', outline: 'none' }}
+                  />
+                  <span style={{ fontSize: '0.85rem', color: '#64748b', fontWeight: 600 }}>{shops.length} total shops</span>
+                </div>
               </div>
               <div className="od-table-wrapper" style={{ overflowX: "auto", width: "100%" }}>
                 <table className="od-table">
@@ -310,7 +332,7 @@ const AdminDashboard = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {shops.map(s => (
+                    {shops.filter(s => s.name.toLowerCase().includes(searchShopTerm.toLowerCase())).map(s => (
                       <tr key={s._id}>
                         <td>{s.name}</td>
                         <td>{s.ownerId?.username || "Unknown"}<br/><small>{s.ownerId?.email}</small></td>
@@ -321,8 +343,11 @@ const AdminDashboard = () => {
                           {s.status === "suspended" && <div style={{fontSize: "11px", color: "red"}}>{s.suspendedReason}</div>}
                         </td>
                         <td>
-                          <button className="od-btn od-btn--secondary od-btn--sm" onClick={() => toggleShopStatus(s._id, s.status)}>
+                          <button className="od-btn od-btn--secondary od-btn--sm" onClick={() => toggleShopStatus(s._id, s.status)} style={{marginRight: '8px'}}>
                             {s.status === "active" ? "Suspend" : "Reactivate"}
+                          </button>
+                          <button className="od-btn od-btn--danger od-btn--sm" onClick={() => deleteShop(s._id)}>
+                            Delete
                           </button>
                         </td>
                       </tr>
@@ -337,7 +362,16 @@ const AdminDashboard = () => {
             <div className="od-panel" style={{ flexShrink: 0, padding: '24px' }}>
               <div className="od-panel__header" style={{ marginBottom: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <h2 className="od-panel__title" style={{ fontSize: '1.2rem', fontWeight: 800 }}>Platform Products</h2>
-                <span style={{ fontSize: '0.85rem', color: '#64748b', fontWeight: 600 }}>{products.length} total products</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                  <input
+                    type="text"
+                    placeholder="Search products or stores..."
+                    value={searchProductTerm}
+                    onChange={(e) => setSearchProductTerm(e.target.value)}
+                    style={{ padding: '8px 12px', border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: '0.9rem', outline: 'none', width: '220px' }}
+                  />
+                  <span style={{ fontSize: '0.85rem', color: '#64748b', fontWeight: 600 }}>{products.length} total products</span>
+                </div>
               </div>
               <div className="od-table-wrapper" style={{ overflowX: "auto", width: "100%" }}>
                 <table className="od-table">
@@ -350,7 +384,12 @@ const AdminDashboard = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {products.map(p => (
+                    {products.filter(p => {
+                      const pName = p.name ? p.name.toLowerCase() : '';
+                      const sName = p.shopId && p.shopId.name ? p.shopId.name.toLowerCase() : '';
+                      const term = searchProductTerm.toLowerCase();
+                      return pName.includes(term) || sName.includes(term);
+                    }).map(p => (
                       <tr key={p._id}>
                         <td>
                           <div style={{display: "flex", gap: "10px", alignItems: "center"}}>

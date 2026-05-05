@@ -15,6 +15,10 @@ export const isAuthenticated = async (req, res, next) => {
 
     if (!user) return res.status(404).json({ success: false, message: "User not found" });
 
+    if (!user.isActive) {
+      return res.status(403).json({ success: false, message: "Your account has been disabled by the admin." });
+    }
+
     // Admin and customer don't need a shopId
     let shopId = user.shopId;
     if (user.role === "staff" && !shopId) {
@@ -24,6 +28,17 @@ export const isAuthenticated = async (req, res, next) => {
 
     if (user.role !== "customer" && user.role !== "admin" && !shopId) {
       return res.status(400).json({ success: false, message: "Shop not associated with this user" });
+    }
+
+    // Check if the shop owner is disabled (for staff) or shop is suspended
+    if (shopId) {
+      const { Shop } = await import("../models/shopModel.js");
+      const shop = await Shop.findById(shopId).populate("ownerId");
+      if (shop) {
+        if (shop.ownerId && !shop.ownerId.isActive && user.role === "staff") {
+          return res.status(403).json({ success: false, message: "The store owner's account has been disabled." });
+        }
+      }
     }
 
     req.user = user;
