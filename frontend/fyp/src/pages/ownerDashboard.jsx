@@ -5,6 +5,7 @@ import { imgUrl } from "../utils/imageUrl";
 import { trackProductView } from "../utils/interactionTracking";
 import socket from "../socket";
 import OwnerNotificationBell from "../components/OwnerNotificationBell";
+import DisabledAccountPopup from "../components/DisabledAccountPopup";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, LineChart, Line, Area, AreaChart
@@ -45,6 +46,7 @@ const OwnerDashboard = () => {
   const [salesTimeframe, setSalesTimeframe]   = useState("week");
   const [yearlyOrders, setYearlyOrders]       = useState([]);
   const [toast, setToast]                     = useState({ message: "", type: "success", visible: false });
+  const [showDisabledPopup, setShowDisabledPopup] = useState(false);
   const [stats, setStats] = useState({
     totalProducts: 0, totalOrders: 0, pendingOrdersCount: 0,
     totalStaffCount: 0, onlineStaffCount: 0,
@@ -80,7 +82,20 @@ const OwnerDashboard = () => {
     navigate("/login");
   };
 
+  const handleDisabledAccountClose = () => {
+    localStorage.clear();
+    navigate("/login");
+  };
+
   useEffect(() => {
+    const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
+    
+    // Check if user is disabled
+    if (currentUser && currentUser._id && !currentUser.isActive) {
+      setShowDisabledPopup(true);
+      return;
+    }
+
     const init = async () => {
       try {
         const token = localStorage.getItem("accessToken");
@@ -123,6 +138,7 @@ const OwnerDashboard = () => {
 
   return (
     <div className="od-shell">
+      <DisabledAccountPopup visible={showDisabledPopup} onClose={handleDisabledAccountClose} />
 
       {/* ══════════════════════ SIDEBAR ══════════════════════ */}
       <aside className="od-sidebar">

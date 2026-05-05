@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { imgUrl } from "../utils/imageUrl";
+import DisabledAccountPopup from "../components/DisabledAccountPopup";
 import "../styles/ownerDashboard.css";
 
 const API_BASE = "http://localhost:8000";
@@ -15,6 +16,7 @@ const AdminDashboard = () => {
   const [products, setProducts] = useState([]);
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [showDisabledPopup, setShowDisabledPopup] = useState(false);
   const [searchShopTerm, setSearchShopTerm] = useState("");
   const [searchProductTerm, setSearchProductTerm] = useState("");
 
@@ -69,9 +71,21 @@ const AdminDashboard = () => {
       navigate("/login");
       return;
     }
+    
+    // Check if user is disabled
+    if (user && !user.isActive) {
+      setShowDisabledPopup(true);
+      return;
+    }
+
     Promise.all([fetchStats(), fetchUsers(), fetchShops(), fetchProducts(), fetchReports()])
       .finally(() => setLoading(false));
   }, [navigate]);
+
+  const handleDisabledAccountClose = () => {
+    localStorage.clear();
+    navigate("/login");
+  };
 
   const toggleUserStatus = async (id) => {
     try {
@@ -153,6 +167,7 @@ const AdminDashboard = () => {
 
   return (
     <div className="od-shell">
+      <DisabledAccountPopup visible={showDisabledPopup} onClose={handleDisabledAccountClose} />
       <aside className="od-sidebar">
         <div className="od-sidebar__brand">
           <div className="od-sidebar__logo">SK</div>

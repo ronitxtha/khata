@@ -123,6 +123,10 @@ export const loginUser = async (req, res) => {
                 message: "Incorrect Password"
             })
         }
+
+        // Account check will be handled on frontend for the requested popup experience
+
+
        // Only enforce verification for non-staff users
 if (user.role !== "staff" && !user.isVerified) {
     return res.status(403).json({

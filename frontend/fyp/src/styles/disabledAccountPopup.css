@@ -1,0 +1,86 @@
+.disabled-account-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+
+.disabled-account-modal {
+  background: white;
+  border-radius: 12px;
+  padding: 40px 30px;
+  max-width: 400px;
+  width: 90%;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  text-align: center;
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateY(-50px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.disabled-account-icon {
+  font-size: 48px;
+  margin-bottom: 20px;
+}
+
+.disabled-account-modal h2 {
+  color: #e74c3c;
+  font-size: 24px;
+  margin: 0 0 15px 0;
+  font-weight: 600;
+}
+
+.disabled-account-message {
+  color: #555;
+  font-size: 16px;
+  line-height: 1.5;
+  margin: 10px 0;
+}
+
+.disabled-account-contact {
+  color: #666;
+  font-size: 14px;
+  line-height: 1.6;
+  margin: 15px 0 25px 0;
+}
+
+.disabled-account-contact a {
+  color: #6366f1;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.disabled-account-contact a:hover {
+  text-decoration: underline;
+}
+
+.disabled-account-btn {
+  background: #e74c3c;
+  color: white;
+  border: none;
+  padding: 12px 30px;
+  border-radius: 6px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.disabled-account-btn:hover {
+  background: #c0392b;
+}

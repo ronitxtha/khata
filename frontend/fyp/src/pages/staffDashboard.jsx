@@ -14,6 +14,7 @@ import {
 import { Bar } from "react-chartjs-2";
 import QRScanner from "./QRScanner";
 import socket from "../socket";
+import DisabledAccountPopup from "../components/DisabledAccountPopup";
 import "../styles/staffDashboard.css";
 import "../styles/staffInventory.css";
 import "../styles/ownerDashboard.css";
@@ -34,6 +35,7 @@ const StaffDashboard = () => {
 
   // Toast
   const [toast, setToast] = useState({ message: "", type: "success", visible: false });
+  const [showDisabledPopup, setShowDisabledPopup] = useState(false);
 
   // QR Scanner
   const [scannerOpen, setScannerOpen] = useState(false);
@@ -54,6 +56,14 @@ const StaffDashboard = () => {
 
   // ===================== Data Fetch =====================
   useEffect(() => {
+    const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
+    
+    // Check if user is disabled
+    if (currentUser && currentUser._id && !currentUser.isActive) {
+      setShowDisabledPopup(true);
+      return;
+    }
+
     const fetchData = async () => {
       try {
         const token = localStorage.getItem("accessToken");
@@ -126,6 +136,11 @@ const StaffDashboard = () => {
   const showToast = (message, type = "success", duration = 3000) => {
     setToast({ message, type, visible: true });
     setTimeout(() => setToast((t) => ({ ...t, visible: false })), duration);
+  };
+
+  const handleDisabledAccountClose = () => {
+    localStorage.clear();
+    navigate("/login");
   };
 
   // ===================== Logout =====================
@@ -379,6 +394,7 @@ const StaffDashboard = () => {
 
   return (
     <div className="od-shell">
+      <DisabledAccountPopup visible={showDisabledPopup} onClose={handleDisabledAccountClose} />
       {/* ══════════════════════ SIDEBAR ══════════════════════ */}
       <StaffSidebar staff={staff} />
 

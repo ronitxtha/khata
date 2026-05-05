@@ -49,8 +49,12 @@ export default function Login() {
       } else {
         setError(res.data.message);
       }
-    } catch {
-      setError("Login failed");
+    } catch (err) {
+      if (err.response?.data?.message) {
+        setError(err.response.data.message);
+      } else {
+        setError("Login failed");
+      }
     }
   };
 

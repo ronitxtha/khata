@@ -4,6 +4,7 @@ import axios from "axios";
 import { imgUrl } from "../utils/imageUrl";
 import CustomerSidebar from "../components/CustomerSidebar";
 import RecommendedProducts from "../components/RecommendedProducts";
+import DisabledAccountPopup from "../components/DisabledAccountPopup";
 import "../styles/ownerDashboard.css";
 import Rating from "../components/Rating";
 
@@ -29,6 +30,7 @@ const CustomerDashboard = () => {
   const [reportReason, setReportReason] = useState("");
   const [reportSent, setReportSent] = useState(false);
   const [submittingReport, setSubmittingReport] = useState(false);
+  const [showDisabledPopup, setShowDisabledPopup] = useState(false);
 
   // Filter states
   const [categoryFilter, setCategoryFilter] = useState("");
@@ -43,6 +45,12 @@ const CustomerDashboard = () => {
     }
     setUser(currentUser);
 
+    // Check if user is disabled
+    if (currentUser && currentUser._id && !currentUser.isActive) {
+      setShowDisabledPopup(true);
+      return;
+    }
+
     const fetchMarketplace = async () => {
       try {
         const res = await axios.get(`${API_BASE}/api/marketplace`);
@@ -56,6 +64,11 @@ const CustomerDashboard = () => {
     };
     fetchMarketplace();
   }, []);
+
+  const handleDisabledAccountClose = () => {
+    localStorage.clear();
+    navigate("/login");
+  };
 
   const isSearchActive = searchTerm.trim() !== "" || categoryFilter !== "";
 
@@ -130,6 +143,7 @@ const CustomerDashboard = () => {
 
   return (
     <div className="od-shell">
+      <DisabledAccountPopup visible={showDisabledPopup} onClose={handleDisabledAccountClose} />
       <CustomerSidebar customer={user} />
 
       <div className="od-main">
