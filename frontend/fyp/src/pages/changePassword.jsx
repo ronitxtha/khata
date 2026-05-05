@@ -11,9 +11,27 @@ export default function ChangePassword() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
+  const validatePassword = (password) => {
+    const hasMinLength = password.length >= 8;
+    const hasNumber = /\d/.test(password);
+    const hasSpecialChar = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password);
+    
+    if (!hasMinLength) {
+      return { valid: false, message: "Password must be at least 8 characters" };
+    }
+    if (!hasNumber) {
+      return { valid: false, message: "Password must contain at least one number" };
+    }
+    if (!hasSpecialChar) {
+      return { valid: false, message: "Password must contain at least one special character (!@#$%^&*)" };
+    }
+    return { valid: true, message: "" };
+  };
+
   const validateForm = () => {
-    if (newPassword.length < 4) {
-      setError("Password must be at least 4 characters");
+    const passwordValidation = validatePassword(newPassword);
+    if (!passwordValidation.valid) {
+      setError(passwordValidation.message);
       return false;
     }
     if (newPassword !== confirmPassword) {
@@ -59,6 +77,9 @@ export default function ChangePassword() {
         <form onSubmit={handleChangePassword} className="auth-form-content animate-fade-in">
           <div className="auth-form-group">
             <label className="input-label">New Password</label>
+            <p style={{ fontSize: "0.85rem", color: "#666", marginBottom: "8px", marginTop: "-8px" }}>
+              Must contain: 8+ characters, 1 number, 1 special character (!@#$%^&*)
+            </p>
             <input
               type="password"
               className="input-field"
