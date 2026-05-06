@@ -12,8 +12,9 @@ import fs from "fs";
 
 export const registerUser = async (req, res) => {
     try {
-        const { username, email, password, role } = req.body;
+        let { username, email, password, role } = req.body;
 
+        // 1. Basic validation
         if (!username || !email || !password || !role) {
             return res.status(400).json({
                 success: false,
@@ -21,6 +22,10 @@ export const registerUser = async (req, res) => {
             });
         }
 
+        // 2. Normalize email (IMPORTANT FIX)
+        email = email.toLowerCase().trim();
+
+        // 3. Validate role
         if (!["customer", "owner"].includes(role)) {
             return res.status(400).json({
                 success: false,
@@ -28,40 +33,53 @@ export const registerUser = async (req, res) => {
             });
         }
 
-        const existinguser = await User.findOne({ email });
-        if (existinguser) {
+        // 4. Check existing user (SAFE QUERY)
+        const existingUser = await User.findOne({ email });
+
+        if (existingUser) {
             return res.status(400).json({
                 success: false,
                 message: "User already exists"
             });
         }
 
+        // 5. Hash password
         const hashedPassword = await bcrypt.hash(password, 10);
 
+        // 6. Create user
         const newUser = await User.create({
-            username,
+            username: username.trim(),
             email,
             password: hashedPassword,
             role
         });
+
+        // 7. If owner → create shop
         if (role === "owner") {
-    const newShop = await Shop.create({
-        name: username,
-        ownerId: newUser._id
-    });
+            const newShop = await Shop.create({
+                name: username,
+                ownerId: newUser._id
+            });
 
-    // attach shopId to owner
-    newUser.shopId = newShop._id;
-    await newUser.save();
-}
+            newUser.shopId = newShop._id;
+            await newUser.save();
+        }
 
+        // 8. Generate JWT token
+        const token = jwt.sign(
+            { id: newUser._id },
+            process.env.SECRET_KEY,
+            { expiresIn: "10m" }
+        );
 
-        // Generate JWT token
-        const token = jwt.sign({ id: newUser._id }, process.env.SECRET_KEY, { expiresIn: "10m" });
+        // 9. Send verification email (IMPORTANT: wrap to avoid crash)
+        try {
+            await verifyMail(token, email);
+        } catch (mailError) {
+            console.error("❌ Email sending failed:", mailError.message);
+        }
 
-        // Send only the token in email
-        await verifyMail(token, email);
-
+        // 10. Response
         return res.status(201).json({
             success: true,
             message: "User registered successfully. Please check your email to verify.",
@@ -69,6 +87,7 @@ export const registerUser = async (req, res) => {
         });
 
     } catch (error) {
+        console.error("❌ Register error:", error);
         return res.status(500).json({
             success: false,
             message: error.message
