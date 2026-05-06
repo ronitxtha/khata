@@ -15,7 +15,7 @@ import bcrypt from "bcryptjs";
 import multer from "multer";
 import QRCode from "qrcode";
 import path from "path";
-import Attendance from "../models/Attendance.js";
+import Attendance from "../models/attendance.js";
 import fs from "fs";
 console.log("✅ Owner routes loaded");
 
