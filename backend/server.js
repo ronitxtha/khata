@@ -154,16 +154,28 @@ io.on("connection", (socket) => {
 app.use(express.json());
 
 app.use(cors({
-    origin: (origin, callback) => {
-        // Allow requests with no origin (e.g. Postman, curl, server-to-server)
+    origin: function (origin, callback) {
+        // Allow requests with no origin (Postman, mobile apps)
         if (!origin) return callback(null, true);
-        if (allowedOrigins.includes(origin)) {
+
+        // Allow all Vercel deployments (IMPORTANT FIX)
+        if (
+            origin.includes("vercel.app") ||
+            origin === process.env.FRONTEND_URL ||
+            origin === "http://localhost:5173" ||
+            origin === "http://localhost:3000"
+        ) {
             return callback(null, true);
         }
-        return callback(new Error(`CORS: origin ${origin} not allowed`));
+
+        return callback(new Error("CORS blocked for origin: " + origin));
     },
-    credentials: true
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"]
 }));
+
+app.options("*", cors());
 
 app.use("/uploads", express.static(path.join(path.resolve(), "uploads")));
 
