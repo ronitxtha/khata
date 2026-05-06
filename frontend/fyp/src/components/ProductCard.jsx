@@ -1,6 +1,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import "./ProductCard.css";
+import { API_BASE } from "../config/api.js";
 
 const ProductCard = ({ product }) => {
   const navigate = useNavigate();
@@ -12,7 +13,7 @@ const ProductCard = ({ product }) => {
   const imageUrl = product.image
     ? product.image.startsWith("http")
       ? product.image
-      : `http://localhost:8000/uploads/${product.image}`
+      : `${API_BASE}/uploads/${product.image}`
     : "https://via.placeholder.com/200?text=No+Image";
 
   return (

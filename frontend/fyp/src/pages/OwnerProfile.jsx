@@ -6,7 +6,7 @@ import "../styles/ownerDashboard.css";
 import "../styles/orderManagement.css";
 import { imgUrl } from "../utils/imageUrl";
 
-const API_BASE = "http://localhost:8000";
+import { API_BASE } from "../config/api.js";
 
 const OwnerProfile = () => {
   const navigate = useNavigate();

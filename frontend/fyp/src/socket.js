@@ -1,15 +1,13 @@
 // frontend/src/socket.js
 import { io } from "socket.io-client";
+import { API_BASE } from "./config/api.js";
 
-// URL of your backend server
-const SOCKET_URL = "http://localhost:8000"; // use your server URL
-
-// Create socket connection
-const socket = io(SOCKET_URL, {
-  transports: ["websocket"], // optional, avoids polling fallback
+// Socket connection uses the same backend URL as all API calls
+const socket = io(API_BASE, {
+  transports: ["websocket"],
+  withCredentials: true,
 });
 
-// Optional: handle connection events
 socket.on("connect", () => {
   console.log("Connected to Socket.IO server with ID:", socket.id);
 });

@@ -6,7 +6,7 @@ import OwnerNotificationBell from "../components/OwnerNotificationBell";
 import "../styles/ownerDashboard.css";
 import "../styles/supplierManagement.css";
 
-const API_BASE = "http://localhost:8000";
+import { API_BASE } from "../config/api.js";
 
 const SupplierManagement = () => {
   const navigate = useNavigate();

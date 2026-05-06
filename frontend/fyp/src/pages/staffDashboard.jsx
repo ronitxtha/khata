@@ -23,7 +23,7 @@ import OwnerNotificationBell from "../components/OwnerNotificationBell";
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
-const API_BASE = "http://localhost:8000";
+import { API_BASE } from "../config/api.js";
 
 const StaffDashboard = () => {
   const navigate = useNavigate();

@@ -9,7 +9,7 @@ import "../styles/ownerReviews.css";
 
 import StaffSidebar from "../components/StaffSidebar";
 
-const API_BASE = "http://localhost:8000";
+import { API_BASE } from "../config/api.js";
 
 /* ─── Helpers ─────────────────────────────────────────── */
 const StarRow = ({ rating, size = 13 }) => {

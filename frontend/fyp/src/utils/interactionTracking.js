@@ -1,6 +1,7 @@
 import axios from "axios";
+import { API_BASE } from "../config/api.js";
 
-const API_BASE_URL = "http://localhost:8000";
+const API_BASE_URL = API_BASE;
 
 export const trackInteraction = async (interactionType, productId = null, category = null, searchQuery = null) => {
   try {

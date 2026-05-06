@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 import "../styles/auth.css";
+import { API_BASE } from "../config/api.js";
 
 export default function ChangePassword() {
   const navigate = useNavigate();
@@ -48,7 +49,7 @@ export default function ChangePassword() {
 
     try {
       const res = await axios.post(
-        `http://localhost:8000/user/change-password/${email}`,
+        `${API_BASE}/user/change-password/${email}`,
         { newPassword, confirmPassword }
       );
       if (res.data.success) {

@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import socket from "../socket";
-
-const API_BASE = "http://localhost:8000";
+import { API_BASE } from "../config/api.js";
 
 const OwnerNotificationBell = ({ shopId }) => {
   const [notifications, setNotifications] = useState([]);

@@ -5,6 +5,7 @@ import { imgUrl } from "../utils/imageUrl";
 import "../styles/customerLayout.css";
 import "../styles/customerDashboard.css";
 import Rating from "../components/Rating";
+import { API_BASE } from "../config/api.js";
 
 const CATEGORIES = [
   { name: "Electronics", icon: "📱", color: "pill-generic" },
@@ -24,8 +25,6 @@ const DemoShop = () => {
   const [expandedShop, setExpandedShop] = useState(null);
   const [categoryFilter, setCategoryFilter] = useState("");
   const [toast, setToast] = useState(null);
-
-  const API_BASE = "http://localhost:8000";
 
   useEffect(() => {
     const fetchMarketplace = async () => {

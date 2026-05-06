@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 import "../styles/auth.css";
+import { API_BASE } from "../config/api.js";
 
 export default function OTP() {
   const navigate = useNavigate();
@@ -24,7 +25,7 @@ export default function OTP() {
     if (!validateForm()) return;
 
     try {
-      const res = await axios.post(`http://localhost:8000/user/verify-otp/${email}`, {
+      const res = await axios.post(`${API_BASE}/user/verify-otp/${email}`, {
         otp,
       });
       if (res.data.success) {

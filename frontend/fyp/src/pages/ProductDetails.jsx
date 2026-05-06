@@ -10,7 +10,7 @@ import Rating from "../components/Rating";
 import io from "socket.io-client";
 import CustomerSidebar from "../components/CustomerSidebar";
 
-const API_BASE = "http://localhost:8000";
+import { API_BASE } from "../config/api.js";
 
 const ProductDetails = () => {
   const { id } = useParams();

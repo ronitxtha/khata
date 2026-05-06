@@ -6,7 +6,7 @@ import "../styles/ownerProfile.css";
 import "../styles/ownerDashboard.css";
 import StaffSidebar from "../components/StaffSidebar";
 
-const API_BASE = "http://localhost:8000";
+import { API_BASE } from "../config/api.js";
 const getAuthHeaders = () => ({ Authorization: `Bearer ${localStorage.getItem("accessToken")}` });
 
 const formatTime = (date) => {

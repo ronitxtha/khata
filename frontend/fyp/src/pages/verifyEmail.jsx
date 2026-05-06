@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import "../styles/auth.css";
+import { API_BASE } from "../config/api.js";
 
 export default function VerifyEmail() {
   const { token } = useParams(); // Extract the token from frontend route
@@ -13,7 +14,7 @@ export default function VerifyEmail() {
     const verifyEmail = async () => {
       try {
         // Call backend with only the JWT token
-        const res = await axios.get(`http://localhost:8000/user/verify/${token}`)
+        const res = await axios.get(`${API_BASE}/user/verify/${token}`)
 
         if (res.data.success) {
           setStatus("Email verified successfully! Redirecting to login...");

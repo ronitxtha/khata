@@ -7,6 +7,7 @@ import RecommendedProducts from "../components/RecommendedProducts";
 import DisabledAccountPopup from "../components/DisabledAccountPopup";
 import "../styles/ownerDashboard.css";
 import Rating from "../components/Rating";
+import { API_BASE } from "../config/api.js";
 
 const CATEGORIES = [
   { name: "Electronics", icon: "📱", color: "pill-generic" },
@@ -34,8 +35,6 @@ const CustomerDashboard = () => {
 
   // Filter states
   const [categoryFilter, setCategoryFilter] = useState("");
-
-  const API_BASE = "http://localhost:8000";
 
   useEffect(() => {
     const currentUser = JSON.parse(localStorage.getItem("user") || "{}");

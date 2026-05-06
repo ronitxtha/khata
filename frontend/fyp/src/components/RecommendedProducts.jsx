@@ -4,8 +4,9 @@ import { useNavigate } from "react-router-dom";
 import { imgUrl } from "../utils/imageUrl";
 import Rating from "./Rating";
 import "./RecommendedProducts.css";
+import { API_BASE } from "../config/api.js";
 
-const API_BASE_URL = "http://localhost:8000";
+const API_BASE_URL = API_BASE;
 
 const RecommendedProducts = () => {
   const navigate = useNavigate();

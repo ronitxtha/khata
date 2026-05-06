@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
 import "../styles/receipt.css";
 
-const API_BASE = "http://localhost:8000";
+import { API_BASE } from "../config/api.js";
 
 /* ── Barcode decoration ────────────────────────── */
 const BarcodeDecoration = ({ orderId }) => {

@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import "../styles/auth.css";
+import { API_BASE } from "../config/api.js";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -31,7 +32,7 @@ export default function Login() {
 
     try {
       const res = await axios.post(
-        "http://localhost:8000/user/login",
+        `${API_BASE}/user/login`,
         { email, password }
       );
 

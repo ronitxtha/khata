@@ -7,7 +7,7 @@ import nepalLocations from "../data/nepalLocations.json";
 import "../styles/ownerProfile.css";
 import "../styles/ownerDashboard.css";
 
-const API_BASE = "http://localhost:8000";
+import { API_BASE } from "../config/api.js";
 const getAuthHeaders = () => ({ Authorization: `Bearer ${localStorage.getItem("accessToken")}` });
 
 const formatDate = (d) =>

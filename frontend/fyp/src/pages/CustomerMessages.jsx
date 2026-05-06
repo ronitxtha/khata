@@ -5,8 +5,7 @@ import io from "socket.io-client";
 import CustomerSidebar from "../components/CustomerSidebar";
 import { imgUrl } from "../utils/imageUrl";
 import "../styles/ownerDashboard.css";
-
-const API_BASE = "http://localhost:8000";
+import { API_BASE } from "../config/api.js";
 
 const CustomerMessages = () => {
   const navigate = useNavigate();

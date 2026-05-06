@@ -8,7 +8,7 @@ import "../styles/ownerDashboard.css";
 import "../styles/staffDashboard.css";
 import "../styles/productManagement.css";
 
-const API_BASE = "http://localhost:8000";
+import { API_BASE } from "../config/api.js";
 
 const CATEGORY_LIST = [
   "Electronics", "Fashion", "Beauty & Personal Care", "Home & Kitchen",

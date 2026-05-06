@@ -5,7 +5,7 @@ import { imgUrl } from "../utils/imageUrl";
 import CustomerSidebar from "../components/CustomerSidebar";
 import "../styles/ownerDashboard.css";
 
-const API_BASE = "http://localhost:8000";
+import { API_BASE } from "../config/api.js";
 
 const STATUS_COLORS = {
   pending:    { badge: "od-badge--amber", dot: "#f59e0b" },

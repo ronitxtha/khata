@@ -1,6 +1,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import "./StoreCard.css";
+import { API_BASE } from "../config/api.js";
 
 const StoreCard = ({ store }) => {
   const navigate = useNavigate();
@@ -12,7 +13,7 @@ const StoreCard = ({ store }) => {
   const logoUrl = store.logoUrl
     ? store.logoUrl.startsWith("http")
       ? store.logoUrl
-      : `http://localhost:8000/uploads/${store.logoUrl}`
+      : `${API_BASE}/uploads/${store.logoUrl}`
     : "https://via.placeholder.com/100?text=Store";
 
   return (

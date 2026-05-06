@@ -9,7 +9,7 @@ import OwnerSidebar from "../components/OwnerSidebar";
 import StaffSidebar from "../components/StaffSidebar";
 import OwnerNotificationBell from "../components/OwnerNotificationBell";
 
-const API_BASE = "http://localhost:8000";
+import { API_BASE } from "../config/api.js";
 
 const STATUS_FILTERS = ["All", "Pending", "Processing", "Delivered", "Cancelled"];
 

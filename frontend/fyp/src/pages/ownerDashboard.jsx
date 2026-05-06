@@ -12,7 +12,7 @@ import {
 } from "recharts";
 import "../styles/ownerDashboard.css";
 
-const API_BASE = "http://localhost:8000";
+import { API_BASE } from "../config/api.js";
 
 /* ── tiny helpers ─────────────────────────────────────────── */
 const NavIcon = ({ d }) => (
