@@ -1,7 +1,7 @@
 import express from "express";
 import { Product } from "../models/productModel.js";
 import { isAuthenticated } from "../middleware/isAuthenticated.js";
-import Attendance from "../models/Attendance.js";
+import Attendance from "../models/attendance.js";
 import {
   getProfile,
   updateProfile,
