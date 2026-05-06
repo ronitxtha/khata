@@ -1,7 +1,7 @@
 import bcrypt from "bcryptjs";
 import { User } from "../models/userModel.js";
 import { Shop } from "../models/shopModel.js";
-import Attendance from "../models/Attendance.js";
+import Attendance from "../models/attendance.js";
 
 // ─────────────────────────────────────────────
 // GET /api/staff/profile
