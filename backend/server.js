@@ -27,7 +27,26 @@ import { User } from "./models/userModel.js";
 import bcrypt from "bcryptjs";
 
 const app = express();
-const PORT = process.env.PORT || 8000;
+const PORT = process.env.PORT || 5000;
+
+/* ================= STARTUP VALIDATION ================= */
+const requiredEnvVars = [
+    "MONGO_URI", 
+    "SECRET_KEY", 
+    "MAIL_USER", 
+    "MAIL_PASS", 
+    "ADMIN_EMAIL", 
+    "ADMIN_PASSWORD",
+    "ESEWA_SECRET_KEY",
+    "ESEWA_PRODUCT_CODE"
+];
+
+for (const envVar of requiredEnvVars) {
+    if (!process.env[envVar]) {
+        console.error(`❌ FATAL ERROR: Missing required environment variable: ${envVar}`);
+        process.exit(1);
+    }
+}
 
 /* ================= SOCKET SETUP ================= */
 
@@ -193,4 +212,5 @@ connectDB().then(seedAdmin);
 
 server.listen(PORT, () => {
     console.log(`🚀 Server running on port ${PORT}`);
+    console.log(`🌐 Environment: ${process.env.NODE_ENV || 'development'}`);
 });
