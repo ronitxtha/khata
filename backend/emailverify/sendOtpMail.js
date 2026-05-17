@@ -3,11 +3,14 @@ import "dotenv/config";
 
 export const sendOtpMail = async (email, otp) => {
     try {
+        // Strip spaces from App Password (Google shows it with spaces but nodemailer needs it without)
+        const appPassword = (process.env.MAIL_PASS || "").replace(/\s+/g, "");
+
         const transporter = nodemailer.createTransport({
             service: 'gmail',
             auth: {
                 user: process.env.MAIL_USER,
-                pass: process.env.MAIL_PASS
+                pass: appPassword
             }
         });
 

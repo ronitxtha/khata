@@ -16,7 +16,8 @@ export const verifyMail = async (token, email) => {
 
   const template = handlebars.compile(emailTemplateSource);
 
-  const frontendLink = `http://localhost:5173/verify/${encodeURIComponent(token)}`;
+  const baseUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+  const frontendLink = `${baseUrl}/verify/${encodeURIComponent(token)}`;
   const htmlToSend = template({ link: frontendLink });
 
   // Strip spaces from App Password (Google shows it with spaces, but it must be used without)
