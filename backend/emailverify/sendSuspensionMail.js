@@ -1,29 +1,27 @@
-import nodemailer from "nodemailer";
+import sgMail from "@sendgrid/mail";
 import "dotenv/config";
+
+sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
 export const sendSuspensionMail = async (email, reason) => {
     try {
-        // Uses Brevo SMTP — works from cloud providers (Gmail SMTP is blocked on Render)
-        const transporter = nodemailer.createTransport({
-            host: 'smtp-relay.brevo.com',
-            port: 587,
-            secure: false,
-            auth: {
-                user: process.env.BREVO_USER,  // your Brevo account email
-                pass: process.env.BREVO_PASS   // Brevo SMTP password (from Settings → SMTP & API)
-            }
-        });
-
-        const mailOptions = {
-            from: `"Smart Khata" <${process.env.BREVO_USER}>`,
+        await sgMail.send({
             to: email,
-            subject: 'Account Suspended',
-            html: `<h2>Account Suspended</h2><p>Your SmartKhata shop has been suspended by the administrator.</p><p><b>Reason:</b> ${reason}</p><p>Please contact support for further assistance.</p>`
-        };
-
-        await transporter.sendMail(mailOptions);
-        console.log('Suspension email sent successfully');
+            from: process.env.SENDGRID_FROM_EMAIL, // must be verified in SendGrid
+            subject: "Account Suspended - Smart Khata",
+            html: `
+                <div style="font-family: Arial, sans-serif; max-width: 480px; margin: auto; padding: 24px; border: 1px solid #e2e8f0; border-radius: 8px;">
+                    <h2 style="color: #ef4444;">Account Suspended</h2>
+                    <p>Your SmartKhata shop has been suspended by the administrator.</p>
+                    <p><strong>Reason:</strong> ${reason}</p>
+                    <p>Please contact support for further assistance.</p>
+                    <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 16px 0;" />
+                    <p style="color: #94a3b8; font-size: 12px;">Smart Khata Support Team</p>
+                </div>
+            `
+        });
+        console.log("Suspension email sent successfully to:", email);
     } catch (error) {
-        console.error('Error sending suspension email:', error);
+        console.error("Error sending suspension email:", error.response?.body || error.message);
     }
 };
