@@ -27,7 +27,7 @@ import { User } from "./models/userModel.js";
 import bcrypt from "bcryptjs";
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 8000;
 
 /* ================= STARTUP VALIDATION ================= */
 const requiredEnvVars = [
@@ -175,8 +175,22 @@ app.use(cors({
     allowedHeaders: ["Content-Type", "Authorization"]
 }));
 
-app.use(cors());
-app.options(/.*/, cors());
+// OPTIONS preflight — use the same configured CORS policy (not an open wildcard)
+app.options(/.*/, cors({
+    origin: function (origin, callback) {
+        if (!origin) return callback(null, true);
+        if (
+            origin.includes("vercel.app") ||
+            origin === process.env.FRONTEND_URL ||
+            origin === "http://localhost:5173" ||
+            origin === "http://localhost:3000"
+        ) return callback(null, true);
+        return callback(new Error("CORS blocked for origin: " + origin));
+    },
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"]
+}));
 
 app.use("/uploads", express.static(path.join(path.resolve(), "uploads")));
 
