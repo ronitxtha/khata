@@ -1,7 +1,8 @@
 import express from "express";
-import { isAuthenticated } from "../middleware/isAuthenticated.js";
+import { isAuthenticated, checkTokenOnly } from "../middleware/isAuthenticated.js";
 import { uploadCustomer } from "../middleware/uploadCustomer.js";
 import {
+  getMe,
   getProfile,
   updateProfile,
   changePassword,
@@ -28,6 +29,9 @@ const requireCustomer = (req, res, next) => {
   }
   next();
 };
+
+// ── Status check (bypasses isActive guard so disabled users can self-check) ──
+router.get("/status", checkTokenOnly, getMe);
 
 // ── Profile ───────────────────────────────────────────────────────────────────
 router.get("/profile", isAuthenticated, requireCustomer, getProfile);

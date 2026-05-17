@@ -56,6 +56,28 @@ export const isAuthenticated = async (req, res, next) => {
   }
 };
 
+// ── Token-only middleware (no isActive check) ────────────────────────────────
+// Use ONLY for status-check endpoints where a disabled user must still get a
+// meaningful response rather than a blanket 403.
+export const checkTokenOnly = async (req, res, next) => {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return res.status(401).json({ success: false, message: "Authorization token missing" });
+    }
+    const token = authHeader.split(" ")[1];
+    const decoded = jwt.verify(token, process.env.SECRET_KEY);
+    const user = await User.findById(decoded.id).select("-password");
+    if (!user) return res.status(404).json({ success: false, message: "User not found" });
+
+    req.user   = user;
+    req.userId = user._id;
+    next();
+  } catch (error) {
+    return res.status(401).json({ success: false, message: "Invalid or expired token" });
+  }
+};
+
 // ── Role-specific guard middleware ───────────────────────────────────────────
 export const isAdmin = (req, res, next) => {
   if (req.user?.role !== "admin") {

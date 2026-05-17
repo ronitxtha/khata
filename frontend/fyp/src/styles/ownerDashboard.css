@@ -723,3 +723,39 @@
   .od-topbar { padding: 0 16px; }
   .od-timeframe-pills { display: none; }
 }
+
+/* ── Shared popup keyframes ─────────────────────────────────── */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px) scale(0.95); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* Admin action button variants */
+.od-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 7px 16px;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  font-family: var(--od-font);
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.od-btn--sm { padding: 5px 12px; font-size: 0.78rem; }
+.od-btn--primary   { background: #6366f1; color: #fff; }
+.od-btn--primary:hover { background: #4f46e5; }
+.od-btn--secondary { background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; }
+.od-btn--secondary:hover { background: #e2e8f0; }
+.od-btn--danger    { background: #fee2e2; color: #b91c1c; }
+.od-btn--danger:hover { background: #fecaca; }
+.od-badge--warn      { background: #fef3c7; color: #92400e; }
+.od-badge--secondary { background: #f1f5f9; color: #475569; }

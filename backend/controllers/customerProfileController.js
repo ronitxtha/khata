@@ -2,6 +2,37 @@ import bcrypt from "bcryptjs";
 import { User } from "../models/userModel.js";
 
 // ─────────────────────────────────────────────
+// GET /api/customer/me
+// Returns live isActive status (used for session checks)
+// ─────────────────────────────────────────────
+export const getMe = async (req, res) => {
+  try {
+    const customer = await User.findById(req.userId).select(
+      "-password -token -otp -otpExpiry"
+    );
+
+    if (!customer) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    res.json({
+      success: true,
+      user: {
+        _id: customer._id,
+        username: customer.username,
+        email: customer.email,
+        role: customer.role,
+        isActive: customer.isActive,
+        profileImage: customer.profileImage || "",
+      },
+    });
+  } catch (err) {
+    console.error("getMe error:", err);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
+// ─────────────────────────────────────────────
 // GET /api/customer/profile
 // ─────────────────────────────────────────────
 export const getProfile = async (req, res) => {

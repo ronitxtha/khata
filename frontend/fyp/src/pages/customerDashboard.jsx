@@ -38,17 +38,37 @@ const CustomerDashboard = () => {
 
   useEffect(() => {
     const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
-    if (!currentUser || currentUser.role !== "customer") {
-      // Allow browsing without login if needed, or redirect. 
-      // Based on original code, it doesn't force redirect, but we can set user.
-    }
     setUser(currentUser);
 
-    // Check if user is disabled
+    // ── Fast path: localStorage already knows the account is disabled ──
     if (currentUser && currentUser._id && !currentUser.isActive) {
+      setLoading(false);
       setShowDisabledPopup(true);
       return;
     }
+
+    // ── Live check: verify isActive directly from the server ──────────
+    // This catches the case where admin disabled the account mid-session
+    // (localStorage is stale but the DB already has isActive: false).
+    const checkAccountStatus = async () => {
+      try {
+        const token = localStorage.getItem("accessToken");
+        if (!token) return;
+        const res = await axios.get(`${API_BASE}/api/customer/status`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (res.data.success && !res.data.user.isActive) {
+          setLoading(false);
+          setShowDisabledPopup(true);
+          return; // stop — don't load the marketplace
+        }
+      } catch (err) {
+        // 401 = token expired/invalid (let normal auth handle it)
+        console.error("Status check error:", err);
+      }
+      // Account is active — load the marketplace
+      fetchMarketplace();
+    };
 
     const fetchMarketplace = async () => {
       try {
@@ -61,7 +81,8 @@ const CustomerDashboard = () => {
         setLoading(false);
       }
     };
-    fetchMarketplace();
+
+    checkAccountStatus();
   }, []);
 
   const handleDisabledAccountClose = () => {

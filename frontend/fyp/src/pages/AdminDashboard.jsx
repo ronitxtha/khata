@@ -16,6 +16,7 @@ const AdminDashboard = () => {
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showDisabledPopup, setShowDisabledPopup] = useState(false);
+  const [confirmDisableModal, setConfirmDisableModal] = useState({ visible: false, userId: null, username: "" });
   const [searchShopTerm, setSearchShopTerm] = useState("");
   const [searchProductTerm, setSearchProductTerm] = useState("");
 
@@ -95,6 +96,20 @@ const AdminDashboard = () => {
     } catch (err) { console.error(err); }
   };
 
+  const handleDisableClick = (user) => {
+    if (!user.isActive) {
+      // Re-enabling — no confirmation needed
+      toggleUserStatus(user._id);
+    } else {
+      setConfirmDisableModal({ visible: true, userId: user._id, username: user.username });
+    }
+  };
+
+  const confirmDisableUser = async () => {
+    await toggleUserStatus(confirmDisableModal.userId);
+    setConfirmDisableModal({ visible: false, userId: null, username: "" });
+  };
+
   const deleteUser = async (id) => {
     if (!window.confirm("Delete this user permanently?")) return;
     try {
@@ -167,6 +182,112 @@ const AdminDashboard = () => {
   return (
     <div className="od-shell">
       <DisabledAccountPopup visible={showDisabledPopup} onClose={handleDisabledAccountClose} />
+
+      {/* ── Confirm Disable User Popup ── */}
+      {confirmDisableModal.visible && (
+        <div style={{
+          position: 'fixed', inset: 0,
+          background: 'rgba(15,23,42,0.6)',
+          backdropFilter: 'blur(12px)',
+          WebkitBackdropFilter: 'blur(12px)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          zIndex: 9999,
+          animation: 'fadeIn 0.3s ease-out'
+        }}>
+          <div style={{
+            background: 'rgba(255,255,255,0.97)',
+            padding: '2.5rem',
+            borderRadius: '24px',
+            width: '90%',
+            maxWidth: '460px',
+            textAlign: 'center',
+            boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)',
+            border: '1px solid rgba(255,255,255,0.2)',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: '1.25rem',
+            animation: 'slideUp 0.4s cubic-bezier(0.16,1,0.3,1)'
+          }}>
+            {/* Icon */}
+            <div style={{
+              width: 72, height: 72,
+              background: '#fef2f2',
+              color: '#ef4444',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              borderRadius: '20px'
+            }}>
+              <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/>
+              </svg>
+            </div>
+
+            <h2 style={{ fontSize: '1.6rem', fontWeight: 700, color: '#1e293b', margin: 0, letterSpacing: '-0.02em' }}>
+              Disable Account?
+            </h2>
+
+            <p style={{ color: '#64748b', lineHeight: 1.6, fontSize: '1rem', margin: 0 }}>
+              You are about to disable the account of{' '}
+              <strong style={{ color: '#0f172a' }}>{confirmDisableModal.username}</strong>.
+              They will be locked out and shown a suspension notice.
+            </p>
+
+            <div style={{
+              background: '#fff7ed',
+              border: '1px solid #fed7aa',
+              borderRadius: '12px',
+              padding: '0.85rem 1.25rem',
+              width: '100%',
+              fontSize: '0.9rem',
+              color: '#9a3412',
+              fontWeight: 500,
+              textAlign: 'left',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px'
+            }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+                <line x1="12" y1="9" x2="12" y2="13"/>
+                <line x1="12" y1="17" x2="12.01" y2="17"/>
+              </svg>
+              This action can be reversed by clicking <strong>&nbsp;"Enable"&nbsp;</strong> anytime.
+            </div>
+
+            {/* Action buttons */}
+            <div style={{ display: 'flex', gap: '12px', width: '100%', marginTop: '0.25rem' }}>
+              <button
+                onClick={() => setConfirmDisableModal({ visible: false, userId: null, username: "" })}
+                style={{
+                  flex: 1, padding: '0.85rem', borderRadius: '12px',
+                  border: '1.5px solid #e2e8f0', background: '#f8fafc',
+                  color: '#475569', fontWeight: 600, fontSize: '0.95rem', cursor: 'pointer',
+                  transition: 'all 0.2s'
+                }}
+                onMouseEnter={e => { e.currentTarget.style.background = '#e2e8f0'; }}
+                onMouseLeave={e => { e.currentTarget.style.background = '#f8fafc'; }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDisableUser}
+                style={{
+                  flex: 1, padding: '0.85rem', borderRadius: '12px',
+                  border: 'none', background: 'linear-gradient(135deg, #ef4444, #dc2626)',
+                  color: '#fff', fontWeight: 700, fontSize: '0.95rem', cursor: 'pointer',
+                  transition: 'all 0.2s',
+                  boxShadow: '0 4px 14px rgba(239,68,68,0.35)'
+                }}
+                onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = '0 8px 20px rgba(239,68,68,0.45)'; }}
+                onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 4px 14px rgba(239,68,68,0.35)'; }}
+              >
+                Yes, Disable
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       <aside className="od-sidebar">
         <div className="od-sidebar__brand">
           <div className="od-sidebar__logo">SK</div>
@@ -307,7 +428,7 @@ const AdminDashboard = () => {
                           </span>
                         </td>
                         <td>
-                          <button className="od-btn od-btn--secondary od-btn--sm" onClick={() => toggleUserStatus(u._id)} style={{marginRight: '8px'}}>
+                          <button className="od-btn od-btn--secondary od-btn--sm" onClick={() => handleDisableClick(u)} style={{marginRight: '8px'}}>
                             {u.isActive ? "Disable" : "Enable"}
                           </button>
                           <button className="od-btn od-btn--danger od-btn--sm" onClick={() => deleteUser(u._id)}>Delete</button>
