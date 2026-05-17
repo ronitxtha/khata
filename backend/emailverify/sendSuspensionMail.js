@@ -15,7 +15,7 @@ export const sendSuspensionMail = async (email, reason) => {
         });
 
         const mailOptions = {
-            from: process.env.MAIL_USER,
+            from: `"Smart Khata" <${process.env.BREVO_USER}>`,
             to: email,
             subject: 'Account Suspended',
             html: `<h2>Account Suspended</h2><p>Your SmartKhata shop has been suspended by the administrator.</p><p><b>Reason:</b> ${reason}</p><p>Please contact support for further assistance.</p>`

@@ -15,7 +15,7 @@ export const sendOtpMail = async (email, otp) => {
         });
 
         const mailOptions = {
-            from: process.env.MAIL_USER,
+            from: `"Smart Khata" <${process.env.BREVO_USER}>`,
             to: email,
             subject: 'Password reset OTP',
             html: `<p>Your OTP for password reset is: <b>${otp}</b>. It is valid for 10 minutes.</p>`
