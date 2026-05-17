@@ -3,11 +3,14 @@ import "dotenv/config";
 
 export const sendSuspensionMail = async (email, reason) => {
     try {
+        // Uses Brevo SMTP — works from cloud providers (Gmail SMTP is blocked on Render)
         const transporter = nodemailer.createTransport({
-            service: 'gmail',
+            host: 'smtp-relay.brevo.com',
+            port: 587,
+            secure: false,
             auth: {
-                user: process.env.MAIL_USER,
-                pass: process.env.MAIL_PASS
+                user: process.env.BREVO_USER,  // your Brevo account email
+                pass: process.env.BREVO_PASS   // Brevo SMTP password (from Settings → SMTP & API)
             }
         });
 

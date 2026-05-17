@@ -3,14 +3,14 @@ import "dotenv/config";
 
 export const sendOtpMail = async (email, otp) => {
     try {
-        // Strip spaces from App Password (Google shows it with spaces but nodemailer needs it without)
-        const appPassword = (process.env.MAIL_PASS || "").replace(/\s+/g, "");
-
+        // Uses Brevo SMTP — works from cloud providers (Gmail SMTP is blocked on Render)
         const transporter = nodemailer.createTransport({
-            service: 'gmail',
+            host: 'smtp-relay.brevo.com',
+            port: 587,
+            secure: false,
             auth: {
-                user: process.env.MAIL_USER,
-                pass: appPassword
+                user: process.env.BREVO_USER,  // your Brevo account email
+                pass: process.env.BREVO_PASS   // Brevo SMTP password (from Settings → SMTP & API)
             }
         });
 
