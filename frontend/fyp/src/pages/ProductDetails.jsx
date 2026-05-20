@@ -88,7 +88,10 @@ const ProductDetails = () => {
   // Handle Socket Init
   useEffect(() => {
     if (currentUser) {
-      const newSocket = io(API_BASE);
+      const newSocket = io(API_BASE, {
+        transports: ["websocket"],
+        withCredentials: true,
+      });
       setSocket(newSocket);
       newSocket.emit("register", currentUser._id);
 

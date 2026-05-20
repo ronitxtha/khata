@@ -50,7 +50,10 @@ const OwnerMessages = () => {
 
   useEffect(() => {
     if (effectiveOwnerId) {
-      const newSocket = io(API_BASE);
+      const newSocket = io(API_BASE, {
+        transports: ["websocket"],
+        withCredentials: true,
+      });
       setSocket(newSocket);
       newSocket.emit("register", effectiveOwnerId);
 

@@ -31,7 +31,10 @@ const CustomerMessages = () => {
   // ── Socket ────────────────────────────────────────────────────
   useEffect(() => {
     if (!customer._id) return;
-    const sock = io(API_BASE);
+    const sock = io(API_BASE, {
+      transports: ["websocket"],
+      withCredentials: true,
+    });
     setSocket(sock);
     sock.emit("register", customer._id);
 

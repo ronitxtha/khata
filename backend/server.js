@@ -61,7 +61,18 @@ const allowedOrigins = [
 
 const io = new Server(server, {
     cors: {
-        origin: allowedOrigins,
+        origin: function (origin, callback) {
+            if (!origin) return callback(null, true);
+            if (
+                origin.includes("vercel.app") ||
+                origin === process.env.FRONTEND_URL ||
+                origin === "http://localhost:5173" ||
+                origin === "http://localhost:3000"
+            ) {
+                return callback(null, true);
+            }
+            return callback(new Error("CORS blocked for origin: " + origin));
+        },
         credentials: true
     }
 });
