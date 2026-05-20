@@ -71,7 +71,12 @@ const OwnerDashboard = () => {
       setSalesData(salesRes.data.data || []);
       setYearlyOrders(ordersRes.data.orders || []);
       if (statsRes.data.success) setStats(statsRes.data.data);
-    } catch (err) { console.error(err); }
+    } catch (err) {
+      console.error(err);
+      if (err.response?.status === 403) {
+        setShowDisabledPopup(true);
+      }
+    }
   };
 
 
@@ -96,6 +101,25 @@ const OwnerDashboard = () => {
       return;
     }
 
+    const checkAccountStatus = async () => {
+      try {
+        const token = localStorage.getItem("accessToken");
+        if (!token) return;
+        const res = await axios.get(`${API_BASE}/api/customer/status`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (res.data.success && !res.data.user.isActive) {
+          currentUser.isActive = false;
+          localStorage.setItem("user", JSON.stringify(currentUser));
+          setShowDisabledPopup(true);
+          return;
+        }
+      } catch (err) {
+        console.error("Status check error:", err);
+      }
+      init();
+    };
+
     const init = async () => {
       try {
         const token = localStorage.getItem("accessToken");
@@ -104,9 +128,15 @@ const OwnerDashboard = () => {
         });
         setOwner(res.data.owner);
         fetchDashboardMetrics(token, salesTimeframe);
-      } catch (err) { console.error(err); }
+      } catch (err) {
+        console.error(err);
+        if (err.response?.status === 403) {
+          setShowDisabledPopup(true);
+        }
+      }
     };
-    init();
+
+    checkAccountStatus();
 
     socket.on("lowStockAlert", (data) => {
       showToast(data.message, "error");

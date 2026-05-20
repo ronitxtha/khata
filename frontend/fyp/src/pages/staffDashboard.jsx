@@ -64,6 +64,25 @@ const StaffDashboard = () => {
       return;
     }
 
+    const checkAccountStatus = async () => {
+      try {
+        const token = localStorage.getItem("accessToken");
+        if (!token) return;
+        const res = await axios.get(`${API_BASE}/api/customer/status`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (res.data.success && !res.data.user.isActive) {
+          currentUser.isActive = false;
+          localStorage.setItem("user", JSON.stringify(currentUser));
+          setShowDisabledPopup(true);
+          return;
+        }
+      } catch (err) {
+        console.error("Status check error:", err);
+      }
+      fetchData();
+    };
+
     const fetchData = async () => {
       try {
         const token = localStorage.getItem("accessToken");
@@ -93,11 +112,15 @@ const StaffDashboard = () => {
         }
       } catch (err) {
         console.error(err);
-        showToast("Failed to load dashboard data", "error");
+        if (err.response?.status === 403) {
+          setShowDisabledPopup(true);
+        } else {
+          showToast("Failed to load dashboard data", "error");
+        }
       }
     };
 
-    fetchData();
+    checkAccountStatus();
   }, []);
 
   useEffect(() => {
