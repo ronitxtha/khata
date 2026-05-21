@@ -5,6 +5,7 @@ import { imgUrl } from "../utils/imageUrl";
 import CustomerSidebar from "../components/CustomerSidebar";
 import RecommendedProducts from "../components/RecommendedProducts";
 import DisabledAccountPopup from "../components/DisabledAccountPopup";
+import socket from "../socket.js";
 import "../styles/ownerDashboard.css";
 import Rating from "../components/Rating";
 import { API_BASE } from "../config/api.js";
@@ -83,6 +84,28 @@ const CustomerDashboard = () => {
     };
 
     checkAccountStatus();
+  }, []);
+
+  // Socket listener for real-time account status changes
+  useEffect(() => {
+    const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
+    
+    // Register this user's socket
+    if (currentUser?._id) {
+      socket.emit("register", currentUser._id);
+    }
+
+    // Listen for status changes
+    socket.on("user-status-changed", (data) => {
+      if (currentUser._id === data.userId && !data.isActive) {
+        localStorage.setItem("user", JSON.stringify({ ...currentUser, isActive: false }));
+        setShowDisabledPopup(true);
+      }
+    });
+
+    return () => {
+      socket.off("user-status-changed");
+    };
   }, []);
 
   const handleDisabledAccountClose = () => {

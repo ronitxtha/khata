@@ -143,16 +143,22 @@ export const loginUser = async (req, res) => {
             })
         }
 
-        // Account check will be handled on frontend for the requested popup experience
+        // Check if user account is disabled
+        if (!user.isActive) {
+            return res.status(403).json({
+                success: false,
+                message: "Your account has been disabled by the administrator. Please contact support.",
+                isDisabled: true
+            });
+        }
 
-
-       // Only enforce verification for non-staff users
-if (user.role !== "staff" && !user.isVerified) {
-    return res.status(403).json({
-        success: false,
-        message: "Please verify your email to login"
-    });
-}
+        // Only enforce verification for non-staff users
+        if (user.role !== "staff" && !user.isVerified) {
+            return res.status(403).json({
+                success: false,
+                message: "Please verify your email to login"
+            });
+        }
 
         const existingSession = await Session.findOne({ userId: user._id });
         if (existingSession) {

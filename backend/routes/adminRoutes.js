@@ -104,8 +104,31 @@ router.patch("/users/:id/toggle-active", isAuthenticated, isAdmin, async (req, r
   try {
     const user = await User.findById(req.params.id);
     if (!user) return res.status(404).json({ success: false, message: "User not found" });
+    
+    const isBeingDisabled = user.isActive === true; // if currently active, we're disabling
     user.isActive = !user.isActive;
     await user.save();
+    
+    // Emit socket event to notify the user and all admins
+    const io = req.app.get("io");
+    if (io) {
+      // Notify the user being disabled/enabled
+      io.emit("user-status-changed", {
+        userId: user._id,
+        isActive: user.isActive,
+        username: user.username,
+        message: user.isActive ? "enabled" : "disabled"
+      });
+      
+      // Broadcast to update admin dashboard user list
+      io.emit("admin-user-list-update", {
+        userId: user._id,
+        isActive: user.isActive,
+        username: user.username,
+        action: isBeingDisabled ? "disabled" : "enabled"
+      });
+    }
+    
     res.json({ success: true, message: `User ${user.isActive ? "activated" : "deactivated"}`, isActive: user.isActive });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });

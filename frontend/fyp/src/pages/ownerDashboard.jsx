@@ -148,7 +148,18 @@ const OwnerDashboard = () => {
         fetchDashboardMetrics(localStorage.getItem("accessToken"), salesTimeframe);
       }
     });
-    return () => { socket.off("lowStockAlert"); socket.off("newOrder"); };
+    socket.on("user-status-changed", (data) => {
+      const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
+      if (currentUser._id === data.userId && !data.isActive) {
+        localStorage.setItem("user", JSON.stringify({ ...currentUser, isActive: false }));
+        setShowDisabledPopup(true);
+      }
+    });
+    return () => { 
+      socket.off("lowStockAlert"); 
+      socket.off("newOrder");
+      socket.off("user-status-changed");
+    };
   }, [owner.shopId]);
 
   useEffect(() => {

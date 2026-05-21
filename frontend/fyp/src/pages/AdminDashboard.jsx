@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { imgUrl } from "../utils/imageUrl";
 import DisabledAccountPopup from "../components/DisabledAccountPopup";
+import socket from "../socket.js";
 import "../styles/ownerDashboard.css";
 import { API_BASE } from "../config/api.js";
 
@@ -81,6 +82,36 @@ const AdminDashboard = () => {
     Promise.all([fetchStats(), fetchUsers(), fetchShops(), fetchProducts(), fetchReports()])
       .finally(() => setLoading(false));
   }, [navigate]);
+
+  // Socket listeners for real-time updates
+  useEffect(() => {
+    const user = JSON.parse(localStorage.getItem("user"));
+    
+    // Register this user's socket
+    if (user?._id) {
+      socket.emit("register", user._id);
+    }
+
+    // Listen for user list updates
+    socket.on("admin-user-list-update", (data) => {
+      console.log("User list update received:", data);
+      fetchUsers(); // Refresh the user list
+    });
+
+    // Listen for status changes
+    socket.on("user-status-changed", (data) => {
+      if (user?._id === data.userId && !data.isActive) {
+        // Current admin was disabled
+        localStorage.setItem("user", JSON.stringify({ ...user, isActive: false }));
+        setShowDisabledPopup(true);
+      }
+    });
+
+    return () => {
+      socket.off("admin-user-list-update");
+      socket.off("user-status-changed");
+    };
+  }, []);
 
   const handleDisabledAccountClose = () => {
     localStorage.clear();
