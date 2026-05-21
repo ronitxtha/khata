@@ -147,7 +147,7 @@ export const loginUser = async (req, res) => {
         if (!user.isActive) {
             return res.status(403).json({
                 success: false,
-                message: "Your account has been disabled by the administrator. Please contact support.",
+                message: "Your account has been disabled by the administrator. Please contact admin ronitxtha09@gmail.com.",
                 isDisabled: true
             });
         }
