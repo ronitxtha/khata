@@ -326,7 +326,7 @@ export const getOwnerStatistics = async (req, res) => {
     const endOfToday = new Date();
     endOfToday.setHours(23, 59, 59, 999);
 
-    const onlineStaffCount = await import("../models/Attendance.js").then(m => m.default.countDocuments({
+    const onlineStaffCount = await import("../models/attendance.js").then(m => m.default.countDocuments({
       shopId,
       checkInTime: { $gte: today, $lte: endOfToday },
       checkOutTime: { $exists: false }
