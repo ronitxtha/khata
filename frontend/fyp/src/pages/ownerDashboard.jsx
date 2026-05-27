@@ -332,14 +332,6 @@ const OwnerDashboard = () => {
                   <div className="od-breakdown-item__num">{stats.totalOrders || 0}</div>
                   <div className="od-breakdown-item__label">Total Orders</div>
                 </div>
-                <div className="od-breakdown-item od-breakdown-item--green">
-                  <div className="od-breakdown-item__num">{stats.pendingOrdersCount || 0}</div>
-                  <div className="od-breakdown-item__label">Pending</div>
-                </div>
-                <div className="od-breakdown-item od-breakdown-item--orange">
-                  <div className="od-breakdown-item__num">{stats.totalProducts || 0}</div>
-                  <div className="od-breakdown-item__label">Products</div>
-                </div>
               </div>
             </div>
 
