@@ -1,5 +1,6 @@
 import bcrypt from "bcryptjs";
 import { User } from "../models/userModel.js";
+import { uploadToCloudinary } from "../utils/cloudinary.js";
 
 // ─────────────────────────────────────────────
 // GET /api/customer/me
@@ -153,7 +154,7 @@ export const uploadProfileImage = async (req, res) => {
         .json({ success: false, message: "No image file uploaded" });
     }
 
-    const imagePath = req.file.path.replace(/\\/g, "/");
+    const imagePath = await uploadToCloudinary(req.file.path, "customer_profiles");
 
     const updated = await User.findByIdAndUpdate(
       req.userId,

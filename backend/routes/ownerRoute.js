@@ -17,6 +17,7 @@ import QRCode from "qrcode";
 import path from "path";
 import Attendance from "../models/attendance.js";
 import fs from "fs";
+import { uploadToCloudinary } from "../utils/cloudinary.js";
 console.log("✅ Owner routes loaded");
 
 const router = express.Router();
@@ -237,7 +238,7 @@ router.post("/add-staff", isAuthenticated, async (req, res) => {
 router.post("/add-product", isAuthenticated, upload.single("image"), async (req, res) => {
   try {
     const { name, price, costPrice, description, category, quantity } = req.body; // include category
-    const imagePath = req.file ? req.file.path.replace(/\\/g, "/") : null;
+    const imagePath = req.file ? await uploadToCloudinary(req.file.path, "products") : null;
 
     // Optional: Validate category against allowed list
     const MAIN_CATEGORIES = [
@@ -322,7 +323,7 @@ router.put(
 
       // ✅ Update image only if new one uploaded
       if (req.file) {
-        product.image = req.file.path.replace(/\\/g, "/");
+        product.image = await uploadToCloudinary(req.file.path, "products");
       }
 
       await product.save();

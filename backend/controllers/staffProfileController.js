@@ -2,6 +2,7 @@ import bcrypt from "bcryptjs";
 import { User } from "../models/userModel.js";
 import { Shop } from "../models/shopModel.js";
 import Attendance from "../models/attendance.js";
+import { uploadToCloudinary } from "../utils/cloudinary.js";
 
 // ─────────────────────────────────────────────
 // GET /api/staff/profile
@@ -201,8 +202,7 @@ export const uploadProfileImage = async (req, res) => {
       return res.status(400).json({ success: false, message: "No image file uploaded" });
     }
 
-    // Store path relative to server root (e.g. "uploads/staff/staff-xxx-timestamp.jpg")
-    const imagePath = req.file.path.replace(/\\/g, "/");
+    const imagePath = await uploadToCloudinary(req.file.path, "staff_profiles");
 
     const updated = await User.findByIdAndUpdate(
       req.userId,

@@ -3,6 +3,7 @@ import { Purchase } from "../models/purchaseModel.js";
 import { Payment } from "../models/paymentModel.js";
 import { Product } from "../models/productModel.js";
 import QRCode from "qrcode";
+import { uploadToCloudinary } from "../utils/cloudinary.js";
 
 /* ─────────────────────────────
    SUPPLIER CRUD
@@ -141,7 +142,7 @@ export const recordPurchase = async (req, res) => {
     }
 
     const totalCost = Number(quantity) * Number(costPrice);
-    const imagePath = req.file ? req.file.path.replace(/\\/g, "/") : null;
+    const imagePath = req.file ? await uploadToCloudinary(req.file.path, "products") : null;
 
     let targetProduct;
 

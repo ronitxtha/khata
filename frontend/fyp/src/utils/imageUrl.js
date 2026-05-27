@@ -9,6 +9,9 @@ import { API_BASE } from "../config/api.js";
  */
 export function imgUrl(path) {
   if (!path) return null;
+  if (path.startsWith("http://") || path.startsWith("https://")) {
+    return path;
+  }
   // Replace every backslash with a forward slash
   const normalised = path.replace(/\\/g, "/");
   return `${API_BASE}/${normalised}`;

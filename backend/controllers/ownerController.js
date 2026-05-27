@@ -6,6 +6,7 @@ import bcrypt from "bcryptjs";
 import fs from "fs";
 import path from "path";
 import mongoose from "mongoose";
+import { uploadToCloudinary } from "../utils/cloudinary.js";
 
 
 // ======================== PROFILE ENDPOINTS ========================
@@ -189,21 +190,14 @@ export const uploadProfileImage = async (req, res) => {
       });
     }
 
-    // Delete old profile image if exists
-    if (owner.profileImage && fs.existsSync(owner.profileImage)) {
+    // Delete old local profile image if it exists and is local
+    if (owner.profileImage && !owner.profileImage.startsWith("http") && fs.existsSync(owner.profileImage)) {
       fs.unlinkSync(owner.profileImage);
     }
 
-    // Create directory if it doesn't exist
-    const uploadDir = "uploads/profile";
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
-    }
+    const imageUrl = await uploadToCloudinary(req.file.path, "owner_profiles");
 
-    const filePath = path.join(uploadDir, req.file.filename).replace(/\\/g, "/");
-    fs.renameSync(req.file.path, filePath);
-
-    owner.profileImage = filePath;
+    owner.profileImage = imageUrl;
     await owner.save();
 
     res.status(200).json({
@@ -243,22 +237,20 @@ export const uploadShopLogo = async (req, res) => {
       });
     }
 
-    // Delete old shop logo if exists
-    if (owner.shopLogo && fs.existsSync(owner.shopLogo)) {
+    // Delete old local shop logo if it exists and is local
+    if (owner.shopLogo && !owner.shopLogo.startsWith("http") && fs.existsSync(owner.shopLogo)) {
       fs.unlinkSync(owner.shopLogo);
     }
 
-    // Create directory if it doesn't exist
-    const uploadDir = "uploads/shop";
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
-    }
+    const logoUrl = await uploadToCloudinary(req.file.path, "shop_logos");
 
-    const filePath = path.join(uploadDir, req.file.filename).replace(/\\/g, "/");
-    fs.renameSync(req.file.path, filePath);
-
-    owner.shopLogo = filePath;
+    owner.shopLogo = logoUrl;
     await owner.save();
+
+    // Keep Shop document in sync with the owner's shopLogo
+    if (owner.shopId) {
+      await Shop.findByIdAndUpdate(owner.shopId, { logoUrl: logoUrl });
+    }
 
     res.status(200).json({
       success: true,
