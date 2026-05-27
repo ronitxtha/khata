@@ -39,6 +39,11 @@ const OrderManagement = () => {
   const [toast, setToast]               = useState(null);
   const [expandedOrder, setExpandedOrder] = useState(null);
 
+  // Export Modal State
+  const [showExportModal, setShowExportModal] = useState(false);
+  const [exportStartDate, setExportStartDate] = useState("");
+  const [exportEndDate, setExportEndDate]     = useState("");
+
   const user   = JSON.parse(localStorage.getItem("user") || "{}");
   const role   = user?.role || "staff";
   const shopId = user?.shopId;
@@ -94,6 +99,64 @@ const OrderManagement = () => {
     navigate("/login");
   };
 
+  const handleExport = () => {
+    if (!exportStartDate || !exportEndDate) {
+      showToast("Please select both start and end dates.", "error");
+      return;
+    }
+
+    const start = new Date(exportStartDate);
+    start.setHours(0, 0, 0, 0);
+    const end = new Date(exportEndDate);
+    end.setHours(23, 59, 59, 999);
+
+    const filteredForExport = orders.filter(o => {
+      const orderDate = new Date(o.createdAt);
+      return orderDate >= start && orderDate <= end;
+    });
+
+    if (filteredForExport.length === 0) {
+      showToast("No orders found in the selected date range.", "error");
+      return;
+    }
+
+    let csvContent = "Order ID,Date,Customer Name,Product Name,Quantity,Cost Price,Selling Price,Profit/Loss\n";
+    let totalProfit = 0;
+
+    filteredForExport.forEach(order => {
+      const orderDate = new Date(order.createdAt).toLocaleDateString("en-US");
+      const customerName = order.user?.username || "Guest";
+      
+      order.items.forEach(item => {
+        const cp = item.costPrice || 0;
+        const sp = item.price || 0;
+        const qty = item.quantity || 1;
+        const profit = (sp - cp) * qty;
+        totalProfit += profit;
+
+        // Escape fields to avoid CSV breakages
+        const safeProductName = `"${(item.name || "").replace(/"/g, '""')}"`;
+        const safeCustomerName = `"${customerName.replace(/"/g, '""')}"`;
+
+        csvContent += `${order._id},${orderDate},${safeCustomerName},${safeProductName},${qty},${cp},${sp},${profit}\n`;
+      });
+    });
+
+    csvContent += `\n,,,,,,,Total Profit/Loss: ${totalProfit}\n`;
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `Order_Export_${exportStartDate}_to_${exportEndDate}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    setShowExportModal(false);
+    showToast("Export successful!");
+  };
+
   const filteredOrders = filter === "All"
     ? orders
     : orders.filter(o => o.status?.toLowerCase() === filter.toLowerCase());
@@ -144,7 +207,7 @@ const OrderManagement = () => {
               <p className="om-page-head__sub">Manage and update all shop orders</p>
             </div>
             <div className="om-page-head__actions">
-              <button className="om-btn-ghost">
+              <button className="om-btn-ghost" onClick={() => setShowExportModal(true)}>
                 <Icon d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" size={15} />
                 Export
               </button>
@@ -328,6 +391,55 @@ const OrderManagement = () => {
       {/* Toast */}
       {toast && (
         <div className={`od-toast od-toast--${toast.type}`}>{toast.message}</div>
+      )}
+
+      {/* Export Modal */}
+      {showExportModal && (
+        <div className="si-modal-overlay" onClick={() => setShowExportModal(false)} style={{ zIndex: 9999 }}>
+          <div className="si-modal" style={{ maxWidth: '400px' }} onClick={(e) => e.stopPropagation()}>
+            <div className="si-modal__header">
+              <h2 style={{ fontSize: '18px' }}>Export Orders</h2>
+              <button className="si-modal__close" onClick={() => setShowExportModal(false)}>✕</button>
+            </div>
+            <div style={{ padding: '20px' }}>
+              <p style={{ marginBottom: '15px', color: '#64748b', fontSize: '14px' }}>
+                Select a date range to download an Excel (CSV) file containing order history and profit/loss calculations.
+              </p>
+              <div style={{ marginBottom: '15px' }}>
+                <label style={{ display: 'block', marginBottom: '5px', fontWeight: '600', fontSize: '13px' }}>From Date</label>
+                <input 
+                  type="date" 
+                  value={exportStartDate}
+                  onChange={(e) => setExportStartDate(e.target.value)}
+                  style={{ width: '100%', padding: '8px', border: '1px solid #cbd5e1', borderRadius: '6px' }} 
+                />
+              </div>
+              <div style={{ marginBottom: '20px' }}>
+                <label style={{ display: 'block', marginBottom: '5px', fontWeight: '600', fontSize: '13px' }}>To Date</label>
+                <input 
+                  type="date" 
+                  value={exportEndDate}
+                  onChange={(e) => setExportEndDate(e.target.value)}
+                  style={{ width: '100%', padding: '8px', border: '1px solid #cbd5e1', borderRadius: '6px' }} 
+                />
+              </div>
+              <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+                <button 
+                  onClick={() => setShowExportModal(false)}
+                  style={{ padding: '8px 16px', background: '#f1f5f9', color: '#475569', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: '600' }}
+                >
+                  Cancel
+                </button>
+                <button 
+                  onClick={handleExport}
+                  style={{ padding: '8px 16px', background: '#6366f1', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: '600' }}
+                >
+                  Download Excel (CSV)
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
