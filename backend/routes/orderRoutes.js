@@ -267,10 +267,8 @@ router.post("/initiate-esewa", async (req, res) => {
     const firstProduct = await Product.findById(items[0].productId);
     const shopId = firstProduct.shopId;
 
-    // Generate a unique transaction UUID: YYYYMMDD-HHMMSS-XXXXX
-    const now = new Date();
-    const pad = (n) => String(n).padStart(2, "0");
-    const transactionUuid = `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}-${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}-${Math.random().toString(36).substr(2, 5).toUpperCase()}`;
+    // Generate a guaranteed-unique transaction UUID using crypto
+    const transactionUuid = crypto.randomUUID();
 
     // Create order with eSewa payment method, paymentStatus Pending
     const order = await Order.create({
@@ -294,7 +292,7 @@ router.post("/initiate-esewa", async (req, res) => {
       .update(message)
       .digest("base64");
 
-    const FRONTEND_BASE = "http://localhost:5173";
+    const FRONTEND_BASE = process.env.FRONTEND_URL || process.env.FRONTEND_BASE || "http://localhost:5173";
 
     res.status(201).json({
       orderId: order._id,
