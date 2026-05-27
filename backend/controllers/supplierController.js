@@ -178,7 +178,10 @@ export const recordPurchase = async (req, res) => {
       const qrFileName = `qr-${targetProduct._id}.png`;
       const qrPath = `uploads/${qrFileName}`;
       await QRCode.toFile(qrPath, targetProduct._id.toString());
-      targetProduct.qrCode = qrPath;
+
+      // Upload QR code to Cloudinary and save the URL
+      const qrCloudinaryUrl = await uploadToCloudinary(qrPath, "qrcodes");
+      targetProduct.qrCode = qrCloudinaryUrl;
       await targetProduct.save();
     }
 

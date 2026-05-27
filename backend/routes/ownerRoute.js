@@ -271,7 +271,9 @@ router.post("/add-product", isAuthenticated, upload.single("image"), async (req,
     const qrPath = `uploads/${qrFileName}`;
     await QRCode.toFile(qrPath, product._id.toString());
 
-    product.qrCode = qrPath;
+    // Upload QR code to Cloudinary and save the URL
+    const qrCloudinaryUrl = await uploadToCloudinary(qrPath, "qrcodes");
+    product.qrCode = qrCloudinaryUrl;
     await product.save();
 
     res.json({ message: "Product added successfully", product });
@@ -375,12 +377,17 @@ router.get("/download-qr/:productId", isAuthenticated, async (req, res) => {
     if (!product || !product.qrCode)
       return res.status(404).json({ message: "QR code not found" });
 
+    if (product.qrCode.startsWith("http://") || product.qrCode.startsWith("https://")) {
+      // For Cloudinary URLs, redirect directly to the image URL so the browser can display/download it
+      return res.redirect(product.qrCode);
+    }
+
     const filePath = path.join(process.cwd(), product.qrCode);
 
     if (!fs.existsSync(filePath))
       return res.status(404).json({ message: "QR file does not exist" });
 
-    // Force download
+    // Force download for local files
     res.download(filePath, `product-${productId}-qr.png`);
   } catch (err) {
     console.error(err);
