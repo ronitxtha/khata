@@ -739,6 +739,99 @@ const ProductManagement = () => {
         </div>
       )}
 
+      {/* ========== SCANNED PRODUCT CARD ========== */}
+      {scannedProduct && !closedScannedProduct && (
+        <div className="sd-scanned-card">
+          <div className="sd-scanned-card__header">
+            <h3>
+              {scannedProduct.name}
+              {scannedProduct.deleted && (
+                <span className="sd-scanned-card__deleted-badge" style={{ marginLeft: "10px", background: "#ef4444", color: "white", padding: "2px 8px", borderRadius: "4px", fontSize: "12px" }}>Deleted</span>
+              )}
+            </h3>
+            <button
+              onClick={() => {
+                setScannedProduct(null);
+                setClosedScannedProduct(false);
+              }}
+              style={{ background: "none", border: "none", fontSize: "18px", cursor: "pointer" }}
+            >
+              ✕
+            </button>
+          </div>
+          {scannedProduct.imageFile && (
+            <img
+              src={imgUrl(scannedProduct.imageFile)}
+              alt={scannedProduct.name}
+              className="sd-scanned-card__img"
+              style={{ width: "100%", maxHeight: "200px", objectFit: "cover", borderRadius: "8px", marginTop: "10px" }}
+            />
+          )}
+          <div className="sd-scanned-card__details" style={{ marginTop: "15px" }}>
+            <div style={{ display: "flex", gap: "10px", alignItems: "center", marginBottom: "8px" }}>
+              <span style={{ width: "90px", fontWeight: "600" }}>Cost Price:</span>
+              <input 
+                type="number" 
+                value={editScannedCostPrice} 
+                onChange={(e) => setEditScannedCostPrice(e.target.value)}
+                style={{ width: "100px", padding: "6px", border: "1px solid #ccc", borderRadius: "5px" }}
+              />
+            </div>
+            <div style={{ display: "flex", gap: "10px", alignItems: "center", marginBottom: "8px" }}>
+              <span style={{ width: "90px", fontWeight: "600" }}>Selling Price:</span>
+              <input 
+                type="number" 
+                value={editScannedPrice} 
+                onChange={(e) => setEditScannedPrice(e.target.value)}
+                style={{ width: "100px", padding: "6px", border: "1px solid #ccc", borderRadius: "5px" }}
+              />
+            </div>
+            <div style={{ display: "flex", gap: "10px", alignItems: "center", marginBottom: "8px" }}>
+              <span style={{ width: "90px", fontWeight: "600" }}>Stock:</span>
+              <input 
+                type="number" 
+                value={editScannedQuantity} 
+                onChange={(e) => setEditScannedQuantity(e.target.value)}
+                style={{ width: "100px", padding: "6px", border: "1px solid #ccc", borderRadius: "5px" }}
+              />
+            </div>
+            <p>
+              <span style={{ fontWeight: "600" }}>Description:</span> {scannedProduct.description}
+            </p>
+            <div style={{ marginTop: "12px" }}>
+              <button 
+                className="si-btn-submit" 
+                onClick={handleUpdateScannedProduct}
+                disabled={isUpdatingScanned || scannedProduct.deleted}
+                style={{ padding: "8px 16px", background: (isUpdatingScanned || scannedProduct.deleted) ? "#9ca3af" : "#2563eb", color: "white", border: "none", borderRadius: "4px", cursor: (isUpdatingScanned || scannedProduct.deleted) ? "not-allowed" : "pointer" }}
+              >
+                {isUpdatingScanned ? "Saving..." : "💾 Update Product"}
+              </button>
+            </div>
+          </div>
+          {scannedProduct.deleted && (
+            <div className="sd-scanned-card__readd" style={{ marginTop: "15px", paddingTop: "15px", borderTop: "1px solid #e2e8f0" }}>
+              <label style={{ fontWeight: "600", marginRight: "10px" }}>Add Quantity:</label>
+              <input
+                type="number"
+                min="1"
+                value={reAddQuantity}
+                onChange={(e) => setReAddQuantity(Number(e.target.value))}
+                disabled={isAddingStock}
+                style={{ width: "80px", padding: "6px", border: "1px solid #ccc", borderRadius: "5px", marginRight: "10px" }}
+              />
+              <button
+                onClick={() => handleAddProductAgain(scannedProduct)}
+                disabled={isAddingStock}
+                style={{ padding: "8px 16px", background: isAddingStock ? "#9ca3af" : "#10b981", color: "white", border: "none", borderRadius: "4px", cursor: isAddingStock ? "not-allowed" : "pointer" }}
+              >
+                {isAddingStock ? "Adding..." : "➕ Add Stock"}
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
       {toast.visible && <div className={`od-toast od-toast--${toast.type}`}>{toast.message}</div>}
     </div>
   );
