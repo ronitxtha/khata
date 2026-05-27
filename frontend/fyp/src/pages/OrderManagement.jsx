@@ -120,7 +120,7 @@ const OrderManagement = () => {
       return;
     }
 
-    let csvContent = "Order ID,Date,Customer Name,Product Name,Quantity,Cost Price,Selling Price,Profit/Loss\n";
+    let csvContent = "Order ID,Date,Customer Name,Product Name,Quantity,Cost Price,Selling Price,Profit,Loss\n";
     let totalProfit = 0;
 
     filteredForExport.forEach(order => {
@@ -138,7 +138,9 @@ const OrderManagement = () => {
         const safeProductName = `"${(item.name || "").replace(/"/g, '""')}"`;
         const safeCustomerName = `"${customerName.replace(/"/g, '""')}"`;
 
-        csvContent += `${order._id},${orderDate},${safeCustomerName},${safeProductName},${qty},${cp},${sp},${profit}\n`;
+        const profitCol = profit >= 0 ? profit : "";
+        const lossCol = profit < 0 ? Math.abs(profit) : "";
+        csvContent += `${order._id},${orderDate},${safeCustomerName},${safeProductName},${qty},${cp},${sp},${profitCol},${lossCol}\n`;
       });
     });
 
