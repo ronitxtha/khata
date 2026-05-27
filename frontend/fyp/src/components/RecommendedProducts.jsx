@@ -117,7 +117,7 @@ const RecommendedProducts = () => {
               <div 
                 key={p._id} 
                 className="od-panel" 
-                style={{ minWidth: "280px", flex: "0 0 auto", display: 'flex', flexDirection: 'column', cursor: 'pointer', transition: 'transform 0.2s, box-shadow 0.2s' }}
+                style={{ width: "260px", flex: "0 0 auto", display: 'flex', flexDirection: 'column', cursor: 'pointer', transition: 'transform 0.2s, box-shadow 0.2s' }}
                 onClick={() => handleProductClick(p._id)}
               >
                 <div style={{ height: '220px', background: '#f8fafc', padding: '16px', borderBottom: '1px solid #f1f5f9' }}>
