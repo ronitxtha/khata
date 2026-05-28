@@ -53,6 +53,7 @@ const Checkout = () => {
     }
 
     setIsProcessing(true);
+    let shouldResetProcessing = true;
 
     try {
       const payload = {
@@ -66,7 +67,8 @@ const Checkout = () => {
               }
             ],
         deliveryAddress: address,
-        paymentMethod: payment
+        paymentMethod: payment,
+        frontendUrl: window.location.origin // Inject dynamic origin to prevent hardcoded localhost redirection in production
       };
 
       if (payment === "COD") {
@@ -78,23 +80,34 @@ const Checkout = () => {
         const res = await axios.post(`${API_BASE}/api/orders/initiate-esewa`, payload);
         const esewaParams = res.data;
 
-        // Create a hidden form and submit it to eSewa UAT endpoint
+        // Use direct property assignments on dynamically created HTML form for robustness
         const form = document.createElement("form");
-        form.setAttribute("method", "POST");
-        form.setAttribute("action", "https://rc-epay.esewa.com.np/api/epay/main/v2/form");
+        form.method = "POST";
+        form.action = "https://rc-epay.esewa.com.np/api/epay/main/v2/form";
 
         for (const key in esewaParams) {
           if (key !== "orderId") {
             const hiddenField = document.createElement("input");
-            hiddenField.setAttribute("type", "hidden");
-            hiddenField.setAttribute("name", key);
-            hiddenField.setAttribute("value", esewaParams[key]);
+            hiddenField.type = "hidden";
+            hiddenField.name = key;
+            hiddenField.value = esewaParams[key];
             form.appendChild(hiddenField);
           }
         }
 
         document.body.appendChild(form);
         form.submit();
+
+        // Remove the dynamic form after submission to keep DOM clean
+        setTimeout(() => {
+          if (document.body.contains(form)) {
+            document.body.removeChild(form);
+          }
+        }, 1000);
+
+        // Crucial: do not reset isProcessing to false to prevent React component re-rendering
+        // from interrupting or canceling the browser's pending POST navigation redirect.
+        shouldResetProcessing = false;
       }
 
     } catch (err) {
@@ -102,7 +115,9 @@ const Checkout = () => {
       const message = err.response?.data?.message || "Order failed. Please try again.";
       alert(message);
     } finally {
-      setIsProcessing(false);
+      if (shouldResetProcessing) {
+        setIsProcessing(false);
+      }
     }
   };
 

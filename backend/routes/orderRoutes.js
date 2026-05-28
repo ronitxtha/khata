@@ -238,7 +238,7 @@ router.put("/:id/status", async (req, res) => {
  */
 router.post("/initiate-esewa", async (req, res) => {
   try {
-    const { userId, items, deliveryAddress } = req.body;
+    const { userId, items, deliveryAddress, frontendUrl } = req.body;
 
     if (!userId || !items || items.length === 0) {
       return res.status(400).json({ message: "Missing order data" });
@@ -283,22 +283,26 @@ router.post("/initiate-esewa", async (req, res) => {
       status: "Pending"
     });
 
-    // Generate HMAC-SHA256 signature
+    // Generate HMAC-SHA256 signature using the exact string representation of totalAmount
     const secretKey = process.env.ESEWA_SECRET_KEY;
     const productCode = process.env.ESEWA_PRODUCT_CODE;
-    const message = `total_amount=${totalAmount},transaction_uuid=${transactionUuid},product_code=${productCode}`;
+    const totalAmountStr = totalAmount.toString();
+    const message = `total_amount=${totalAmountStr},transaction_uuid=${transactionUuid},product_code=${productCode}`;
     const signature = crypto
       .createHmac("sha256", secretKey)
       .update(message)
       .digest("base64");
 
-    const FRONTEND_BASE = process.env.FRONTEND_URL || process.env.FRONTEND_BASE || "http://localhost:5173";
+    // Dynamic redirection base: prioritizes request origin -> env configuration -> localhost fallback
+    const FRONTEND_BASE = frontendUrl || process.env.FRONTEND_URL || process.env.FRONTEND_BASE || "http://localhost:5173";
+
+    console.log(`[eSewa Initiate] Order: ${order._id}, UUID: ${transactionUuid}, Amount: ${totalAmountStr}, Redirect: ${FRONTEND_BASE}`);
 
     res.status(201).json({
       orderId: order._id,
-      amount: totalAmount,
+      amount: totalAmountStr,
       tax_amount: 0,
-      total_amount: totalAmount,
+      total_amount: totalAmountStr,
       transaction_uuid: transactionUuid,
       product_code: productCode,
       product_service_charge: 0,
@@ -330,6 +334,7 @@ router.post("/esewa-success", async (req, res) => {
     const { transaction_uuid, signed_field_names, signature, status } = decoded;
 
     if (status !== "COMPLETE") {
+      console.warn(`[eSewa Callback] Payment status not COMPLETE: ${status}`);
       return res.status(400).json({ message: "Payment not completed" });
     }
 
@@ -343,12 +348,25 @@ router.post("/esewa-success", async (req, res) => {
       .digest("base64");
 
     if (expectedSig !== signature) {
+      console.error(`[eSewa Callback] Signature Mismatch! Expected: ${expectedSig}, Got: ${signature}`);
       return res.status(400).json({ message: "Signature verification failed. Possible fraud!" });
     }
 
     // Find and update the order
     const order = await Order.findOne({ transactionUuid: transaction_uuid });
-    if (!order) return res.status(404).json({ message: "Order not found for this transaction" });
+    if (!order) {
+      console.error(`[eSewa Callback] Order not found for UUID: ${transaction_uuid}`);
+      return res.status(404).json({ message: "Order not found for this transaction" });
+    }
+
+    // Secure paid amount validation (Anti-Underpayment / Fraud Check)
+    const paidAmount = Number(decoded.total_amount);
+    if (paidAmount !== order.totalAmount) {
+      console.error(`[eSewa Callback] FRAUD DETECTED: Paid: ${paidAmount}, Expected: ${order.totalAmount} (Order: ${order._id})`);
+      return res.status(400).json({ message: "Payment amount mismatch. Possible fraud!" });
+    }
+
+    console.log(`[eSewa Callback] Payment Verified: Order: ${order._id}, UUID: ${transaction_uuid}`);
 
     order.paymentStatus = "Paid";
     order.status = "Processing";
