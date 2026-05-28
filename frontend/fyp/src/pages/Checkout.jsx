@@ -84,7 +84,7 @@ const Checkout = () => {
         form.setAttribute("action", "https://rc-epay.esewa.com.np/api/epay/main/v2/form");
 
         for (const key in esewaParams) {
-          if (key !== "orderId" && key !== "amount") {
+          if (key !== "orderId") {
             const hiddenField = document.createElement("input");
             hiddenField.setAttribute("type", "hidden");
             hiddenField.setAttribute("name", key);
