@@ -522,6 +522,13 @@ router.get("/sales-report", isAuthenticated, async (req, res) => {
     let startDate, endDate;
     let dataPoints = [];
 
+    const getLocalDateString = (date) => {
+      const y = date.getFullYear();
+      const m = String(date.getMonth() + 1).padStart(2, '0');
+      const d = String(date.getDate()).padStart(2, '0');
+      return `${y}-${m}-${d}`;
+    };
+
     if (timeframe === "today") {
       // Data Points: 24 hours of today
       startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -542,7 +549,8 @@ router.get("/sales-report", isAuthenticated, async (req, res) => {
         const d = new Date(startDate);
         d.setDate(d.getDate() + i);
         const label = d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }); // "01 Mar"
-        dataPoints.push({ name: label, timestamp: d.getTime(), sales: 0, items: 0, profit: 0 });
+        const dateKey = getLocalDateString(d);
+        dataPoints.push({ name: label, dateKey, sales: 0, items: 0, profit: 0 });
       }
     } else {
       // Default to "week"
@@ -554,7 +562,8 @@ router.get("/sales-report", isAuthenticated, async (req, res) => {
         const d = new Date(startDate);
         d.setDate(d.getDate() + i);
         const label = d.toLocaleDateString('en-GB', { weekday: 'short' }); // "Mon", "Tue"
-        dataPoints.push({ name: label, timestamp: d.getTime(), sales: 0, items: 0, profit: 0 });
+        const dateKey = getLocalDateString(d);
+        dataPoints.push({ name: label, dateKey, sales: 0, items: 0, profit: 0 });
       }
     }
 
@@ -568,16 +577,18 @@ router.get("/sales-report", isAuthenticated, async (req, res) => {
     // Aggregate data into the pre-filled dataPoints buckets
     recentOrders.forEach(order => {
       const orderDate = new Date(order.createdAt);
-      const totalAmount = order.totalAmount || 0;
+      const totalAmount = Number(order.totalAmount) || 0;
       let totalProfit = 0;
       let itemsCount = 0;
 
       if (order.items && order.items.length > 0) {
         order.items.forEach(item => {
-          itemsCount += (item.quantity || 1);
+          const qty = Number(item.quantity) || 1;
+          itemsCount += qty;
           // Profit = (SP - CP) * Qty. If CP is missing, assume 0 for legacy orders.
-          const cp = item.costPrice || 0;
-          totalProfit += ((item.price || 0) - cp) * (item.quantity || 1);
+          const cp = Number(item.costPrice) || 0;
+          const sp = Number(item.price) || 0;
+          totalProfit += (sp - cp) * qty;
         });
       }
 
@@ -590,8 +601,8 @@ router.get("/sales-report", isAuthenticated, async (req, res) => {
           point.profit += totalProfit;
         }
       } else {
-        const orderDay = new Date(orderDate.getFullYear(), orderDate.getMonth(), orderDate.getDate()).getTime();
-        const point = dataPoints.find(p => p.timestamp === orderDay);
+        const dateKey = getLocalDateString(orderDate);
+        const point = dataPoints.find(p => p.dateKey === dateKey);
         if (point) {
           point.sales += totalAmount;
           point.items += itemsCount;
@@ -601,7 +612,12 @@ router.get("/sales-report", isAuthenticated, async (req, res) => {
     });
 
     // Remove sorting metadata and include profit
-    const cleanData = dataPoints.map(({ name, sales, items, profit }) => ({ name, sales, items, profit }));
+    const cleanData = dataPoints.map(({ name, sales, items, profit }) => ({
+      name,
+      sales: Number(sales.toFixed(2)),
+      items,
+      profit: Number(profit.toFixed(2))
+    }));
 
     res.json({
       success: true,
