@@ -331,14 +331,12 @@ const ProductDetails = () => {
             </div>
 
             <main className="pd-product-section" style={{ padding: 0 }}>
-              {/* Column 1: Image Card */}
               <div className="pd-image-section">
                 <div className="pd-image-card">
                   <img src={imgUrl(product.image)} alt={product.name} />
                 </div>
               </div>
 
-              {/* Column 2: Product details and CTAs */}
               <div className="pd-details-section">
                 <div className="pd-details-card">
                   <h1 className="pd-product-name">{product.name}</h1>
@@ -346,8 +344,6 @@ const ProductDetails = () => {
                   <div className="pd-rating-summary">
                     <Rating value={product.rating || 0} />
                     <span style={{ color: "var(--pd-secondary)", fontSize: "0.9rem" }}>({product.numReviews || 0} reviews)</span>
-                    <span style={{ margin: '0 8px', color: '#e2e8f0' }}>|</span>
-                    <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--pd-accent)' }}>🏪 Store: {product.shopId?.name || "Verified Store"}</span>
                   </div>
 
                   <div className="pd-price-row">
@@ -366,41 +362,8 @@ const ProductDetails = () => {
                   </div>
                 </div>
 
-                <div className="pd-actions">
-                  <button
-                    onClick={() => setReportModal(true)}
-                    className="pd-action-btn-report"
-                    title="Report this product"
-                  >
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path><line x1="4" y1="22" x2="4" y2="15"></line></svg>
-                    Report
-                  </button>
-                  <button className="pd-add-to-cart-btn" onClick={() => { addToCart(product); alert("Added to cart!"); }}>
-                    🛒 Add to Cart
-                  </button>
-                  <button
-                    className="pd-buy-now-btn"
-                    disabled={!isDeliveryComplete}
-                    onClick={() =>
-                      navigate("/checkout", {
-                        state: {
-                          product,
-                          deliveryAddress: locationAdded
-                            ? { fullAddress: location }
-                            : { province, district, municipality, ward, exactLocation },
-                        },
-                      })
-                    }
-                  >
-                    Buy Now
-                  </button>
-                </div>
-              </div>
-
-              {/* Column 3: Delivery Options */}
-              <div className="pd-delivery-section">
-                <div className="pd-delivery-card">
-                  <h3 className="pd-delivery-title">📍 Delivery Options</h3>
+                <div className="pd-delivery-card" style={{ marginTop: '1.5rem' }}>
+                  <h3 className="pd-delivery-title">📍 Delivery Address</h3>
 
                   <button
                     className={`pd-geolocation-btn ${locationAdded ? "pd-geolocation-success" : ""}`}
@@ -413,17 +376,17 @@ const ProductDetails = () => {
                   {locationAdded && (
                     <div style={{ marginTop: "1rem", display: "flex", gap: "10px", alignItems: "center" }}>
                       <div className="pd-selected-address" style={{ flex: 1, margin: 0 }}>📌 {location}</div>
-                      <button onClick={() => { setLocation(""); setLocationAdded(false); }} className="pd-clear-location-btn">✕</button>
+                      <button onClick={() => { setLocation(""); setLocationAdded(false); }} style={{ padding: "10px", background: "#fee2e2", color: "#991b1b", border: "none", borderRadius: "12px", cursor: "pointer" }}>✕</button>
                     </div>
                   )}
 
-                  <div className="pd-or-divider">
-                    OR SELECT MANUALLY
+                  <div style={{ textAlign: "center", margin: "1.5rem 0", color: "#94a3b8", fontSize: "0.85rem" }}>
+                    — OR SELECT MANUALLY —
                   </div>
 
                   <div className="pd-location-dropdowns">
                     <select value={province} onChange={(e) => { setProvince(e.target.value); setDistrict(""); setMunicipality(""); setWard(""); setExactLocation(""); }} className="pd-select">
-                      <option value="">Province State</option>
+                      <option value="">Provience State</option>
                       {Object.keys(nepalLocations).map((prov) => <option key={prov} value={prov}>{prov}</option>)}
                     </select>
 
@@ -442,7 +405,7 @@ const ProductDetails = () => {
                       {province && district && municipality && nepalLocations[province][district][municipality].map((w, i) => <option key={i} value={w}>Ward {w}</option>)}
                     </select>
 
-                    <input type="text" className="pd-select" placeholder="Street / House Number" value={exactLocation} onChange={(e) => setExactLocation(e.target.value)} disabled={!ward} />
+                    <input type="text" className="pd-select" placeholder="Street name / House Number" value={exactLocation} onChange={(e) => setExactLocation(e.target.value)} disabled={!ward} />
 
                     {isDropdownComplete && (
                       <div className="pd-selected-address">
@@ -450,6 +413,36 @@ const ProductDetails = () => {
                       </div>
                     )}
                   </div>
+                </div>
+
+                <div className="pd-actions" style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
+                  <button
+                    onClick={() => setReportModal(true)}
+                    style={{ background: '#fee2e2', border: 'none', color: '#ef4444', fontSize: '13px', fontWeight: 700, padding: '12px 16px', borderRadius: '12px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', height: '50px' }}
+                    title="Report this product"
+                  >
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path><line x1="4" y1="22" x2="4" y2="15"></line></svg>
+                    Report
+                  </button>
+                  <button
+                    className="pd-buy-now"
+                    disabled={!isDeliveryComplete}
+                    onClick={() =>
+                      navigate("/checkout", {
+                        state: {
+                          product,
+                          deliveryAddress: locationAdded
+                            ? { fullAddress: location }
+                            : { province, district, municipality, ward, exactLocation },
+                        },
+                      })
+                    }
+                  >
+                    Buy Now
+                  </button>
+                  <button className="pd-add-cart" onClick={() => { addToCart(product); alert("Added to cart!"); }}>
+                    🛒 Add to Cart
+                  </button>
                 </div>
               </div>
             </main>
