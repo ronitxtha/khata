@@ -8,7 +8,7 @@ export const getRecommendations = async (req, res) => {
     const userId = req.userId;
     const user = req.user;
     const isDemoUser = user?.isDemoUser || false;
-    const limit = 12;
+    const limit = 20;
 
     let recommendations = [];
     let storeIds = new Set();
@@ -19,12 +19,12 @@ export const getRecommendations = async (req, res) => {
       
       const trendingProducts = await Product.find({ deleted: { $ne: true } })
         .sort({ views: -1, createdAt: -1 })
-        .limit(8)
+        .limit(15)
         .populate("shopId", "name logoUrl");
 
       const popularProducts = await Product.find({ deleted: { $ne: true } })
         .sort({ totalSold: -1 })
-        .limit(4)
+        .limit(10)
         .populate("shopId", "name logoUrl");
 
       const combined = [];
@@ -81,12 +81,12 @@ export const getRecommendations = async (req, res) => {
       
       const trendingProducts = await Product.find({ deleted: { $ne: true } })
         .sort({ views: -1, createdAt: -1 })
-        .limit(8)
+        .limit(15)
         .populate("shopId", "name logoUrl");
 
       const popularProducts = await Product.find({ deleted: { $ne: true } })
         .sort({ totalSold: -1 })
-        .limit(4)
+        .limit(10)
         .populate("shopId", "name logoUrl");
 
       const combined = [];
@@ -156,7 +156,7 @@ export const getRecommendations = async (req, res) => {
       
       const trendingProducts = await Product.find({ deleted: { $ne: true } })
         .sort({ views: -1, createdAt: -1 })
-        .limit(6)
+        .limit(10)
         .populate("shopId", "name logoUrl");
 
       const popularProducts = await Product.find({
@@ -164,7 +164,7 @@ export const getRecommendations = async (req, res) => {
         _id: { $nin: trendingProducts.map(p => p._id) }
       })
         .sort({ totalSold: -1 })
-        .limit(3)
+        .limit(5)
         .populate("shopId", "name logoUrl");
 
       const latestProducts = await Product.find({
@@ -177,7 +177,7 @@ export const getRecommendations = async (req, res) => {
         }
       })
         .sort({ createdAt: -1 })
-        .limit(3)
+        .limit(5)
         .populate("shopId", "name logoUrl");
 
       recommendations = [...trendingProducts, ...popularProducts, ...latestProducts]
@@ -256,12 +256,12 @@ export const getRecommendations = async (req, res) => {
         if (storeProducts) {
           personalizedProducts.push(storeProducts);
         }
-        if (personalizedProducts.length >= 8) break;
+        if (personalizedProducts.length >= personalizedCount) break;
       }
     } else {
       console.log(`Multiple categories mode: ${userCategories.join(", ")}`);
       
-      const productsPerCategory = Math.ceil(8 / userCategories.length);
+      const productsPerCategory = Math.ceil(personalizedCount / userCategories.length);
       
       for (const category of userCategories) {
         const categoryProducts = await Product.find({
@@ -300,13 +300,13 @@ export const getRecommendations = async (req, res) => {
       ...trendingProducts.slice(0, trendingCount)
     ].slice(0, limit);
 
-    if (final.length < 8) {
+    if (final.length < personalizedCount) {
       const additional = await Product.find({
         deleted: { $ne: true },
         _id: { $nin: final.map(p => p._id) }
       })
         .sort({ createdAt: -1 })
-        .limit(8 - final.length)
+        .limit(personalizedCount - final.length)
         .populate("shopId", "name logoUrl");
       
       final.push(...additional);

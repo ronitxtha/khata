@@ -113,7 +113,7 @@ const RecommendedProducts = () => {
               scrollbarWidth: "none"
             }}
           >
-            {recommendations.map((p) => (
+            {recommendations.slice(0, 20).map((p) => (
               <div 
                 key={p._id} 
                 className="od-panel" 

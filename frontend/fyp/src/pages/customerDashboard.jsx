@@ -270,8 +270,8 @@ const CustomerDashboard = () => {
           {/* SHOPS GRID */}
           {(shops || []).map((shop) => {
             const filteredProducts = getFilteredProducts(shop.products, shop);
-            const displayedProducts = filteredProducts.slice(0, 4);
-            const hasMore = filteredProducts.length > 4;
+            const displayedProducts = filteredProducts.slice(0, 5);
+            const hasMore = filteredProducts.length > 5;
 
             if (filteredProducts.length === 0 && !shopMatchesSearch(shop)) return null;
             if (filteredProducts.length === 0) return null;
