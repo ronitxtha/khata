@@ -355,104 +355,108 @@ const ProductDetails = () => {
               {/* Column 2: Product details and CTAs */}
               <div className="pd-details-section">
                 <div className="pd-details-card">
-                  <h1 className="pd-product-name">{product.name}</h1>
-                  
-                  <div className="pd-rating-summary">
-                    <div className="pd-rating-stars-gold">
-                      {[1, 2, 3, 4, 5].map((star) => (
-                        <span key={star} style={{ color: star <= Math.round(product.rating || 0) ? '#f59e0b' : '#cbd5e1', fontSize: '15px' }}>★</span>
-                      ))}
+                  <div className="pd-details-main-info">
+                    <h1 className="pd-product-name">{product.name}</h1>
+                    
+                    <div className="pd-rating-summary">
+                      <div className="pd-rating-stars-gold">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <span key={star} style={{ color: star <= Math.round(product.rating || 0) ? '#f59e0b' : '#cbd5e1', fontSize: '15px' }}>★</span>
+                        ))}
+                      </div>
+                      <span className="pd-rating-value">{(product.rating || 0).toFixed(1)}</span>
+                      <span style={{ color: "var(--pd-secondary)" }}>({product.numReviews || 0} reviews)</span>
+                      <span style={{ margin: '0 8px', color: '#e2e8f0' }}>|</span>
+                      <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--pd-accent)', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                        🏪 Store: <span style={{ color: '#4f46e5', textDecoration: 'underline', cursor: 'pointer' }}>{product.shopId?.name || "Verified Store"}</span>
+                      </span>
                     </div>
-                    <span className="pd-rating-value">{(product.rating || 0).toFixed(1)}</span>
-                    <span style={{ color: "var(--pd-secondary)" }}>({product.numReviews || 0} reviews)</span>
-                    <span style={{ margin: '0 8px', color: '#e2e8f0' }}>|</span>
-                    <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--pd-accent)', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                      🏪 Store: <span style={{ color: '#4f46e5', textDecoration: 'underline', cursor: 'pointer' }}>{product.shopId?.name || "Verified Store"}</span>
-                    </span>
-                  </div>
-                  
-                  <div className="pd-price-row">
-                    <span className="pd-price">NPR {product.price?.toLocaleString()}</span>
-                    <span className={`pd-stock-badge ${product.quantity > 5 ? "pd-in-stock" : "pd-low-stock"}`}>
-                      {product.quantity > 5 ? "✓ In Stock" : `⚠ Only ${product.quantity} left`}
-                    </span>
+                    
+                    <div className="pd-price-row">
+                      <span className="pd-price">NPR {product.price?.toLocaleString()}</span>
+                      <span className={`pd-stock-badge ${product.quantity > 5 ? "pd-in-stock" : "pd-low-stock"}`}>
+                        {product.quantity > 5 ? "✓ In Stock" : `⚠ Only ${product.quantity} left`}
+                      </span>
+                    </div>
+
+                    <p className="pd-desc">{product.description}</p>
+
+                    <div className="pd-info-chips">
+                      <div className="pd-chip pd-chip--cod">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '4px', verticalAlign: 'middle' }}><path d="M20 6L9 17l-5-5"/></svg>
+                        Cash on Delivery
+                      </div>
+                      <div className="pd-chip pd-chip--return">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '4px', verticalAlign: 'middle' }}><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+                        7 Days Return
+                      </div>
+                      <div className="pd-chip pd-chip--shipping">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '4px', verticalAlign: 'middle' }}><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+                        Free Shipping
+                      </div>
+                    </div>
                   </div>
 
-                  <p className="pd-desc">{product.description}</p>
-
-                  <div className="pd-info-chips">
-                    <div className="pd-chip pd-chip--cod">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '4px', verticalAlign: 'middle' }}><path d="M20 6L9 17l-5-5"/></svg>
-                      Cash on Delivery
-                    </div>
-                    <div className="pd-chip pd-chip--return">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '4px', verticalAlign: 'middle' }}><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
-                      7 Days Return
-                    </div>
-                    <div className="pd-chip pd-chip--shipping">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '4px', verticalAlign: 'middle' }}><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
-                      Free Shipping
-                    </div>
+                  <div className="pd-actions">
+                    <button
+                      onClick={() => setReportModal(true)}
+                      className="pd-action-btn-report"
+                      title="Report this product"
+                    >
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path><line x1="4" y1="22" x2="4" y2="15"></line></svg>
+                      Report
+                    </button>
+                    <button className="pd-add-to-cart-btn" onClick={() => { addToCart(product); alert("Added to cart!"); }}>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+                      Add to Cart
+                    </button>
+                    <button
+                      className="pd-buy-now-btn"
+                      disabled={!isDeliveryComplete}
+                      onClick={() =>
+                        navigate("/checkout", {
+                          state: {
+                            product,
+                            deliveryAddress: locationAdded
+                              ? { fullAddress: location }
+                              : { province, district, municipality, ward, exactLocation },
+                          },
+                        })
+                      }
+                    >
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                      Buy Now
+                    </button>
                   </div>
-                </div>
-
-                <div className="pd-actions">
-                  <button
-                    onClick={() => setReportModal(true)}
-                    className="pd-action-btn-report"
-                    title="Report this product"
-                  >
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path><line x1="4" y1="22" x2="4" y2="15"></line></svg>
-                    Report
-                  </button>
-                  <button className="pd-add-to-cart-btn" onClick={() => { addToCart(product); alert("Added to cart!"); }}>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
-                    Add to Cart
-                  </button>
-                  <button
-                    className="pd-buy-now-btn"
-                    disabled={!isDeliveryComplete}
-                    onClick={() =>
-                      navigate("/checkout", {
-                        state: {
-                          product,
-                          deliveryAddress: locationAdded
-                            ? { fullAddress: location }
-                            : { province, district, municipality, ward, exactLocation },
-                        },
-                      })
-                    }
-                  >
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-                    Buy Now
-                  </button>
                 </div>
               </div>
 
               {/* Column 3: Delivery Options */}
               <div className="pd-delivery-section">
                 <div className="pd-delivery-card">
-                  <h3 className="pd-delivery-title">📍 Delivery Options</h3>
+                  <div className="pd-delivery-main-fields">
+                    <h3 className="pd-delivery-title">📍 Delivery Options</h3>
 
-                  <button
-                    className={`pd-geolocation-btn ${locationAdded ? "pd-geolocation-success" : ""}`}
-                    onClick={handleAddLocation}
-                    disabled={geoLoading || locationAdded}
-                  >
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/><path d="M2 12h20"/></svg>
-                    Auto Detect Address
-                  </button>
-                  <p style={{ fontSize: '11px', color: '#94a3b8', marginTop: '6px', textAlign: 'center', fontWeight: 500 }}>Detect your current location automatically</p>
+                    <button
+                      className={`pd-geolocation-btn ${locationAdded ? "pd-geolocation-success" : ""}`}
+                      onClick={handleAddLocation}
+                      disabled={geoLoading || locationAdded}
+                    >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/><path d="M2 12h20"/></svg>
+                      Auto Detect Address
+                    </button>
+                    <p style={{ fontSize: '11px', color: '#94a3b8', marginTop: '6px', textAlign: 'center', fontWeight: 500 }}>Detect your current location automatically</p>
 
-                  {locationAdded && (
-                    <div style={{ marginTop: "1rem", display: "flex", gap: "10px", alignItems: "center" }}>
-                      <div className="pd-selected-address" style={{ flex: 1, margin: 0 }}>📌 {location}</div>
-                      <button onClick={() => { setLocation(""); setLocationAdded(false); }} className="pd-clear-location-btn">✕</button>
+                    {locationAdded && (
+                      <div style={{ marginTop: "1rem", display: "flex", gap: "10px", alignItems: "center" }}>
+                        <div className="pd-selected-address" style={{ flex: 1, margin: 0 }}>📌 {location}</div>
+                        <button onClick={() => { setLocation(""); setLocationAdded(false); }} className="pd-clear-location-btn">✕</button>
+                      </div>
+                    )}
+
+                    <div className="pd-or-divider">
+                      OR SELECT MANUALLY
                     </div>
-                  )}
-
-                  <div className="pd-or-divider">
-                    OR SELECT MANUALLY
                   </div>
 
                   <div className="pd-location-dropdowns">

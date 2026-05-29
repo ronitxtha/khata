@@ -16,20 +16,52 @@
   --pd-shadow-lg:     0 20px 40px rgba(15,23,42,0.08);
 }
 
-/* ─── Global Base ───────────────────────────────────────────── */
+/* ─── Global Viewport Locking ────────────────────────────────── */
+body, html {
+  margin: 0;
+  padding: 0;
+  overflow: hidden; /* Lock viewport to prevent outer body scrolling */
+  height: 100%;
+}
+
+.od-shell {
+  height: 100vh;
+  overflow: hidden;
+}
+
+.od-main {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.od-content {
+  flex: 1;
+  overflow: hidden; /* Prevent content scrollbar */
+  padding: 16px 24px;
+  display: flex;
+  flex-direction: column;
+  background: var(--pd-bg);
+}
+
 .pd-page {
   font-family: 'Inter', system-ui, sans-serif;
   color: var(--pd-primary);
-  background: var(--pd-bg);
-  padding: 0 8px;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  padding: 0;
 }
 
-/* ─── Breadcrumbs ───────────────────────────────────────────── */
+/* ─── Breadcrumbs (Ultra Compact) ────────────────────────────── */
 .pd-breadcrumb {
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   color: var(--pd-secondary);
   font-weight: 500;
-  margin-bottom: 20px;
+  margin-bottom: 12px;
+  flex-shrink: 0;
 }
 
 .pd-breadcrumb span {
@@ -47,26 +79,28 @@
   cursor: default !important;
 }
 
-/* ─── Main 3-Column Product Section ──────────────────────────── */
+/* ─── Main 3-Column Top Grid (Fixed Height) ─────────────────── */
 .pd-product-section {
   display: grid;
   grid-template-columns: 360px 1fr 340px;
-  gap: 24px;
-  align-items: start;
-  margin-bottom: 24px;
+  gap: 20px;
+  height: 440px; /* Precise locked height */
+  flex-shrink: 0;
+  margin-bottom: 16px;
 }
 
 /* ─── Column 1: Image & Thumbnails Gallery ──────────────────── */
 .pd-image-section {
   width: 360px;
+  height: 100%;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
 }
 
 .pd-image-card {
   width: 360px;
-  height: 360px;
+  flex: 1; /* Stretch to fill remaining space of 440px */
   background: var(--pd-surface);
   border: 1px solid var(--pd-border);
   border-radius: var(--pd-radius);
@@ -74,13 +108,13 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 20px;
+  padding: 12px;
   overflow: hidden;
 }
 
 .pd-image-card img {
-  width: 100%;
-  height: 100%;
+  max-width: 100%;
+  max-height: 100%;
   object-fit: contain;
   mix-blend-mode: darken;
   transition: transform 0.3s ease;
@@ -94,12 +128,13 @@
 .pd-thumbnails {
   display: flex;
   justify-content: space-between;
-  gap: 12px;
+  gap: 8px;
+  flex-shrink: 0;
 }
 
 .pd-thumbnail {
   width: 78px;
-  height: 78px;
+  height: 68px;
   background: var(--pd-surface);
   border: 1px solid var(--pd-border);
   border-radius: var(--pd-radius-sm);
@@ -107,14 +142,14 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 6px;
+  padding: 4px;
   overflow: hidden;
   transition: border-color 0.2s ease;
 }
 
 .pd-thumbnail img {
-  width: 100%;
-  height: 100%;
+  max-width: 100%;
+  max-height: 100%;
   object-fit: contain;
   mix-blend-mode: darken;
 }
@@ -129,36 +164,43 @@
 
 /* ─── Column 2: Product Core details & Actions ──────────────── */
 .pd-details-section {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
+  height: 100%;
 }
 
 .pd-details-card {
   background: var(--pd-surface);
   border: 1px solid var(--pd-border);
   border-radius: var(--pd-radius);
-  padding: 28px;
+  padding: 24px;
   box-shadow: var(--pd-shadow);
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between; /* Anchor actions to the absolute bottom */
+}
+
+.pd-details-main-info {
+  display: flex;
+  flex-direction: column;
 }
 
 .pd-product-name {
-  font-size: 1.8rem;
+  font-size: 1.65rem;
   font-weight: 800;
   letter-spacing: -0.6px;
   color: var(--pd-primary);
-  margin-bottom: 8px;
-  line-height: 1.25;
+  margin-bottom: 6px;
+  line-height: 1.2;
 }
 
 .pd-rating-summary {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 0.88rem;
+  font-size: 0.82rem;
   color: var(--pd-secondary);
   font-weight: 500;
-  margin-bottom: 16px;
+  margin-bottom: 12px;
 }
 
 .pd-rating-stars-gold {
@@ -176,21 +218,21 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-bottom: 16px;
-  padding-bottom: 16px;
+  margin-bottom: 12px;
+  padding-bottom: 12px;
   border-bottom: 1px dashed var(--pd-border);
 }
 
 .pd-price {
-  font-size: 1.9rem;
+  font-size: 1.7rem;
   font-weight: 850;
   color: var(--pd-accent);
 }
 
 .pd-stock-badge {
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   font-weight: 700;
-  padding: 4px 10px;
+  padding: 3px 8px;
   border-radius: 12px;
   text-transform: capitalize;
 }
@@ -207,11 +249,17 @@
   border: 1px solid rgba(217, 119, 6, 0.15);
 }
 
+/* Locked description lines to prevent push-down */
 .pd-desc {
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   color: #475569;
-  line-height: 1.65;
-  margin-bottom: 20px;
+  line-height: 1.5;
+  margin-top: 0;
+  margin-bottom: 14px;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 /* Custom Soft-Bg Info Chips */
@@ -222,9 +270,9 @@
 }
 
 .pd-chip {
-  padding: 6px 14px;
-  border-radius: 8px;
-  font-size: 0.8rem;
+  padding: 5px 12px;
+  border-radius: 6px;
+  font-size: 0.78rem;
   font-weight: 600;
   display: flex;
   align-items: center;
@@ -249,22 +297,23 @@
 /* Compact Buy-Flow CTAs */
 .pd-actions {
   display: flex;
-  gap: 12px;
+  gap: 10px;
+  margin-top: auto; /* Push to bottom of flex card */
 }
 
 .pd-action-btn-report {
   background: #f8fafc;
   border: 1px solid var(--pd-border);
   color: var(--pd-secondary);
-  padding: 0 16px;
+  padding: 0 12px;
   border-radius: var(--pd-radius-sm);
   font-weight: 600;
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   cursor: pointer;
-  height: 48px;
+  height: 44px;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
   transition: all 0.15s ease;
 }
 
@@ -279,16 +328,16 @@
   background: #ffffff;
   color: var(--pd-accent);
   border: 1.5px solid var(--pd-accent);
-  padding: 0 16px;
+  padding: 0 12px;
   border-radius: var(--pd-radius-sm);
   font-weight: 700;
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   cursor: pointer;
-  height: 48px;
+  height: 44px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  gap: 4px;
   transition: background 0.15s ease;
 }
 
@@ -301,16 +350,16 @@
   background: var(--pd-accent);
   color: #ffffff;
   border: none;
-  padding: 0 16px;
+  padding: 0 12px;
   border-radius: var(--pd-radius-sm);
   font-weight: 700;
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   cursor: pointer;
-  height: 48px;
+  height: 44px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  gap: 4px;
   transition: opacity 0.15s ease;
 }
 
@@ -327,6 +376,7 @@
 /* ─── Column 3: Delivery Options ───────────────────────────── */
 .pd-delivery-section {
   width: 340px;
+  height: 100%;
 }
 
 .pd-delivery-card {
@@ -335,12 +385,22 @@
   border-radius: var(--pd-radius);
   padding: 20px;
   box-shadow: var(--pd-shadow);
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between; /* Anchor alerts to the absolute bottom */
+}
+
+.pd-delivery-main-fields {
+  display: flex;
+  flex-direction: column;
 }
 
 .pd-delivery-title {
-  font-size: 0.95rem;
+  font-size: 0.92rem;
   font-weight: 800;
-  margin-bottom: 12px;
+  margin-top: 0;
+  margin-bottom: 10px;
   color: var(--pd-primary);
   display: flex;
   align-items: center;
@@ -349,13 +409,13 @@
 
 .pd-geolocation-btn {
   width: 100%;
-  height: 40px;
+  height: 38px;
   background: var(--pd-accent);
   color: #ffffff;
   font-weight: 700;
   border: none;
   border-radius: var(--pd-radius-sm);
-  font-size: 0.85rem;
+  font-size: 0.82rem;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -375,27 +435,27 @@
 
 .pd-selected-address {
   background: #eff6ff;
-  padding: 10px 12px;
+  padding: 8px 10px;
   border-radius: var(--pd-radius-sm);
-  font-size: 0.82rem;
+  font-size: 0.8rem;
   color: #2563eb;
   font-weight: 600;
   border: 1px solid rgba(37,99,235,0.1);
-  margin-top: 10px;
+  margin-top: 6px;
   line-height: 1.4;
   display: flex;
   align-items: center;
 }
 
 .pd-clear-location-btn {
-  padding: 4px 8px;
+  padding: 2px 6px;
   background: #fee2e2;
   color: #b91c1c;
   border: none;
-  border-radius: 6px;
+  border-radius: 4px;
   cursor: pointer;
   font-weight: 700;
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   margin-left: auto;
 }
 
@@ -405,16 +465,16 @@
 
 .pd-or-divider {
   text-align: center;
-  margin: 16px 0 12px;
+  margin: 10px 0 8px;
   color: #94a3b8;
-  font-size: 0.7rem;
+  font-size: 0.65rem;
   font-weight: 700;
   letter-spacing: 0.6px;
   text-transform: uppercase;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  gap: 4px;
 }
 
 .pd-or-divider::before,
@@ -428,19 +488,20 @@
 .pd-location-dropdowns {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
 }
 
 .pd-select {
-  padding: 8px 12px;
+  padding: 8px 10px;
   border: 1px solid var(--pd-border);
   border-radius: var(--pd-radius-sm);
-  font-size: 0.85rem;
+  font-size: 0.82rem;
   font-family: inherit;
   width: 100%;
   background: #ffffff;
   color: var(--pd-primary);
   outline: none;
+  height: 34px;
 }
 
 .pd-select:focus:not(:disabled) {
@@ -459,13 +520,13 @@
   align-items: center;
   background: #f0f4ff;
   color: #2563eb;
-  padding: 10px 12px;
+  padding: 8px 10px;
   border-radius: var(--pd-radius-sm);
   border: 1px solid rgba(37,99,235,0.08);
-  margin-top: 8px;
-  font-size: 0.78rem;
+  margin-top: auto; /* Push to absolute bottom of Delivery Options card */
+  font-size: 0.75rem;
   font-weight: 550;
-  line-height: 1.45;
+  line-height: 1.4;
 }
 
 .pd-delivery-info-card svg {
@@ -476,17 +537,20 @@
 .pd-bottom-grid {
   display: grid;
   grid-template-columns: 1.5fr 1fr 340px;
-  gap: 24px;
-  align-items: start;
-  margin-top: 16px;
-  margin-bottom: 48px;
+  gap: 20px;
+  height: 320px; /* Locked height to prevent scrollbar */
+  flex-shrink: 0;
+  margin-top: 0;
+  margin-bottom: 0;
 }
 
 .pd-section-title {
-  font-size: 1.25rem;
+  font-size: 1.05rem;
   font-weight: 800;
   color: var(--pd-primary);
-  margin-bottom: 20px;
+  margin-top: 0;
+  margin-bottom: 12px;
+  flex-shrink: 0;
 }
 
 /* Column 1: Reviews List Card */
@@ -494,44 +558,50 @@
   background: var(--pd-surface);
   border: 1px solid var(--pd-border);
   border-radius: var(--pd-radius);
-  padding: 24px;
+  padding: 20px;
   box-shadow: var(--pd-shadow);
+  height: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
 .pd-reviews-layout {
   display: flex;
-  gap: 24px;
+  gap: 16px;
+  flex: 1;
+  min-height: 0; /* Let child layout scroll internally if needed */
 }
 
-/* Average Rating Circle/Box */
+/* Average Rating Box (Stretched) */
 .pd-avg-box {
-  width: 170px;
+  width: 150px;
   background: #f8fafc;
   border: 1px solid var(--pd-border-light);
   border-radius: var(--pd-radius);
-  padding: 24px 16px;
+  padding: 16px 8px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   text-align: center;
   flex-shrink: 0;
+  height: 100%;
 }
 
 .pd-avg-num {
-  font-size: 3.5rem;
+  font-size: 3.2rem;
   font-weight: 900;
   line-height: 1;
   color: var(--pd-primary);
-  margin-bottom: 8px;
+  margin-bottom: 4px;
   letter-spacing: -1.5px;
 }
 
 .pd-avg-count {
-  font-size: 0.78rem;
+  font-size: 0.72rem;
   color: var(--pd-secondary);
   font-weight: 500;
-  margin-top: 8px;
+  margin-top: 4px;
 }
 
 /* Feed Column */
@@ -539,18 +609,22 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  justify-content: space-between;
+  height: 100%;
+  min-height: 0;
 }
 
 .pd-reviews-feed {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
+  overflow-y: auto; /* Enable scrollbar within feed, maintaining exact container height */
+  flex: 1;
+  padding-right: 4px;
+  margin-bottom: 8px;
 }
 
 .pd-review-item {
   border-bottom: 1px solid var(--pd-border-light);
-  padding-bottom: 14px;
+  padding-bottom: 10px;
+  margin-bottom: 10px;
 }
 
 .pd-review-item:last-child {
@@ -560,14 +634,14 @@
 
 .pd-rev-user {
   display: flex;
-  gap: 10px;
+  gap: 8px;
   align-items: center;
-  margin-bottom: 8px;
+  margin-bottom: 4px;
 }
 
 .pd-user-avatar {
-  width: 34px;
-  height: 34px;
+  width: 30px;
+  height: 30px;
   background: #eff6ff;
   color: var(--pd-accent);
   border-radius: 50%;
@@ -575,7 +649,7 @@
   align-items: center;
   justify-content: center;
   font-weight: 700;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   border: 1px solid rgba(79,70,229,0.08);
 }
 
@@ -585,7 +659,7 @@
 }
 
 .pd-rev-info strong {
-  font-size: 0.88rem;
+  font-size: 0.82rem;
   font-weight: 700;
   color: var(--pd-primary);
 }
@@ -593,14 +667,14 @@
 .pd-user-badge {
   background: var(--pd-accent);
   color: #ffffff;
-  padding: 1px 4px;
-  font-size: 8px;
+  padding: 1px 3px;
+  font-size: 7px;
   border-radius: 4px;
   margin-left: 4px;
 }
 
 .pd-rev-date {
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   color: var(--pd-secondary);
 }
 
@@ -609,28 +683,43 @@
 }
 
 .pd-review-text {
-  font-size: 0.88rem;
+  font-size: 0.82rem;
   color: #475569;
-  line-height: 1.5;
+  line-height: 1.45;
   margin: 0;
+}
+
+/* Empty review stays exact same layout shape */
+.pd-empty-reviews {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  font-size: 0.82rem;
+  color: var(--pd-secondary);
+  text-align: center;
+  background: #f8fafc;
+  border-radius: var(--pd-radius-sm);
+  border: 1px dashed var(--pd-border);
+  height: 100%;
 }
 
 .pd-view-all-reviews-btn {
   width: 100%;
-  height: 38px;
+  height: 34px;
   background: #ffffff;
   border: 1.5px solid var(--pd-accent);
   color: var(--pd-accent);
   font-weight: 700;
-  font-size: 0.88rem;
+  font-size: 0.82rem;
   border-radius: var(--pd-radius-sm);
   cursor: pointer;
-  margin-top: 12px;
+  flex-shrink: 0;
   transition: background 0.15s ease;
 }
 
 .pd-view-all-reviews-btn:hover {
-  background: rgba(79,70,229,0.04);
+  background: rgba(79, 70, 229, 0.04);
 }
 
 /* Column 2: Write a Review Form Card */
@@ -638,34 +727,46 @@
   background: var(--pd-surface);
   border: 1px solid var(--pd-border);
   border-radius: var(--pd-radius);
-  padding: 24px;
+  padding: 20px;
   box-shadow: var(--pd-shadow);
+  height: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
 .pd-write-review-subtitle {
-  font-size: 0.82rem;
+  font-size: 0.78rem;
   color: var(--pd-secondary);
   font-weight: 500;
-  margin-top: -16px;
-  margin-bottom: 20px;
+  margin-top: -8px;
+  margin-bottom: 12px;
+  flex-shrink: 0;
+}
+
+.pd-review-form {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  flex: 1;
+  min-height: 0;
 }
 
 .pd-form-group {
-  margin-bottom: 16px;
+  margin-bottom: 10px;
 }
 
 .pd-form-group label {
   display: block;
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   font-weight: 600;
   color: var(--pd-primary);
-  margin-bottom: 6px;
+  margin-bottom: 4px;
 }
 
 .pd-stars-input {
   display: flex;
   gap: 4px;
-  font-size: 1.7rem;
+  font-size: 1.5rem;
   cursor: pointer;
   color: #cbd5e1;
   user-select: none;
@@ -685,13 +786,13 @@
 
 .pd-review-form textarea {
   width: 100%;
-  padding: 10px 14px;
+  padding: 8px 12px;
   border: 1px solid var(--pd-border);
   border-radius: var(--pd-radius-sm);
   font-family: inherit;
-  font-size: 0.88rem;
-  resize: vertical;
-  min-height: 80px;
+  font-size: 0.82rem;
+  resize: none; /* Disable manual resize inside locked layout */
+  height: 64px;
   background: #f8fafc;
   outline: none;
 }
@@ -703,14 +804,15 @@
 
 .pd-submit-review-btn {
   width: 100%;
-  height: 40px;
+  height: 36px;
   background: var(--pd-accent);
   color: #ffffff;
   border: none;
   font-weight: 700;
-  font-size: 0.88rem;
+  font-size: 0.82rem;
   border-radius: var(--pd-radius-sm);
   cursor: pointer;
+  flex-shrink: 0;
   transition: opacity 0.15s;
 }
 
@@ -721,8 +823,12 @@
 .pd-review-login-prompt {
   text-align: center;
   padding: 24px 0;
-  font-size: 0.88rem;
+  font-size: 0.82rem;
   color: var(--pd-secondary);
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .pd-login-link {
@@ -732,27 +838,10 @@
   cursor: pointer;
 }
 
-.pd-alert {
-  padding: 8px 12px;
-  border-radius: 6px;
-  font-size: 0.8rem;
-  margin-bottom: 12px;
-}
-
-.pd-alert-success {
-  background: #dcfce7;
-  color: #166534;
-}
-
-.pd-alert-danger {
-  background: #fee2e2;
-  color: #991b1b;
-}
-
-/* Column 3: Chat Box Card (Embedded Open Window) */
+/* Column 3: Chat Box Card (Embedded Open Window - Locked) */
 .pd-chat-card {
   width: 340px;
-  height: 380px;
+  height: 100%; /* Stretched directly to 320px */
   background: var(--pd-surface);
   border: 1px solid var(--pd-border);
   border-radius: var(--pd-radius);
@@ -765,15 +854,16 @@
 .pd-chat-header-embedded {
   background: var(--pd-accent);
   color: #ffffff;
-  padding: 12px 16px;
+  padding: 10px 14px;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-shrink: 0;
 }
 
 .pd-chat-header-embedded h3 {
   margin: 0;
-  font-size: 0.85rem;
+  font-size: 0.82rem;
   font-weight: 800;
 }
 
@@ -782,17 +872,18 @@
   border: none;
   color: #ffffff;
   cursor: pointer;
-  font-size: 1.1rem;
+  font-size: 1rem;
   opacity: 0.8;
 }
 
 .pd-chat-body-embedded {
   flex: 1;
-  padding: 12px;
+  padding: 10px;
   overflow-y: auto;
   background: #f8fafc;
   display: flex;
   flex-direction: column;
+  min-height: 0;
 }
 
 .pd-chat-empty-feed {
@@ -805,10 +896,10 @@
 .pd-chat-welcome-bubble {
   background: #ffffff;
   border: 1px solid var(--pd-border-light);
-  padding: 10px 14px;
+  padding: 8px 12px;
   border-radius: 12px;
   border-top-left-radius: 2px;
-  font-size: 0.82rem;
+  font-size: 0.8rem;
   color: var(--pd-primary);
   line-height: 1.4;
   max-width: 85%;
@@ -819,7 +910,7 @@
 .pd-chat-time,
 .pd-message-time {
   display: block;
-  font-size: 0.68rem;
+  font-size: 0.65rem;
   color: var(--pd-secondary);
   margin-top: 4px;
   font-weight: 500;
@@ -828,15 +919,15 @@
 .pd-chat-history-wrapper {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
 }
 
 .pd-message {
   max-width: 82%;
-  padding: 10px 14px;
+  padding: 8px 12px;
   border-radius: 12px;
-  font-size: 0.82rem;
-  line-height: 1.45;
+  font-size: 0.8rem;
+  line-height: 1.4;
 }
 
 .pd-message-incoming {
@@ -852,7 +943,7 @@
   background: var(--pd-accent);
   color: #ffffff;
   border-top-right-radius: 2px;
-  box-shadow: 0 1px 3px rgba(79,70,229,0.12);
+  box-shadow: 0 1px 2px rgba(79,70,229,0.1);
 }
 
 .pd-message-outgoing .pd-message-time {
@@ -860,12 +951,13 @@
 }
 
 .pd-chat-footer-embedded {
-  padding: 10px;
+  padding: 8px;
   background: #ffffff;
   border-top: 1px solid var(--pd-border-light);
   display: flex;
   gap: 6px;
   align-items: center;
+  flex-shrink: 0;
 }
 
 .pd-chat-input {
@@ -875,9 +967,10 @@
   border-radius: 18px;
   outline: none;
   font-family: inherit;
-  font-size: 0.82rem;
+  font-size: 0.8rem;
   background: #f1f5f9;
   color: var(--pd-primary);
+  height: 32px;
 }
 
 .pd-chat-input:focus {
@@ -910,7 +1003,7 @@
   cursor: not-allowed;
 }
 
-/* ─── Floating Chat Widget (In Backup) ───────────────────────── */
+/* ─── Floating Chat Widget ───────────────────────────────────── */
 .pd-chat-widget-btn-floating {
   position: fixed;
   bottom: 24px;
@@ -1034,11 +1127,24 @@
   cursor: pointer;
 }
 
-/* ─── Responsive Adjustments ────────────────────────────────── */
+/* ─── Responsive Adjustments (Desktop Focused Overrides) ─────── */
 @media (max-width: 1200px) {
+  /* On small screens, keep scrolling enabled dynamically */
+  body, html {
+    overflow-y: auto;
+    height: auto;
+  }
+  .od-shell,
+  .od-main,
+  .od-content,
+  .pd-page {
+    height: auto;
+    overflow: visible;
+  }
   .pd-product-section {
     grid-template-columns: 320px 1fr;
     gap: 20px;
+    height: auto;
   }
   .pd-image-section,
   .pd-image-card {
@@ -1055,16 +1161,24 @@
   .pd-delivery-section {
     grid-column: span 2;
     width: 100%;
-    margin-top: 12px;
+    height: auto;
+  }
+  .pd-delivery-card {
+    height: auto;
   }
   .pd-bottom-grid {
     grid-template-columns: 1.2fr 1fr;
     gap: 20px;
+    height: auto;
+  }
+  .pd-reviews-card,
+  .pd-write-review-card,
+  .pd-chat-card {
+    height: 350px;
   }
   .pd-chat-card {
     grid-column: span 2;
     width: 100%;
-    height: 350px;
   }
 }
 
@@ -1072,6 +1186,7 @@
   .pd-product-section {
     grid-template-columns: 1fr;
     gap: 20px;
+    height: auto;
   }
   .pd-image-section {
     width: 100%;
@@ -1099,6 +1214,7 @@
   .pd-bottom-grid {
     grid-template-columns: 1fr;
     gap: 20px;
+    height: auto;
   }
   .pd-reviews-layout {
     flex-direction: column;
