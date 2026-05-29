@@ -235,10 +235,17 @@ router.post("/add-staff", isAuthenticated, async (req, res) => {
 });
 // ----------------------- Add Product with QR -----------------------
 
-router.post("/add-product", isAuthenticated, upload.single("image"), async (req, res) => {
+router.post("/add-product", isAuthenticated, upload.array("images", 5), async (req, res) => {
   try {
     const { name, price, costPrice, description, category, quantity } = req.body; // include category
-    const imagePath = req.file ? await uploadToCloudinary(req.file.path, "products") : null;
+    
+    const imageUrls = [];
+    if (req.files && req.files.length > 0) {
+      for (const file of req.files) {
+        const url = await uploadToCloudinary(file.path, "products");
+        if (url) imageUrls.push(url);
+      }
+    }
 
     // Optional: Validate category against allowed list
     const MAIN_CATEGORIES = [
@@ -260,7 +267,8 @@ router.post("/add-product", isAuthenticated, upload.single("image"), async (req,
       price,
       costPrice: Number(costPrice) || 0,
       description,
-      image: imagePath,
+      image: imageUrls.length > 0 ? imageUrls[0] : null,
+      images: imageUrls,
       shopId: req.user.shopId,
       category: finalCategory,
       quantity: Number(quantity) // save category
@@ -284,12 +292,12 @@ router.post("/add-product", isAuthenticated, upload.single("image"), async (req,
 });
 router.put(
   "/update-product/:id",
-  upload.single("image"),   // 🔥 MUST come FIRST
+  upload.array("images", 5),   // 🔥 MUST come FIRST
   isAuthenticated,          // then auth
   async (req, res) => {
     try {
       const { id } = req.params;
-      const { name, price, costPrice, quantity, category, description } = req.body;
+      const { name, price, costPrice, quantity, category, description, existingImages } = req.body;
 
       const MAIN_CATEGORIES = [
         "Electronics",
@@ -323,10 +331,35 @@ router.put(
       product.category = finalCategory;
       product.description = description;
 
-      // ✅ Update image only if new one uploaded
-      if (req.file) {
-        product.image = await uploadToCloudinary(req.file.path, "products");
+      // Update images
+      let finalImages = [];
+      if (existingImages !== undefined) {
+        try {
+          finalImages = JSON.parse(existingImages);
+        } catch (err) {
+          if (Array.isArray(existingImages)) {
+            finalImages = existingImages;
+          } else if (existingImages) {
+            finalImages = [existingImages];
+          }
+        }
+      } else {
+        // fallback to existing images of product
+        finalImages = product.images && product.images.length > 0 ? product.images : (product.image ? [product.image] : []);
       }
+
+      // Add newly uploaded files
+      if (req.files && req.files.length > 0) {
+        for (const file of req.files) {
+          const url = await uploadToCloudinary(file.path, "products");
+          if (url) {
+            finalImages.push(url);
+          }
+        }
+      }
+
+      product.images = finalImages;
+      product.image = finalImages.length > 0 ? finalImages[0] : null;
 
       await product.save();
 

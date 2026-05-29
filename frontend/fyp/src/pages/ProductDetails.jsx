@@ -18,6 +18,7 @@ const ProductDetails = () => {
   const { addToCart, totalQuantity } = useCart();
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [selectedImgIdx, setSelectedImgIdx] = useState(0);
 
   // User / Auth
   const [currentUser, setCurrentUser] = useState(null);
@@ -59,6 +60,7 @@ const ProductDetails = () => {
   useEffect(() => {
     const fetchProduct = async () => {
       try {
+        setSelectedImgIdx(0);
         const res = await axios.get(`${API_BASE}/api/products/${id}`);
         const p = res.data.product;
         setProduct(p);
@@ -341,9 +343,30 @@ const ProductDetails = () => {
             <main className="pd-product-section" style={{ padding: 0 }}>
               {/* ── Col 1: Product Image ── */}
               <div className="pd-image-section">
-                <div className="pd-image-card">
-                  <img src={imgUrl(product.image)} alt={product.name} />
-                </div>
+                {(() => {
+                  const images = product.images && product.images.length > 0 ? product.images : (product.image ? [product.image] : []);
+                  const activeImage = images[selectedImgIdx] || product.image;
+                  return (
+                    <>
+                      <div className="pd-image-card">
+                        <img src={imgUrl(activeImage)} alt={product.name} />
+                      </div>
+                      {images.length > 1 && (
+                        <div className="pd-image-thumbnails-gallery">
+                          {images.map((img, idx) => (
+                            <div 
+                              key={idx} 
+                              className={`pd-image-thumbnail-item ${idx === selectedImgIdx ? "active" : ""}`}
+                              onClick={() => setSelectedImgIdx(idx)}
+                            >
+                              <img src={imgUrl(img)} alt={`Thumbnail ${idx + 1}`} />
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </>
+                  );
+                })()}
               </div>
 
               {/* ── Col 2: Product Details + Action Buttons ── */}

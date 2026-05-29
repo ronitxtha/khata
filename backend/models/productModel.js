@@ -28,7 +28,8 @@ const productSchema = new mongoose.Schema({
     default: 1,
   },
   description: { type: String, required: true },
-  image: { type: String }, // stored as file path
+  image: { type: String }, // primary/first image (Cloudinary URL)
+  images: [{ type: String }], // all product images (up to 5 Cloudinary URLs)
   qrCode: { type: String }, // stored as URL to QR image
   shopId: {
     type: mongoose.Schema.Types.ObjectId,

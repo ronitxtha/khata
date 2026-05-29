@@ -41,7 +41,7 @@ const StaffInventory = () => {
   const [productQuantity, setProductQuantity] = useState("");
   const [productCategory, setProductCategory] = useState("");
   const [productDescription, setProductDescription] = useState("");
-  const [productImage, setProductImage] = useState(null);
+  const [productImages, setProductImages] = useState([]);
 
   // Edit product form
   const [editingProduct, setEditingProduct] = useState(null);
@@ -51,7 +51,8 @@ const StaffInventory = () => {
   const [editQuantity, setEditQuantity] = useState("");
   const [editCategory, setEditCategory] = useState("");
   const [editDescription, setEditDescription] = useState("");
-  const [editImage, setEditImage] = useState(null);
+  const [editExistingImages, setEditExistingImages] = useState([]);
+  const [editNewImages, setEditNewImages] = useState([]);
 
   // Scanner state
   const [scannerOpen, setScannerOpen] = useState(false);
@@ -127,7 +128,9 @@ const StaffInventory = () => {
       formData.append("quantity", productQuantity);
       formData.append("description", productDescription);
       formData.append("category", productCategory);
-      if (productImage) formData.append("image", productImage);
+      productImages.forEach((img) => {
+        formData.append("images", img);
+      });
 
       const res = await axios.post(`${API_BASE}/api/owner/add-product`, formData, {
         headers: { Authorization: `Bearer ${token}` },
@@ -135,7 +138,7 @@ const StaffInventory = () => {
       setProducts((prev) => [...prev, res.data.product]);
       showToast("Product added successfully!");
       setProductName(""); setProductPrice(""); setProductCostPrice(""); setProductQuantity("");
-      setProductDescription(""); setProductCategory(""); setProductImage(null);
+      setProductDescription(""); setProductCategory(""); setProductImages([]);
       setShowAddForm(false);
     } catch (err) {
       console.error(err);
@@ -152,7 +155,8 @@ const StaffInventory = () => {
     setEditQuantity(product.quantity || "");
     setEditCategory(product.category || "Others");
     setEditDescription(product.description || "");
-    setEditImage(null);
+    setEditExistingImages(product.images || (product.image ? [product.image] : []));
+    setEditNewImages([]);
   };
 
   // Update product
@@ -167,7 +171,10 @@ const StaffInventory = () => {
       formData.append("quantity", editQuantity);
       formData.append("category", editCategory);
       formData.append("description", editDescription);
-      if (editImage) formData.append("image", editImage);
+      formData.append("existingImages", JSON.stringify(editExistingImages));
+      editNewImages.forEach((img) => {
+        formData.append("images", img);
+      });
 
       const res = await axios.put(
         `${API_BASE}/api/owner/update-product/${editingProduct}`,
@@ -562,9 +569,38 @@ const StaffInventory = () => {
                   onChange={(e) => setProductDescription(e.target.value)} required />
               </div>
               <div className="si-form__group">
-                <label>Product Image</label>
-                <input type="file" accept="image/*" onChange={(e) => setProductImage(e.target.files[0])} />
-                {productImage && <span className="si-file-hint">✓ {productImage.name}</span>}
+                <label>Product Images (up to 5)</label>
+                <input 
+                  type="file" 
+                  accept="image/*" 
+                  multiple 
+                  onChange={(e) => {
+                    const files = Array.from(e.target.files);
+                    if (productImages.length + files.length > 5) {
+                      showToast("You can upload a maximum of 5 images", "error");
+                      return;
+                    }
+                    setProductImages((prev) => [...prev, ...files]);
+                  }} 
+                />
+                {productImages.length > 0 && (
+                  <div className="pm-image-gallery-preview">
+                    {productImages.map((file, idx) => (
+                      <div key={idx} className="pm-image-thumbnail">
+                        <img src={URL.createObjectURL(file)} alt={`preview-${idx}`} />
+                        <button 
+                          type="button" 
+                          className="pm-image-thumbnail__remove" 
+                          onClick={() => {
+                            setProductImages((prev) => prev.filter((_, i) => i !== idx));
+                          }}
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
               <div className="si-form__actions">
                 <button type="button" className="si-btn-cancel" onClick={() => setShowAddForm(false)}>Cancel</button>
@@ -584,15 +620,6 @@ const StaffInventory = () => {
               <button className="si-modal__close" onClick={() => setEditingProduct(null)}>✕</button>
             </div>
             <form onSubmit={handleUpdateProduct} className="si-form">
-              {/* Current image preview */}
-              {products.find((p) => p._id === editingProduct)?.image && !editImage && (
-                <div className="si-edit-img-preview">
-                  <img
-                    src={imgUrl(products.find((p) => p._id === editingProduct)?.image)}
-                    alt="Current"
-                  />
-                </div>
-              )}
               <div className="si-form__grid">
                 <div className="si-form__group">
                   <label>Product Name *</label>
@@ -627,9 +654,52 @@ const StaffInventory = () => {
                   placeholder="Product description..." required />
               </div>
               <div className="si-form__group">
-                <label>New Image (optional)</label>
-                <input type="file" accept="image/*" onChange={(e) => setEditImage(e.target.files[0])} />
-                {editImage && <span className="si-file-hint">✓ {editImage.name}</span>}
+                <label>Product Images (up to 5)</label>
+                <div className="pm-image-gallery-preview" style={{ marginBottom: "10px" }}>
+                  {/* Render Existing Images */}
+                  {editExistingImages.map((url, idx) => (
+                    <div key={`existing-${idx}`} className="pm-image-thumbnail">
+                      <img src={imgUrl(url)} alt={`existing-${idx}`} />
+                      <button 
+                        type="button" 
+                        className="pm-image-thumbnail__remove" 
+                        onClick={() => {
+                          setEditExistingImages((prev) => prev.filter((_, i) => i !== idx));
+                        }}
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  ))}
+                  {/* Render New Selected Images */}
+                  {editNewImages.map((file, idx) => (
+                    <div key={`new-${idx}`} className="pm-image-thumbnail">
+                      <img src={URL.createObjectURL(file)} alt={`new-${idx}`} />
+                      <button 
+                        type="button" 
+                        className="pm-image-thumbnail__remove" 
+                        onClick={() => {
+                          setEditNewImages((prev) => prev.filter((_, i) => i !== idx));
+                        }}
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  ))}
+                </div>
+                <input 
+                  type="file" 
+                  accept="image/*" 
+                  multiple 
+                  onChange={(e) => {
+                    const files = Array.from(e.target.files);
+                    if (editExistingImages.length + editNewImages.length + files.length > 5) {
+                      showToast("You can upload a maximum of 5 images", "error");
+                      return;
+                    }
+                    setEditNewImages((prev) => [...prev, ...files]);
+                  }} 
+                />
               </div>
               <div className="si-form__actions">
                 <button type="button" className="si-btn-cancel" onClick={() => setEditingProduct(null)}>Cancel</button>
