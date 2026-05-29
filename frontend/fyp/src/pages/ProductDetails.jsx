@@ -135,6 +135,14 @@ const ProductDetails = () => {
     }
   };
 
+  // Auto-load chat history when user and product are both ready (for embedded panel)
+  useEffect(() => {
+    if (currentUser?._id && product?.shopId?.ownerId) {
+      loadChatHistory();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentUser?._id, product?.shopId?.ownerId]);
+
   const toggleChat = () => {
     if (!currentUser) {
       alert("Please login to chat with the shop owner.");
@@ -331,19 +339,29 @@ const ProductDetails = () => {
             </div>
 
             <main className="pd-product-section" style={{ padding: 0 }}>
+              {/* ── Col 1: Product Image ── */}
               <div className="pd-image-section">
                 <div className="pd-image-card">
                   <img src={imgUrl(product.image)} alt={product.name} />
                 </div>
               </div>
 
+              {/* ── Col 2: Product Details + Action Buttons ── */}
               <div className="pd-details-section">
                 <div className="pd-details-card">
                   <h1 className="pd-product-name">{product.name}</h1>
 
                   <div className="pd-rating-summary">
                     <Rating value={product.rating || 0} />
-                    <span style={{ color: "var(--pd-secondary)", fontSize: "0.9rem" }}>({product.numReviews || 0} reviews)</span>
+                    <span style={{ color: "var(--pd-secondary)", fontSize: "0.85rem" }}>({product.numReviews || 0} reviews)</span>
+                    {product.shopId?.name && (
+                      <>
+                        <span style={{ color: '#cbd5e1', margin: '0 4px' }}>|</span>
+                        <span style={{ fontSize: '0.82rem', color: 'var(--pd-secondary)' }}>
+                          🏪 Store: <strong style={{ color: 'var(--pd-primary)' }}>{product.shopId.name}</strong>
+                        </span>
+                      </>
+                    )}
                   </div>
 
                   <div className="pd-price-row">
@@ -362,67 +380,17 @@ const ProductDetails = () => {
                   </div>
                 </div>
 
-                <div className="pd-delivery-card" style={{ marginTop: '1.5rem' }}>
-                  <h3 className="pd-delivery-title">📍 Delivery Address</h3>
-
-                  <button
-                    className={`pd-geolocation-btn ${locationAdded ? "pd-geolocation-success" : ""}`}
-                    onClick={handleAddLocation}
-                    disabled={geoLoading || locationAdded}
-                  >
-                    {geoLoading ? "⏳ Detecting location..." : locationAdded ? "✅ Location detected" : "📍 Auto Detect Address"}
-                  </button>
-
-                  {locationAdded && (
-                    <div style={{ marginTop: "1rem", display: "flex", gap: "10px", alignItems: "center" }}>
-                      <div className="pd-selected-address" style={{ flex: 1, margin: 0 }}>📌 {location}</div>
-                      <button onClick={() => { setLocation(""); setLocationAdded(false); }} style={{ padding: "10px", background: "#fee2e2", color: "#991b1b", border: "none", borderRadius: "12px", cursor: "pointer" }}>✕</button>
-                    </div>
-                  )}
-
-                  <div style={{ textAlign: "center", margin: "1.5rem 0", color: "#94a3b8", fontSize: "0.85rem" }}>
-                    — OR SELECT MANUALLY —
-                  </div>
-
-                  <div className="pd-location-dropdowns">
-                    <select value={province} onChange={(e) => { setProvince(e.target.value); setDistrict(""); setMunicipality(""); setWard(""); setExactLocation(""); }} className="pd-select">
-                      <option value="">Provience State</option>
-                      {Object.keys(nepalLocations).map((prov) => <option key={prov} value={prov}>{prov}</option>)}
-                    </select>
-
-                    <select value={district} onChange={(e) => { setDistrict(e.target.value); setMunicipality(""); setWard(""); setExactLocation(""); }} className="pd-select" disabled={!province}>
-                      <option value="">District/City</option>
-                      {province && Object.keys(nepalLocations[province]).map((dist) => <option key={dist} value={dist}>{dist}</option>)}
-                    </select>
-
-                    <select value={municipality} onChange={(e) => { setMunicipality(e.target.value); setWard(""); setExactLocation(""); }} className="pd-select" disabled={!district}>
-                      <option value="">Municipality</option>
-                      {province && district && Object.keys(nepalLocations[province][district]).map((mun) => <option key={mun} value={mun}>{mun}</option>)}
-                    </select>
-
-                    <select value={ward} onChange={(e) => setWard(e.target.value)} className="pd-select" disabled={!municipality}>
-                      <option value="">Ward No.</option>
-                      {province && district && municipality && nepalLocations[province][district][municipality].map((w, i) => <option key={i} value={w}>Ward {w}</option>)}
-                    </select>
-
-                    <input type="text" className="pd-select" placeholder="Street name / House Number" value={exactLocation} onChange={(e) => setExactLocation(e.target.value)} disabled={!ward} />
-
-                    {isDropdownComplete && (
-                      <div className="pd-selected-address">
-                        📌 {province}, {district}, {municipality}-{ward}, {exactLocation}
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                <div className="pd-actions" style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
-                  <button
-                    onClick={() => setReportModal(true)}
-                    style={{ background: '#fee2e2', border: 'none', color: '#ef4444', fontSize: '13px', fontWeight: 700, padding: '12px 16px', borderRadius: '12px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', height: '50px' }}
-                    title="Report this product"
-                  >
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path><line x1="4" y1="22" x2="4" y2="15"></line></svg>
+                {/* Action row: Report | Add to Cart | Buy Now */}
+                <div className="pd-actions">
+                  <button onClick={() => setReportModal(true)} className="pd-report-btn" title="Report this product">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" />
+                      <line x1="4" y1="22" x2="4" y2="15" />
+                    </svg>
                     Report
+                  </button>
+                  <button className="pd-add-cart" onClick={() => { addToCart(product); alert("Added to cart!"); }}>
+                    🛒 Add to Cart
                   </button>
                   <button
                     className="pd-buy-now"
@@ -438,32 +406,88 @@ const ProductDetails = () => {
                       })
                     }
                   >
-                    Buy Now
-                  </button>
-                  <button className="pd-add-cart" onClick={() => { addToCart(product); alert("Added to cart!"); }}>
-                    🛒 Add to Cart
+                    ⚡ Buy Now
                   </button>
                 </div>
               </div>
+
+              {/* ── Col 3: Delivery Options ── */}
+              <div className="pd-delivery-card pd-delivery-sticky">
+                <h3 className="pd-delivery-title">📍 Delivery Options</h3>
+
+                <button
+                  className={`pd-geolocation-btn ${locationAdded ? "pd-geolocation-success" : ""}`}
+                  onClick={handleAddLocation}
+                  disabled={geoLoading || locationAdded}
+                >
+                  {geoLoading ? "⏳ Detecting..." : locationAdded ? "✅ Location detected" : "📍 Auto Detect Address"}
+                </button>
+                <p style={{ fontSize: '0.72rem', color: '#94a3b8', textAlign: 'center', margin: '0.4rem 0 0' }}>
+                  Detect your current location automatically
+                </p>
+
+                {locationAdded && (
+                  <div style={{ marginTop: "0.75rem", display: "flex", gap: "8px", alignItems: "center" }}>
+                    <div className="pd-selected-address" style={{ flex: 1, margin: 0, fontSize: '0.75rem' }}>📌 {location}</div>
+                    <button onClick={() => { setLocation(""); setLocationAdded(false); }} style={{ padding: "6px 8px", background: "#fee2e2", color: "#991b1b", border: "none", borderRadius: "8px", cursor: "pointer", flexShrink: 0 }}>✕</button>
+                  </div>
+                )}
+
+                <div style={{ textAlign: "center", margin: "0.9rem 0 0.6rem", color: "#94a3b8", fontSize: "0.7rem", fontWeight: 700, letterSpacing: '0.5px', textTransform: 'uppercase' }}>
+                  — OR SELECT MANUALLY —
+                </div>
+
+                <div className="pd-delivery-dropdowns">
+                  <select value={province} onChange={(e) => { setProvince(e.target.value); setDistrict(""); setMunicipality(""); setWard(""); setExactLocation(""); }} className="pd-select">
+                    <option value="">Province State</option>
+                    {Object.keys(nepalLocations).map((prov) => <option key={prov} value={prov}>{prov}</option>)}
+                  </select>
+                  <select value={district} onChange={(e) => { setDistrict(e.target.value); setMunicipality(""); setWard(""); setExactLocation(""); }} className="pd-select" disabled={!province}>
+                    <option value="">District / City</option>
+                    {province && Object.keys(nepalLocations[province]).map((dist) => <option key={dist} value={dist}>{dist}</option>)}
+                  </select>
+                  <select value={municipality} onChange={(e) => { setMunicipality(e.target.value); setWard(""); setExactLocation(""); }} className="pd-select" disabled={!district}>
+                    <option value="">Municipality</option>
+                    {province && district && Object.keys(nepalLocations[province][district]).map((mun) => <option key={mun} value={mun}>{mun}</option>)}
+                  </select>
+                  <select value={ward} onChange={(e) => setWard(e.target.value)} className="pd-select" disabled={!municipality}>
+                    <option value="">Ward No.</option>
+                    {province && district && municipality && nepalLocations[province][district][municipality].map((w, i) => <option key={i} value={w}>Ward {w}</option>)}
+                  </select>
+                  <input type="text" className="pd-select" placeholder="Street / House Number" value={exactLocation} onChange={(e) => setExactLocation(e.target.value)} disabled={!ward} />
+                  {isDropdownComplete && (
+                    <div className="pd-selected-address">
+                      📌 {province}, {district}, {municipality}-{ward}, {exactLocation}
+                    </div>
+                  )}
+                </div>
+
+                {!isDeliveryComplete && (
+                  <div style={{ marginTop: '0.75rem', padding: '0.55rem 0.85rem', background: 'linear-gradient(135deg, #ede9fe, #dbeafe)', borderRadius: '8px', fontSize: '0.72rem', color: 'var(--pd-accent)', fontWeight: 600, border: '1px solid rgba(99,102,241,0.2)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    📍 Select your delivery location for fast and accurate delivery
+                  </div>
+                )}
+              </div>
             </main>
 
-            <section className="pd-reviews-section" style={{ padding: '0 0 3rem 0' }}>
+            <section className="pd-reviews-section" style={{ padding: '0 0 2rem 0' }}>
               <div className="pd-reviews-header">
                 <h2>Customer Reviews</h2>
               </div>
 
               <div className="pd-reviews-grid">
+                {/* ── Col 1: Customer Reviews List ── */}
                 <div className="pd-reviews-list">
-                  <div className="pd-avg-box" style={{ marginBottom: "2rem" }}>
+                  <div className="pd-avg-box" style={{ marginBottom: "1.5rem" }}>
                     <span className="pd-avg-num">{(product.rating || 0).toFixed(1)}</span>
                     <div>
                       <Rating value={product.rating || 0} />
-                      <div style={{ fontSize: "0.85rem", color: "#64748b", marginTop: "4px" }}>Based on {product.numReviews || 0} reviews</div>
+                      <div style={{ fontSize: "0.82rem", color: "#64748b", marginTop: "4px" }}>Based on {product.numReviews || 0} reviews</div>
                     </div>
                   </div>
 
                   {product.reviews?.length === 0 ? (
-                    <div style={{ padding: "2rem", textAlign: "center", color: "#64748b", background: "#f8fafc", borderRadius: "12px" }}>
+                    <div style={{ padding: "1.5rem", textAlign: "center", color: "#64748b", background: "#f8fafc", borderRadius: "12px" }}>
                       <p>No reviews yet. Be the first to share your thoughts!</p>
                     </div>
                   ) : (
@@ -471,24 +495,24 @@ const ProductDetails = () => {
                       {(product.reviews || []).map((rev) => {
                         const isMyReview = currentUser && (rev.user === currentUser._id || rev.user?.toString() === currentUser._id?.toString());
                         return (
-                          <div key={rev._id} className="pd-review-item" style={isMyReview ? { background: "#eff6ff", padding: "1.5rem", borderRadius: "12px", border: "none" } : {}}>
+                          <div key={rev._id} className="pd-review-item" style={isMyReview ? { background: "#eff6ff", padding: "1rem", borderRadius: "12px", border: "none" } : {}}>
                             <div className="pd-rev-user">
                               <div className="pd-user-avatar" style={isMyReview ? { background: "var(--pd-accent)", color: "white" } : {}}>
                                 {rev.name.charAt(0).toUpperCase()}
                               </div>
                               <div className="pd-rev-info">
                                 <strong>{rev.name} {isMyReview && <span style={{ background: "var(--pd-accent)", color: "white", padding: "2px 6px", fontSize: "10px", borderRadius: "10px", marginLeft: "6px" }}>YOU</span>}</strong>
-                                <span style={{ fontSize: "0.8rem", color: "#94a3b8" }}>{new Date(rev.createdAt).toLocaleDateString()}</span>
+                                <span style={{ fontSize: "0.78rem", color: "#94a3b8" }}>{new Date(rev.createdAt).toLocaleDateString()}</span>
                               </div>
                               {isMyReview && (
-                                <button onClick={() => handleEditClick(rev)} style={{ marginLeft: "auto", background: "white", border: "1px solid var(--pd-accent)", color: "var(--pd-accent)", padding: "4px 12px", borderRadius: "8px", fontSize: "0.8rem", cursor: "pointer", fontWeight: "600" }}>
+                                <button onClick={() => handleEditClick(rev)} style={{ marginLeft: "auto", background: "white", border: "1px solid var(--pd-accent)", color: "var(--pd-accent)", padding: "3px 10px", borderRadius: "8px", fontSize: "0.78rem", cursor: "pointer", fontWeight: "600" }}>
                                   Edit
                                 </button>
                               )}
                             </div>
-                            <div style={{ marginTop: "0.5rem" }}>
+                            <div style={{ marginTop: "0.4rem" }}>
                               <Rating value={rev.rating} />
-                              <p style={{ margin: "0.5rem 0 0", fontSize: "0.95rem", color: "#334155", lineHeight: "1.5" }}>{rev.comment}</p>
+                              <p style={{ margin: "0.4rem 0 0", fontSize: "0.88rem", color: "#334155", lineHeight: "1.5" }}>{rev.comment}</p>
                             </div>
                           </div>
                         );
@@ -497,95 +521,99 @@ const ProductDetails = () => {
                   )}
                 </div>
 
+                {/* ── Col 2: Write a Review ── */}
                 <div className="pd-write-review" id="pd-review-form-section">
                   <div className="pd-write-card">
-                    <h3 style={{ fontSize: "1.2rem", fontWeight: "700", marginBottom: "1.5rem" }}>
+                    <h3 style={{ fontSize: "1.05rem", fontWeight: "700", marginBottom: "0.4rem" }}>
                       {editMode ? "Edit Your Review" : myReview ? "Your Review" : "Write a Review"}
                     </h3>
+                    <p style={{ fontSize: '0.8rem', color: 'var(--pd-secondary)', marginBottom: '1.1rem' }}>Share your experience with this product</p>
 
                     {editMode && (
-                      <div style={{ background: "#eff6ff", padding: "1rem", borderRadius: "12px", fontSize: "0.85rem", color: "#1e3a8a", marginBottom: "1rem", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                      <div style={{ background: "#eff6ff", padding: "0.75rem", borderRadius: "10px", fontSize: "0.82rem", color: "#1e3a8a", marginBottom: "0.75rem", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                         <span>Updating your review.</span>
                         <button onClick={() => { setEditMode(false); setRating(0); setComment(""); setReviewError(""); setReviewSuccess(""); }} style={{ color: "#ef4444", background: "none", border: "none", cursor: "pointer", fontWeight: "bold" }}>Cancel</button>
                       </div>
                     )}
 
-                    {reviewSuccess && <div style={{ background: "#dcfce7", color: "#166534", padding: "1rem", borderRadius: "12px", marginBottom: "1rem", fontSize: "0.9rem" }}>{reviewSuccess}</div>}
-                    {reviewError && <div style={{ background: "#fee2e2", color: "#991b1b", padding: "1rem", borderRadius: "12px", marginBottom: "1rem", fontSize: "0.9rem" }}>{reviewError}</div>}
+                    {reviewSuccess && <div style={{ background: "#dcfce7", color: "#166534", padding: "0.75rem", borderRadius: "10px", marginBottom: "0.75rem", fontSize: "0.85rem" }}>{reviewSuccess}</div>}
+                    {reviewError && <div style={{ background: "#fee2e2", color: "#991b1b", padding: "0.75rem", borderRadius: "10px", marginBottom: "0.75rem", fontSize: "0.85rem" }}>{reviewError}</div>}
 
                     {currentUser ? (
                       <form onSubmit={submitReviewHandler} className="pd-review-form">
-                        <div style={{ marginBottom: "1.5rem" }}>
-                          <label style={{ display: "block", marginBottom: "0.5rem", fontWeight: "600", fontSize: "0.9rem" }}>Rating</label>
+                        <div style={{ marginBottom: "1.1rem" }}>
+                          <label style={{ display: "block", marginBottom: "0.4rem", fontWeight: "600", fontSize: "0.85rem" }}>Rating</label>
                           <div className="pd-stars-input">
                             {[1, 2, 3, 4, 5].map((star) => (
                               <span key={star} className={`pd-star-btn ${star <= (hoverRating || rating) ? "active" : ""}`} onMouseEnter={() => setHoverRating(star)} onMouseLeave={() => setHoverRating(0)} onClick={() => setRating(star)}>★</span>
                             ))}
                           </div>
                         </div>
-
-                        <div style={{ marginBottom: "1.5rem" }}>
-                          <label style={{ display: "block", marginBottom: "0.5rem", fontWeight: "600", fontSize: "0.9rem" }}>Your Comment</label>
+                        <div style={{ marginBottom: "1.1rem" }}>
+                          <label style={{ display: "block", marginBottom: "0.4rem", fontWeight: "600", fontSize: "0.85rem" }}>Your Comment</label>
                           <textarea placeholder="Share your experience with this product..." value={comment} onChange={(e) => setComment(e.target.value)} required></textarea>
                         </div>
-
                         <button type="submit" className="pd-submit-review" disabled={submittingReview} style={{ width: "100%" }}>
                           {submittingReview ? "Submitting..." : editMode ? "Update Review" : "Post Review"}
                         </button>
                       </form>
                     ) : (
-                      <div style={{ textAlign: "center", padding: "2rem 0" }}>
-                        <p style={{ color: "#64748b", marginBottom: "1rem" }}>Please log in to share your review.</p>
-                        <button onClick={() => navigate("/login")} className="pd-buy-now" style={{ padding: "0.75rem 2rem" }}>Login to Review</button>
+                      <div style={{ textAlign: "center", padding: "1.5rem 0" }}>
+                        <p style={{ color: "#64748b", fontSize: '0.9rem' }}>
+                          Please <button onClick={() => navigate("/login")} style={{ background: 'none', border: 'none', color: 'var(--pd-accent)', fontWeight: 700, cursor: 'pointer', padding: 0, textDecoration: 'underline', fontSize: '0.9rem' }}>login</button> to write a review.
+                        </p>
                       </div>
                     )}
                   </div>
                 </div>
-              </div>
-            </section>
 
-            <button className="pd-chat-widget-btn" onClick={toggleChat} title="Chat with Shop Owner">
-              💬
-            </button>
-
-            {chatOpen && (
-              <div className="pd-chat-window">
-                <div className="pd-chat-header">
-                  <h3>💬 Chat with Shop</h3>
-                  <button className="pd-chat-close" onClick={() => setChatOpen(false)}>✕</button>
-                </div>
-
-                <div className="pd-chat-body" ref={chatBodyRef}>
-                  {chatMessages.length === 0 ? (
-                    <div style={{ textAlign: 'center', color: '#94a3b8', fontSize: '0.85rem', marginTop: '2rem' }}>
-                      Start a conversation with the shop owner!
+                {/* ── Col 3: Embedded Chat Panel ── */}
+                <div className="pd-chat-panel">
+                  <div className="pd-chat-header" style={{ borderRadius: '14px 14px 0 0' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span>💬</span>
+                      <h3>Chat with Shop</h3>
                     </div>
-                  ) : (
-                    chatMessages.map(msg => {
-                      const isMine = msg.senderId === currentUser._id || msg.senderId?._id === currentUser._id;
-                      return (
-                        <div key={msg._id} className={`pd-message ${isMine ? 'pd-message-outgoing' : 'pd-message-incoming'}`}>
-                          {msg.text}
-                        </div>
-                      );
-                    })
+                    <span style={{ opacity: 0.7, fontSize: '1.1rem' }}>—</span>
+                  </div>
+
+                  <div className="pd-chat-body" ref={chatBodyRef}>
+                    {!currentUser ? (
+                      <div style={{ textAlign: 'center', padding: '2rem 1rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem' }}>
+                        <p style={{ color: '#94a3b8', fontSize: '0.85rem' }}>Login to chat with the shop owner</p>
+                        <button onClick={() => navigate('/login')} className="pd-buy-now" style={{ padding: '0.55rem 1.25rem', fontSize: '0.82rem' }}>Login</button>
+                      </div>
+                    ) : chatMessages.length === 0 ? (
+                      <div style={{ textAlign: 'center', color: '#94a3b8', fontSize: '0.82rem', marginTop: '2rem' }}>
+                        Start a conversation with the shop owner!
+                      </div>
+                    ) : (
+                      chatMessages.map(msg => {
+                        const isMine = msg.senderId === currentUser._id || msg.senderId?._id === currentUser._id;
+                        return (
+                          <div key={msg._id} className={`pd-message ${isMine ? 'pd-message-outgoing' : 'pd-message-incoming'}`}>
+                            {msg.text}
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+
+                  {currentUser && (
+                    <form className="pd-chat-footer" onSubmit={handleSendMessage} style={{ borderRadius: '0 0 14px 14px' }}>
+                      <input
+                        type="text"
+                        className="pd-chat-input"
+                        placeholder="Type a message..."
+                        value={chatInput}
+                        onChange={(e) => setChatInput(e.target.value)}
+                      />
+                      <button type="submit" className="pd-chat-send" disabled={!chatInput.trim()}>➤</button>
+                    </form>
                   )}
                 </div>
-
-                <form className="pd-chat-footer" onSubmit={handleSendMessage}>
-                  <input
-                    type="text"
-                    className="pd-chat-input"
-                    placeholder="Type a message..."
-                    value={chatInput}
-                    onChange={(e) => setChatInput(e.target.value)}
-                  />
-                  <button type="submit" className="pd-chat-send" disabled={!chatInput.trim()}>
-                    ➤
-                  </button>
-                </form>
               </div>
-            )}
+            </section>
           </div>
         </main>
       </div>
