@@ -125,7 +125,7 @@ const ProductDetails = () => {
         headers: { Authorization: `Bearer ${token}` }
       });
       setChatMessages(res.data.messages);
-      
+
       // Mark as read over socket
       if (socket) {
         socket.emit("mark_read", { senderId: product.shopId.ownerId, receiverId: currentUser._id });
@@ -330,7 +330,7 @@ const ProductDetails = () => {
               <span className="pd-breadcrumb__current">{product.name}</span>
             </div>
 
-               <div className="pd-product-section">
+            <main className="pd-product-section" style={{ padding: 0 }}>
               {/* Column 1: Image Card */}
               <div className="pd-image-section">
                 <div className="pd-image-card">
@@ -342,14 +342,14 @@ const ProductDetails = () => {
               <div className="pd-details-section">
                 <div className="pd-details-card">
                   <h1 className="pd-product-name">{product.name}</h1>
-                  
+
                   <div className="pd-rating-summary">
                     <Rating value={product.rating || 0} />
                     <span style={{ color: "var(--pd-secondary)", fontSize: "0.9rem" }}>({product.numReviews || 0} reviews)</span>
                     <span style={{ margin: '0 8px', color: '#e2e8f0' }}>|</span>
                     <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--pd-accent)' }}>🏪 Store: {product.shopId?.name || "Verified Store"}</span>
                   </div>
-                  
+
                   <div className="pd-price-row">
                     <span className="pd-price">NPR {product.price?.toLocaleString()}</span>
                     <span className={`pd-stock-badge ${product.quantity > 5 ? "pd-in-stock" : "pd-low-stock"}`}>
@@ -452,104 +452,104 @@ const ProductDetails = () => {
                   </div>
                 </div>
               </div>
-            </div>
+            </main>
 
             <section className="pd-reviews-section" style={{ padding: '0 0 3rem 0' }}>
               <div className="pd-reviews-header">
-          <h2>Customer Reviews</h2>
-        </div>
-        
-        <div className="pd-reviews-grid">
-          <div className="pd-reviews-list">
-            <div className="pd-avg-box" style={{ marginBottom: "2rem" }}>
-              <span className="pd-avg-num">{(product.rating || 0).toFixed(1)}</span>
-              <div>
-                <Rating value={product.rating || 0} />
-                <div style={{ fontSize: "0.85rem", color: "#64748b", marginTop: "4px" }}>Based on {product.numReviews || 0} reviews</div>
+                <h2>Customer Reviews</h2>
               </div>
-            </div>
 
-            {product.reviews?.length === 0 ? (
-              <div style={{ padding: "2rem", textAlign: "center", color: "#64748b", background: "#f8fafc", borderRadius: "12px" }}>
-                <p>No reviews yet. Be the first to share your thoughts!</p>
-              </div>
-            ) : (
-              <div>
-                {(product.reviews || []).map((rev) => {
-                  const isMyReview = currentUser && (rev.user === currentUser._id || rev.user?.toString() === currentUser._id?.toString());
-                  return (
-                    <div key={rev._id} className="pd-review-item" style={isMyReview ? { background: "#eff6ff", padding: "1.5rem", borderRadius: "12px", border: "none" } : {}}>
-                      <div className="pd-rev-user">
-                        <div className="pd-user-avatar" style={isMyReview ? { background: "var(--pd-accent)", color: "white" } : {}}>
-                          {rev.name.charAt(0).toUpperCase()}
-                        </div>
-                        <div className="pd-rev-info">
-                          <strong>{rev.name} {isMyReview && <span style={{ background: "var(--pd-accent)", color: "white", padding: "2px 6px", fontSize: "10px", borderRadius: "10px", marginLeft: "6px" }}>YOU</span>}</strong>
-                          <span style={{ fontSize: "0.8rem", color: "#94a3b8" }}>{new Date(rev.createdAt).toLocaleDateString()}</span>
-                        </div>
-                        {isMyReview && (
-                          <button onClick={() => handleEditClick(rev)} style={{ marginLeft: "auto", background: "white", border: "1px solid var(--pd-accent)", color: "var(--pd-accent)", padding: "4px 12px", borderRadius: "8px", fontSize: "0.8rem", cursor: "pointer", fontWeight: "600" }}>
-                            Edit
-                          </button>
-                        )}
-                      </div>
-                      <div style={{ marginTop: "0.5rem" }}>
-                        <Rating value={rev.rating} />
-                        <p style={{ margin: "0.5rem 0 0", fontSize: "0.95rem", color: "#334155", lineHeight: "1.5" }}>{rev.comment}</p>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-
-          <div className="pd-write-review" id="pd-review-form-section">
-            <div className="pd-write-card">
-              <h3 style={{ fontSize: "1.2rem", fontWeight: "700", marginBottom: "1.5rem" }}>
-                {editMode ? "Edit Your Review" : myReview ? "Your Review" : "Write a Review"}
-              </h3>
-
-              {editMode && (
-                <div style={{ background: "#eff6ff", padding: "1rem", borderRadius: "12px", fontSize: "0.85rem", color: "#1e3a8a", marginBottom: "1rem", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <span>Updating your review.</span>
-                  <button onClick={() => { setEditMode(false); setRating(0); setComment(""); setReviewError(""); setReviewSuccess(""); }} style={{ color: "#ef4444", background: "none", border: "none", cursor: "pointer", fontWeight: "bold" }}>Cancel</button>
-                </div>
-              )}
-              
-              {reviewSuccess && <div style={{ background: "#dcfce7", color: "#166534", padding: "1rem", borderRadius: "12px", marginBottom: "1rem", fontSize: "0.9rem" }}>{reviewSuccess}</div>}
-              {reviewError && <div style={{ background: "#fee2e2", color: "#991b1b", padding: "1rem", borderRadius: "12px", marginBottom: "1rem", fontSize: "0.9rem" }}>{reviewError}</div>}
-
-              {currentUser ? (
-                <form onSubmit={submitReviewHandler} className="pd-review-form">
-                  <div style={{ marginBottom: "1.5rem" }}>
-                    <label style={{ display: "block", marginBottom: "0.5rem", fontWeight: "600", fontSize: "0.9rem" }}>Rating</label>
-                    <div className="pd-stars-input">
-                      {[1, 2, 3, 4, 5].map((star) => (
-                        <span key={star} className={`pd-star-btn ${star <= (hoverRating || rating) ? "active" : ""}`} onMouseEnter={() => setHoverRating(star)} onMouseLeave={() => setHoverRating(0)} onClick={() => setRating(star)}>★</span>
-                      ))}
+              <div className="pd-reviews-grid">
+                <div className="pd-reviews-list">
+                  <div className="pd-avg-box" style={{ marginBottom: "2rem" }}>
+                    <span className="pd-avg-num">{(product.rating || 0).toFixed(1)}</span>
+                    <div>
+                      <Rating value={product.rating || 0} />
+                      <div style={{ fontSize: "0.85rem", color: "#64748b", marginTop: "4px" }}>Based on {product.numReviews || 0} reviews</div>
                     </div>
                   </div>
 
-                  <div style={{ marginBottom: "1.5rem" }}>
-                    <label style={{ display: "block", marginBottom: "0.5rem", fontWeight: "600", fontSize: "0.9rem" }}>Your Comment</label>
-                    <textarea placeholder="Share your experience with this product..." value={comment} onChange={(e) => setComment(e.target.value)} required></textarea>
-                  </div>
-
-                  <button type="submit" className="pd-submit-review" disabled={submittingReview} style={{ width: "100%" }}>
-                    {submittingReview ? "Submitting..." : editMode ? "Update Review" : "Post Review"}
-                  </button>
-                </form>
-              ) : (
-                <div style={{ textAlign: "center", padding: "2rem 0" }}>
-                  <p style={{ color: "#64748b", marginBottom: "1rem" }}>Please log in to share your review.</p>
-                  <button onClick={() => navigate("/login")} className="pd-buy-now" style={{ padding: "0.75rem 2rem" }}>Login to Review</button>
+                  {product.reviews?.length === 0 ? (
+                    <div style={{ padding: "2rem", textAlign: "center", color: "#64748b", background: "#f8fafc", borderRadius: "12px" }}>
+                      <p>No reviews yet. Be the first to share your thoughts!</p>
+                    </div>
+                  ) : (
+                    <div>
+                      {(product.reviews || []).map((rev) => {
+                        const isMyReview = currentUser && (rev.user === currentUser._id || rev.user?.toString() === currentUser._id?.toString());
+                        return (
+                          <div key={rev._id} className="pd-review-item" style={isMyReview ? { background: "#eff6ff", padding: "1.5rem", borderRadius: "12px", border: "none" } : {}}>
+                            <div className="pd-rev-user">
+                              <div className="pd-user-avatar" style={isMyReview ? { background: "var(--pd-accent)", color: "white" } : {}}>
+                                {rev.name.charAt(0).toUpperCase()}
+                              </div>
+                              <div className="pd-rev-info">
+                                <strong>{rev.name} {isMyReview && <span style={{ background: "var(--pd-accent)", color: "white", padding: "2px 6px", fontSize: "10px", borderRadius: "10px", marginLeft: "6px" }}>YOU</span>}</strong>
+                                <span style={{ fontSize: "0.8rem", color: "#94a3b8" }}>{new Date(rev.createdAt).toLocaleDateString()}</span>
+                              </div>
+                              {isMyReview && (
+                                <button onClick={() => handleEditClick(rev)} style={{ marginLeft: "auto", background: "white", border: "1px solid var(--pd-accent)", color: "var(--pd-accent)", padding: "4px 12px", borderRadius: "8px", fontSize: "0.8rem", cursor: "pointer", fontWeight: "600" }}>
+                                  Edit
+                                </button>
+                              )}
+                            </div>
+                            <div style={{ marginTop: "0.5rem" }}>
+                              <Rating value={rev.rating} />
+                              <p style={{ margin: "0.5rem 0 0", fontSize: "0.95rem", color: "#334155", lineHeight: "1.5" }}>{rev.comment}</p>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
-          </div>
-        </div>
-      </section>
+
+                <div className="pd-write-review" id="pd-review-form-section">
+                  <div className="pd-write-card">
+                    <h3 style={{ fontSize: "1.2rem", fontWeight: "700", marginBottom: "1.5rem" }}>
+                      {editMode ? "Edit Your Review" : myReview ? "Your Review" : "Write a Review"}
+                    </h3>
+
+                    {editMode && (
+                      <div style={{ background: "#eff6ff", padding: "1rem", borderRadius: "12px", fontSize: "0.85rem", color: "#1e3a8a", marginBottom: "1rem", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                        <span>Updating your review.</span>
+                        <button onClick={() => { setEditMode(false); setRating(0); setComment(""); setReviewError(""); setReviewSuccess(""); }} style={{ color: "#ef4444", background: "none", border: "none", cursor: "pointer", fontWeight: "bold" }}>Cancel</button>
+                      </div>
+                    )}
+
+                    {reviewSuccess && <div style={{ background: "#dcfce7", color: "#166534", padding: "1rem", borderRadius: "12px", marginBottom: "1rem", fontSize: "0.9rem" }}>{reviewSuccess}</div>}
+                    {reviewError && <div style={{ background: "#fee2e2", color: "#991b1b", padding: "1rem", borderRadius: "12px", marginBottom: "1rem", fontSize: "0.9rem" }}>{reviewError}</div>}
+
+                    {currentUser ? (
+                      <form onSubmit={submitReviewHandler} className="pd-review-form">
+                        <div style={{ marginBottom: "1.5rem" }}>
+                          <label style={{ display: "block", marginBottom: "0.5rem", fontWeight: "600", fontSize: "0.9rem" }}>Rating</label>
+                          <div className="pd-stars-input">
+                            {[1, 2, 3, 4, 5].map((star) => (
+                              <span key={star} className={`pd-star-btn ${star <= (hoverRating || rating) ? "active" : ""}`} onMouseEnter={() => setHoverRating(star)} onMouseLeave={() => setHoverRating(0)} onClick={() => setRating(star)}>★</span>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div style={{ marginBottom: "1.5rem" }}>
+                          <label style={{ display: "block", marginBottom: "0.5rem", fontWeight: "600", fontSize: "0.9rem" }}>Your Comment</label>
+                          <textarea placeholder="Share your experience with this product..." value={comment} onChange={(e) => setComment(e.target.value)} required></textarea>
+                        </div>
+
+                        <button type="submit" className="pd-submit-review" disabled={submittingReview} style={{ width: "100%" }}>
+                          {submittingReview ? "Submitting..." : editMode ? "Update Review" : "Post Review"}
+                        </button>
+                      </form>
+                    ) : (
+                      <div style={{ textAlign: "center", padding: "2rem 0" }}>
+                        <p style={{ color: "#64748b", marginBottom: "1rem" }}>Please log in to share your review.</p>
+                        <button onClick={() => navigate("/login")} className="pd-buy-now" style={{ padding: "0.75rem 2rem" }}>Login to Review</button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </section>
 
             <button className="pd-chat-widget-btn" onClick={toggleChat} title="Chat with Shop Owner">
               💬
@@ -561,7 +561,7 @@ const ProductDetails = () => {
                   <h3>💬 Chat with Shop</h3>
                   <button className="pd-chat-close" onClick={() => setChatOpen(false)}>✕</button>
                 </div>
-                
+
                 <div className="pd-chat-body" ref={chatBodyRef}>
                   {chatMessages.length === 0 ? (
                     <div style={{ textAlign: 'center', color: '#94a3b8', fontSize: '0.85rem', marginTop: '2rem' }}>
@@ -578,12 +578,12 @@ const ProductDetails = () => {
                     })
                   )}
                 </div>
-                
+
                 <form className="pd-chat-footer" onSubmit={handleSendMessage}>
-                  <input 
-                    type="text" 
-                    className="pd-chat-input" 
-                    placeholder="Type a message..." 
+                  <input
+                    type="text"
+                    className="pd-chat-input"
+                    placeholder="Type a message..."
                     value={chatInput}
                     onChange={(e) => setChatInput(e.target.value)}
                   />
@@ -609,7 +609,7 @@ const ProductDetails = () => {
           >
             <div style={{ padding: '20px 24px', background: 'linear-gradient(135deg, #ef4444, #dc2626)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#fff' }}>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" /><line x1="4" y1="22" x2="4" y2="15" /></svg>
                 <strong style={{ fontSize: '18px', fontWeight: 800 }}>Report Product</strong>
               </div>
               <button onClick={() => { setReportModal(false); setReportSent(false); setReportReason(''); }} style={{ background: 'rgba(255,255,255,0.2)', border: 'none', color: '#fff', width: '32px', height: '32px', borderRadius: '8px', cursor: 'pointer', fontSize: '16px' }}>✕</button>
