@@ -84,15 +84,15 @@ const DemoShop = () => {
             <span className="sd-navbar__subtitle">Experience our marketplace</span>
           </div>
         </div>
-        
+
         <div className="sd-navbar__right">
-          <button 
+          <button
             onClick={() => navigate("/login")}
             style={{ marginRight: "12px", background: "transparent", border: "1px solid #e2e8f0", padding: "8px 16px", borderRadius: "8px", cursor: "pointer", fontWeight: 600 }}
           >
             Sign In
           </button>
-          <button 
+          <button
             onClick={() => navigate("/register")}
             style={{ background: "#0f172a", color: "white", border: "none", padding: "8px 16px", borderRadius: "8px", cursor: "pointer", fontWeight: 600 }}
           >
@@ -103,7 +103,7 @@ const DemoShop = () => {
 
       {/* BODY: content */}
       <main className="sd-content od-content" style={{ maxWidth: "1200px", margin: "0 auto", padding: "40px 20px" }}>
-          
+
         <div className="si-header-section" style={{ marginBottom: '32px' }}>
           <div className="si-header-info">
             <h2>Product Discovery</h2>
@@ -130,10 +130,10 @@ const DemoShop = () => {
                 key={cat.name}
                 className={`cd-cat-pill ${categoryFilter === cat.name ? "active" : ""}`}
                 onClick={() => setCategoryFilter(categoryFilter === cat.name ? "" : cat.name)}
-                style={{ 
-                  padding: '8px 16px', 
-                  borderRadius: '8px', 
-                  background: categoryFilter === cat.name ? '#0f172a' : '#f8fafc', 
+                style={{
+                  padding: '8px 16px',
+                  borderRadius: '8px',
+                  background: categoryFilter === cat.name ? '#0f172a' : '#f8fafc',
                   color: categoryFilter === cat.name ? '#fff' : '#475569',
                   border: '1px solid',
                   borderColor: categoryFilter === cat.name ? '#0f172a' : '#e2e8f0',
@@ -154,8 +154,8 @@ const DemoShop = () => {
         {/* SHOPS GRID */}
         {(shops || []).map((shop) => {
           const filteredProducts = getFilteredProducts(shop.products);
-          const displayedProducts = filteredProducts.slice(0, 5);
-          const hasMore = filteredProducts.length > 5;
+          const displayedProducts = filteredProducts.slice(0, 6);
+          const hasMore = filteredProducts.length > 6;
 
           if (filteredProducts.length === 0) return null;
 
@@ -198,10 +198,10 @@ const DemoShop = () => {
                       <p className="desc" style={{ fontSize: '13px', color: '#64748b', margin: '0 0 16px', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
                         {p.description}
                       </p>
-                      
+
                       <div className="store-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', borderTop: '1px solid #f1f5f9', paddingTop: '12px' }}>
                         <div className="store-name" style={{ fontSize: '13px', fontWeight: 600, color: '#475569' }}>
-                           {shop.name}
+                          {shop.name}
                         </div>
                         <div className="store-rating">
                           <Rating value={p.rating || 0} text={`(${p.numReviews || 0})`} fontSize="11px" />

@@ -89,7 +89,7 @@ const CustomerDashboard = () => {
   // Socket listener for real-time account status changes
   useEffect(() => {
     const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
-    
+
     // Register this user's socket
     if (currentUser?._id) {
       socket.emit("register", currentUser._id);
@@ -196,7 +196,7 @@ const CustomerDashboard = () => {
             <h1 className="od-topbar__title">Marketplace</h1>
             <div className="od-topbar__date">Discover premium products from verified stores</div>
           </div>
-          
+
           <div className="od-topbar__right">
             <div className="od-topbar__profile" onClick={() => navigate("/customer-profile")}>
               <div className="od-topbar__avatar">
@@ -204,21 +204,21 @@ const CustomerDashboard = () => {
               </div>
             </div>
             <button className="od-topbar__logout" onClick={handleLogout} title="Logout">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9" /></svg>
             </button>
           </div>
         </header>
 
         {/* BODY: content */}
         <main className="od-content">
-            
+
           {/* SEARCH BAR WIDGET */}
           <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '14px', marginBottom: '32px', boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
             {/* Search Input Row */}
             <div style={{ padding: '16px 24px', display: 'flex', alignItems: 'center', gap: '14px', borderBottom: '1px solid #f1f5f9' }}>
               <div style={{ width: '38px', height: '38px', background: '#f1f5f9', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                 <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#64748b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                  <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
                 </svg>
               </div>
               <input
@@ -239,10 +239,10 @@ const CustomerDashboard = () => {
                 <button
                   key={cat.name}
                   onClick={() => setCategoryFilter(categoryFilter === cat.name ? "" : cat.name)}
-                  style={{ 
-                    padding: '5px 13px', 
-                    borderRadius: '20px', 
-                    background: categoryFilter === cat.name ? '#6366f1' : '#ffffff', 
+                  style={{
+                    padding: '5px 13px',
+                    borderRadius: '20px',
+                    background: categoryFilter === cat.name ? '#6366f1' : '#ffffff',
                     color: categoryFilter === cat.name ? '#fff' : '#475569',
                     border: `1px solid ${categoryFilter === cat.name ? '#6366f1' : '#e2e8f0'}`,
                     fontWeight: 600,
@@ -270,8 +270,8 @@ const CustomerDashboard = () => {
           {/* SHOPS GRID */}
           {(shops || []).map((shop) => {
             const filteredProducts = getFilteredProducts(shop.products, shop);
-            const displayedProducts = filteredProducts.slice(0, 5);
-            const hasMore = filteredProducts.length > 5;
+            const displayedProducts = filteredProducts.slice(0, 4);
+            const hasMore = filteredProducts.length > 4;
 
             if (filteredProducts.length === 0 && !shopMatchesSearch(shop)) return null;
             if (filteredProducts.length === 0) return null;
@@ -318,14 +318,14 @@ const CustomerDashboard = () => {
                       </div>
                       <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', flex: 1 }}>
                         <h3 style={{ margin: '0 0 8px', fontSize: '16px', fontWeight: 700, color: '#0f172a', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{p.name}</h3>
-                        
+
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'auto', paddingTop: '16px' }}>
                           <span style={{ fontSize: '18px', fontWeight: 800, color: '#6366f1' }}>NPR {p.price.toLocaleString()}</span>
                           <span className={`od-badge od-badge--${p.quantity > 5 ? "green" : "red"}`}>
                             {p.quantity > 5 ? "In Stock" : "Low Stock"}
                           </span>
                         </div>
-                        
+
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '16px', paddingTop: '16px', borderTop: '1px dashed #e2e8f0' }}>
                           <span style={{ fontSize: '12px', fontWeight: 600, color: '#64748b' }}>🏪 {shop.name}</span>
                           <Rating value={p.rating || 0} text={`(${p.numReviews || 0})`} fontSize="11px" />
@@ -346,9 +346,9 @@ const CustomerDashboard = () => {
         const allProducts = getFilteredProducts(activeShop?.products);
         const modalFiltered = modalSearch.trim()
           ? allProducts.filter(p =>
-              p.name.toLowerCase().includes(modalSearch.toLowerCase()) ||
-              (p.category || "").toLowerCase().includes(modalSearch.toLowerCase())
-            )
+            p.name.toLowerCase().includes(modalSearch.toLowerCase()) ||
+            (p.category || "").toLowerCase().includes(modalSearch.toLowerCase())
+          )
           : allProducts;
 
         return (
@@ -382,7 +382,7 @@ const CustomerDashboard = () => {
                     onMouseEnter={e => e.currentTarget.style.background = 'rgba(239,68,68,0.3)'}
                     onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.15)'}
                   >
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" /><line x1="4" y1="22" x2="4" y2="15" /></svg>
                     Report Shop
                   </button>
                   {/* Close */}
@@ -398,7 +398,7 @@ const CustomerDashboard = () => {
               {/* ── Search bar ── */}
               <div style={{ padding: '16px 32px', background: '#f8fafc', borderBottom: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', gap: '12px' }}>
                 <div style={{ position: 'relative', flex: 1 }}>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2" style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)' }}><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2" style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)' }}><circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" /></svg>
                   <input
                     type="text"
                     placeholder={`Search products in ${activeShop?.name || 'this store'}...`}
@@ -474,7 +474,7 @@ const CustomerDashboard = () => {
           >
             <div style={{ padding: '20px 24px', background: 'linear-gradient(135deg, #ef4444, #dc2626)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#fff' }}>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" /><line x1="4" y1="22" x2="4" y2="15" /></svg>
                 <strong style={{ fontSize: '18px', fontWeight: 800 }}>Report Shop</strong>
               </div>
               <button onClick={() => { setReportModal(false); setReportSent(false); setReportReason(''); }} style={{ background: 'rgba(255,255,255,0.2)', border: 'none', color: '#fff', width: '32px', height: '32px', borderRadius: '8px', cursor: 'pointer', fontSize: '16px' }}>✕</button>
