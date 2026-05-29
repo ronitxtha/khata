@@ -100,7 +100,7 @@ const Cart = () => {
           </div>
         </header>
 
-        <main className="od-content" style={{ overflow: 'hidden', flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
+        <main className="od-content" style={{ display: 'flex', flexDirection: 'column' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '20px', flexShrink: 0 }}>
             <div>
               <h2 style={{ fontSize: '20px', fontWeight: 800, color: '#0f172a', margin: '0 0 4px' }}>My Cart</h2>
@@ -125,11 +125,11 @@ const Cart = () => {
               </Link>
             </div>
           ) : (
-            <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 380px', gap: '24px', flex: 1, minHeight: 0, alignItems: 'stretch' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 380px', gap: '24px', alignItems: 'start' }}>
 
               {/* CART ITEMS */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', overflowY: 'auto', height: '100%', paddingRight: '8px', minHeight: 0 }}>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', padding: '10px 20px', background: '#f8fafc', borderRadius: '10px', fontSize: '11px', fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.5px', position: 'sticky', top: 0, zIndex: 1 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', padding: '10px 20px', background: '#f8fafc', borderRadius: '10px', fontSize: '11px', fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.5px', position: 'sticky', top: '24px', zIndex: 1 }}>
                   <span>Product Details</span>
                   <span>Qty & Actions</span>
                 </div>
@@ -163,7 +163,7 @@ const Cart = () => {
               </div>
 
               {/* ORDER SUMMARY */}
-              <div style={{ height: '100%', overflowY: 'auto', paddingRight: '8px', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', position: 'sticky', top: '24px' }}>
                 <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: '14px', overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
                   <div style={{ padding: '18px 24px', borderBottom: '1px solid #f1f5f9' }}>
                     <h2 style={{ fontSize: '15px', fontWeight: 800, color: '#0f172a', margin: 0 }}>Order Summary</h2>
