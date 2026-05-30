@@ -56,6 +56,8 @@ const ProductDetails = () => {
   const [chatInput, setChatInput] = useState("");
   const [socket, setSocket] = useState(null);
   const chatBodyRef = useRef(null);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -186,6 +188,41 @@ const ProductDetails = () => {
       text: chatInput,
     });
     setChatInput("");
+  };
+
+  const handleImageUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file || !product?.shopId?.ownerId || !socket) return;
+
+    e.target.value = "";
+    const formData = new FormData();
+    formData.append("image", file);
+
+    try {
+      setUploading(true);
+      const token = localStorage.getItem("accessToken");
+      const res = await axios.post(`${API_BASE}/api/messages/upload`, formData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "multipart/form-data",
+        },
+      });
+
+      if (res.data.url) {
+        socket.emit("send_message", {
+          senderId: currentUser._id,
+          receiverId: product.shopId.ownerId,
+          productId: product._id,
+          text: "",
+          image: res.data.url,
+        });
+      }
+    } catch (err) {
+      console.error("Image upload failed:", err);
+      alert("Failed to upload image. Please try again.");
+    } finally {
+      setUploading(false);
+    }
   };
 
   const handleAddLocation = () => {
@@ -611,11 +648,33 @@ const ProductDetails = () => {
                         Start a conversation with the shop owner!
                       </div>
                     ) : (
-                      chatMessages.map(msg => {
+                      chatMessages.map((msg, idx) => {
                         const isMine = msg.senderId === currentUser._id || msg.senderId?._id === currentUser._id;
                         return (
-                          <div key={msg._id} className={`pd-message ${isMine ? 'pd-message-outgoing' : 'pd-message-incoming'}`}>
-                            {msg.text}
+                          <div key={msg._id || idx} className={`pd-message ${isMine ? 'pd-message-outgoing' : 'pd-message-incoming'}`} style={{
+                            padding: msg.image ? "6px" : undefined,
+                            borderRadius: msg.image ? "12px" : undefined,
+                            maxWidth: "80%",
+                            overflow: "hidden",
+                          }}>
+                            {msg.image && (
+                              <div style={{ marginBottom: msg.text ? "8px" : "0" }}>
+                                <img
+                                  src={imgUrl(msg.image)}
+                                  alt="shared"
+                                  style={{
+                                    maxWidth: "100%",
+                                    maxHeight: "200px",
+                                    borderRadius: "8px",
+                                    display: "block",
+                                    objectFit: "cover",
+                                    cursor: "pointer",
+                                  }}
+                                  onClick={() => window.open(imgUrl(msg.image), "_blank")}
+                                />
+                              </div>
+                            )}
+                            {msg.text && <div style={{ padding: msg.image ? "4px 8px" : "0" }}>{msg.text}</div>}
                           </div>
                         );
                       })
@@ -623,15 +682,47 @@ const ProductDetails = () => {
                   </div>
 
                   {currentUser && (
-                    <form className="pd-chat-footer" onSubmit={handleSendMessage} style={{ borderRadius: '0 0 14px 14px' }}>
+                    <form className="pd-chat-footer" onSubmit={handleSendMessage} style={{ borderRadius: '0 0 14px 14px', display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 16px' }}>
+                      <button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={uploading}
+                        style={{
+                          background: "rgba(99,102,241,0.08)",
+                          border: "none",
+                          borderRadius: "50%",
+                          width: "36px",
+                          height: "36px",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          cursor: uploading ? "not-allowed" : "pointer",
+                          color: "#6366f1",
+                          fontSize: "16px",
+                          flexShrink: 0,
+                          transition: "all 0.2s"
+                        }}
+                        title="Upload Image"
+                      >
+                        📷
+                      </button>
+                      <input
+                        type="file"
+                        ref={fileInputRef}
+                        onChange={handleImageUpload}
+                        accept="image/*"
+                        style={{ display: "none" }}
+                      />
                       <input
                         type="text"
                         className="pd-chat-input"
-                        placeholder="Type a message..."
+                        placeholder={uploading ? "Uploading..." : "Type a message..."}
                         value={chatInput}
+                        disabled={uploading}
                         onChange={(e) => setChatInput(e.target.value)}
+                        style={{ flex: 1 }}
                       />
-                      <button type="submit" className="pd-chat-send" disabled={!chatInput.trim()}>➤</button>
+                      <button type="submit" className="pd-chat-send" disabled={!chatInput.trim() || uploading}>➤</button>
                     </form>
                   )}
                 </div>

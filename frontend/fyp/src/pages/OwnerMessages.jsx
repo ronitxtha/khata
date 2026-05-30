@@ -24,6 +24,8 @@ const OwnerMessages = () => {
   const [socket, setSocket] = useState(null);
 
   const messagesEndRef = useRef(null);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
     const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
@@ -131,6 +133,40 @@ const OwnerMessages = () => {
       text: chatInput,
     });
     setChatInput("");
+  };
+
+  const handleImageUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file || !activeChat || !socket) return;
+
+    e.target.value = "";
+    const formData = new FormData();
+    formData.append("image", file);
+
+    try {
+      setUploading(true);
+      const token = localStorage.getItem("accessToken");
+      const res = await axios.post(`${API_BASE}/api/messages/upload`, formData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "multipart/form-data",
+        },
+      });
+
+      if (res.data.url) {
+        socket.emit("send_message", {
+          senderId: effectiveOwnerId,
+          receiverId: activeChat._id,
+          text: "",
+          image: res.data.url,
+        });
+      }
+    } catch (err) {
+      console.error("Image upload failed:", err);
+      alert("Failed to upload image. Please try again.");
+    } finally {
+      setUploading(false);
+    }
   };
 
   const handleLogout = () => {
@@ -322,7 +358,7 @@ const OwnerMessages = () => {
                     return (
                       <div key={idx} style={{ alignSelf: isMine ? 'flex-end' : 'flex-start', maxWidth: '60%' }}>
                         <div style={{ 
-                          padding: '12px 18px', 
+                          padding: msg.image ? '6px' : '12px 18px', 
                           background: isMine ? '#026bf4' : '#ffffff', 
                           color: isMine ? '#ffffff' : '#0f172a',
                           borderRadius: '16px',
@@ -331,9 +367,27 @@ const OwnerMessages = () => {
                           boxShadow: '0 2px 5px rgba(0,0,0,0.05)',
                           border: isMine ? 'none' : '1px solid #e2e8f0',
                           fontSize: '15px',
-                          lineHeight: '1.5'
+                          lineHeight: '1.5',
+                          overflow: "hidden",
                         }}>
-                          {msg.text}
+                          {msg.image && (
+                            <div style={{ marginBottom: msg.text ? "8px" : "0" }}>
+                              <img
+                                src={imgUrl(msg.image)}
+                                alt="shared"
+                                style={{
+                                  maxWidth: "100%",
+                                  maxHeight: "300px",
+                                  borderRadius: "12px",
+                                  display: "block",
+                                  objectFit: "cover",
+                                  cursor: "pointer",
+                                }}
+                                onClick={() => window.open(imgUrl(msg.image), "_blank")}
+                              />
+                            </div>
+                          )}
+                          {msg.text && <div style={{ padding: msg.image ? "6px 12px" : "0" }}>{msg.text}</div>}
                         </div>
                         <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '6px', textAlign: isMine ? 'right' : 'left' }}>
                           {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -344,18 +398,49 @@ const OwnerMessages = () => {
                   <div ref={messagesEndRef} />
                 </div>
 
-                <form onSubmit={handleSendMessage} style={{ padding: '20px 30px', borderTop: '1px solid #e2e8f0', display: 'flex', gap: '15px', background: '#fff' }}>
+                <form onSubmit={handleSendMessage} style={{ padding: '20px 30px', borderTop: '1px solid #e2e8f0', display: 'flex', gap: '15px', background: '#fff', alignItems: "center" }}>
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploading}
+                    style={{
+                      background: "rgba(2,107,244,0.08)",
+                      border: "none",
+                      borderRadius: "50%",
+                      width: "48px",
+                      height: "48px",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      cursor: uploading ? "not-allowed" : "pointer",
+                      color: "#026bf4",
+                      fontSize: "20px",
+                      flexShrink: 0,
+                      transition: "all 0.2s"
+                    }}
+                    title="Upload Image"
+                  >
+                    📷
+                  </button>
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleImageUpload}
+                    accept="image/*"
+                    style={{ display: "none" }}
+                  />
                   <input 
                     type="text" 
-                    placeholder="Type your message..." 
+                    placeholder={uploading ? "Uploading image..." : "Type your message..."} 
                     value={chatInput}
+                    disabled={uploading}
                     onChange={(e) => setChatInput(e.target.value)}
                     style={{ flex: 1, padding: '14px 20px', borderRadius: '24px', border: '1px solid #cbd5e1', outline: 'none', fontSize: '15px', background: '#f8fafc' }}
                   />
                   <button 
                     type="submit" 
-                    disabled={!chatInput.trim()}
-                    style={{ background: '#026bf4', color: '#fff', border: 'none', borderRadius: '24px', padding: '0 25px', fontWeight: 'bold', cursor: 'pointer', transition: 'background 0.2s', opacity: chatInput.trim() ? 1 : 0.6 }}
+                    disabled={!chatInput.trim() || uploading}
+                    style={{ background: '#026bf4', color: '#fff', border: 'none', borderRadius: '24px', padding: '0 25px', fontWeight: 'bold', cursor: 'pointer', transition: 'background 0.2s', opacity: (chatInput.trim() && !uploading) ? 1 : 0.6 }}
                   >
                     Send
                   </button>

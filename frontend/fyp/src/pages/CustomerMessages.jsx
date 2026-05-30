@@ -19,6 +19,8 @@ const CustomerMessages = () => {
   const [loading, setLoading] = useState(true);
 
   const messagesEndRef = useRef(null);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef(null);
 
   // ── Boot ──────────────────────────────────────────────────────
   useEffect(() => {
@@ -102,6 +104,40 @@ const CustomerMessages = () => {
       text: chatInput,
     });
     setChatInput("");
+  };
+
+  const handleImageUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file || !activeChat || !socket) return;
+
+    e.target.value = "";
+    const formData = new FormData();
+    formData.append("image", file);
+
+    try {
+      setUploading(true);
+      const token = localStorage.getItem("accessToken");
+      const res = await axios.post(`${API_BASE}/api/messages/upload`, formData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "multipart/form-data",
+        },
+      });
+
+      if (res.data.url) {
+        socket.emit("send_message", {
+          senderId: customer._id,
+          receiverId: activeChat.user._id,
+          text: "",
+          image: res.data.url,
+        });
+      }
+    } catch (err) {
+      console.error("Image upload failed:", err);
+      alert("Failed to upload image. Please try again.");
+    } finally {
+      setUploading(false);
+    }
   };
 
   // ── Helpers ───────────────────────────────────────────────────
@@ -399,7 +435,7 @@ const CustomerMessages = () => {
                               </div>
                             )}
                             <div style={{
-                              padding: "12px 18px",
+                              padding: msg.image ? "6px" : "12px 18px",
                               background: isMine
                                 ? "linear-gradient(135deg, #2563eb 0%, #3b82f6 100%)"
                                 : "rgba(255,255,255,0.95)",
@@ -411,9 +447,28 @@ const CustomerMessages = () => {
                                 ? "0 4px 14px rgba(37,99,235,0.25)"
                                 : "0 2px 8px rgba(0,0,0,0.06)",
                               border: isMine ? "none" : "1px solid rgba(15,23,42,0.07)",
-                              fontSize: "15px", lineHeight: "1.55",
+                              fontSize: "15px",
+                              lineHeight: "1.55",
+                              overflow: "hidden",
                             }}>
-                              {msg.text}
+                              {msg.image && (
+                                <div style={{ marginBottom: msg.text ? "8px" : "0" }}>
+                                  <img
+                                    src={imgUrl(msg.image)}
+                                    alt="shared"
+                                    style={{
+                                      maxWidth: "100%",
+                                      maxHeight: "300px",
+                                      borderRadius: "12px",
+                                      display: "block",
+                                      objectFit: "cover",
+                                      cursor: "pointer",
+                                    }}
+                                    onClick={() => window.open(imgUrl(msg.image), "_blank")}
+                                  />
+                                </div>
+                              )}
+                              {msg.text && <div style={{ padding: msg.image ? "6px 12px" : "0" }}>{msg.text}</div>}
                             </div>
                             <div style={{
                               fontSize: "11px", color: "var(--color-text-muted)",
@@ -443,10 +498,41 @@ const CustomerMessages = () => {
                     alignItems: "center",
                   }}
                 >
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploading}
+                    style={{
+                      background: "rgba(37,99,235,0.08)",
+                      border: "none",
+                      borderRadius: "50%",
+                      width: "48px",
+                      height: "48px",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      cursor: uploading ? "not-allowed" : "pointer",
+                      color: "#2563eb",
+                      fontSize: "20px",
+                      flexShrink: 0,
+                      transition: "all 0.2s"
+                    }}
+                    title="Upload Image"
+                  >
+                    📷
+                  </button>
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleImageUpload}
+                    accept="image/*"
+                    style={{ display: "none" }}
+                  />
                   <input
                     type="text"
-                    placeholder="Type a message..."
+                    placeholder={uploading ? "Uploading image..." : "Type a message..."}
                     value={chatInput}
+                    disabled={uploading}
                     onChange={(e) => setChatInput(e.target.value)}
                     style={{
                       flex: 1, padding: "14px 20px",
@@ -463,18 +549,18 @@ const CustomerMessages = () => {
                   />
                   <button
                     type="submit"
-                    disabled={!chatInput.trim()}
+                    disabled={!chatInput.trim() || uploading}
                     style={{
-                      background: chatInput.trim()
+                      background: (chatInput.trim() && !uploading)
                         ? "linear-gradient(135deg, #2563eb 0%, #3b82f6 100%)"
                         : "#e2e8f0",
-                      color: chatInput.trim() ? "#fff" : "#94a3b8",
+                      color: (chatInput.trim() && !uploading) ? "#fff" : "#94a3b8",
                       border: "none", borderRadius: "24px",
                       padding: "0 28px", height: "50px",
                       fontWeight: 800, fontSize: "14px",
-                      cursor: chatInput.trim() ? "pointer" : "not-allowed",
+                      cursor: (chatInput.trim() && !uploading) ? "pointer" : "not-allowed",
                       transition: "all 0.2s",
-                      boxShadow: chatInput.trim() ? "0 4px 14px rgba(37,99,235,0.3)" : "none",
+                      boxShadow: (chatInput.trim() && !uploading) ? "0 4px 14px rgba(37,99,235,0.3)" : "none",
                       letterSpacing: "0.5px",
                     }}
                   >

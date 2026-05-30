@@ -99,14 +99,15 @@ io.on("connection", (socket) => {
         fs.appendFileSync("socket_debug.log", new Date().toISOString() + " - " + JSON.stringify(data) + "\n");
         console.log("Socket received send_message:", data);
         try {
-            const { senderId, receiverId, productId, text } = data;
+            const { senderId, receiverId, productId, text, image } = data;
             
             // Save to database
             const newMessage = new Message({
                 senderId,
                 receiverId,
                 productId: productId || null,
-                text
+                text: text || "",
+                image: image || null
             });
             await newMessage.save();
 
