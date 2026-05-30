@@ -33,7 +33,7 @@ router.get("/stats", isAuthenticated, isAdmin, async (req, res) => {
               input: "$reports",
               as: "report",
               cond: {
-                $gte: ["$totalCount", 10]
+                $gte: ["$totalCount", 2]
               }
             }
           }
@@ -104,11 +104,11 @@ router.patch("/users/:id/toggle-active", isAuthenticated, isAdmin, async (req, r
   try {
     const user = await User.findById(req.params.id);
     if (!user) return res.status(404).json({ success: false, message: "User not found" });
-    
+
     const isBeingDisabled = user.isActive === true; // if currently active, we're disabling
     user.isActive = !user.isActive;
     await user.save();
-    
+
     // Emit socket event to notify the user and all admins
     const io = req.app.get("io");
     if (io) {
@@ -119,7 +119,7 @@ router.patch("/users/:id/toggle-active", isAuthenticated, isAdmin, async (req, r
         username: user.username,
         message: user.isActive ? "enabled" : "disabled"
       });
-      
+
       // Broadcast to update admin dashboard user list
       io.emit("admin-user-list-update", {
         userId: user._id,
@@ -128,7 +128,7 @@ router.patch("/users/:id/toggle-active", isAuthenticated, isAdmin, async (req, r
         action: isBeingDisabled ? "disabled" : "enabled"
       });
     }
-    
+
     res.json({ success: true, message: `User ${user.isActive ? "activated" : "deactivated"}`, isActive: user.isActive });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
@@ -222,12 +222,12 @@ router.get("/products", isAuthenticated, isAdmin, async (req, res) => {
     const products = await Product.find(filter)
       .sort({ createdAt: -1 })
       .populate({
-         path: "shopId",
-         select: "name ownerId",
-         populate: {
-            path: "ownerId",
-            select: "username email"
-         }
+        path: "shopId",
+        select: "name ownerId",
+        populate: {
+          path: "ownerId",
+          select: "username email"
+        }
       });
 
     res.json({ success: true, products });
@@ -271,13 +271,13 @@ router.get("/reports", isAuthenticated, isAdmin, async (req, res) => {
     const targetCounts = await Report.aggregate([
       { $group: { _id: "$targetId", count: { $sum: 1 } } }
     ]);
-    
+
     const targetCountMap = {};
     targetCounts.forEach(t => targetCountMap[t._id.toString()] = t.count);
 
-    // Apply threshold: both product and shop reports only show if count >= 10
+    // Apply threshold: both product and shop reports only show if count >= 2
     const reports = allReports.filter(r => {
-      return targetCountMap[r.targetId.toString()] >= 10;
+      return targetCountMap[r.targetId.toString()] >= 2;
     });
 
     // Attach target name for display
