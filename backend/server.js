@@ -33,8 +33,8 @@ const PORT = process.env.PORT || 8000;
 const requiredEnvVars = [
     "MONGO_URI", 
     "SECRET_KEY", 
-    "MAIL_USER", 
-    "MAIL_PASS", 
+    "SENDGRID_API_KEY", 
+    "SENDGRID_FROM_EMAIL", 
     "ADMIN_EMAIL", 
     "ADMIN_PASSWORD",
     "ESEWA_SECRET_KEY",

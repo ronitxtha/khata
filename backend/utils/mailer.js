@@ -1,33 +1,26 @@
-import nodemailer from "nodemailer";
+import sgMail from "@sendgrid/mail";
+import "dotenv/config";
 
 export const sendEmail = async ({ to, subject, text }) => {
   // Guard: log and throw if credentials are missing
-  if (!process.env.MAIL_USER || !process.env.MAIL_PASS) {
-    const msg = `❌ [mailer] MAIL_USER or MAIL_PASS env var is missing — cannot send email to ${to}`;
+  if (!process.env.SENDGRID_API_KEY || !process.env.SENDGRID_FROM_EMAIL) {
+    const msg = `❌ [mailer] SENDGRID_API_KEY or SENDGRID_FROM_EMAIL env var is missing — cannot send email to ${to}`;
     console.error(msg);
     throw new Error(msg);
   }
 
-  const transporter = nodemailer.createTransport({
-    host: "smtp.gmail.com",
-    port: 465,
-    secure: true,
-    auth: {
-      user: process.env.MAIL_USER,
-      pass: process.env.MAIL_PASS,
-    },
-    tls: {
-      rejectUnauthorized: false
-    }
-  });
+  sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
-  // Throws on SMTP failure — caller is responsible for catching
-  await transporter.sendMail({
-    from: `"Khata App" <${process.env.MAIL_USER}>`,
+  const msg = {
     to,
+    from: process.env.SENDGRID_FROM_EMAIL, // must be verified in SendGrid
     subject,
     text,
-  });
+    html: text.replace(/\n/g, "<br>"),
+  };
 
-  console.log(`✅ [mailer] Email sent successfully to ${to} | Subject: "${subject}"`);
+  // Throws on SendGrid failure — caller is responsible for catching
+  await sgMail.send(msg);
+
+  console.log(`✅ [mailer] SendGrid email sent successfully to ${to} | Subject: "${subject}"`);
 };
