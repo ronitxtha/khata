@@ -9,36 +9,23 @@ import Order from "../models/Order.js";
 
 const router = express.Router();
 
-async function checkAndNotifyLowStock(product, io) {
-  if (product.quantity < 5) {
-    const existingNotification = await Notification.findOne({
+async function checkAndNotifyLowStock(product, io, oldQuantity) {
+  const isTransition = oldQuantity !== undefined ? (oldQuantity >= 5 && product.quantity < 5) : (product.quantity < 5);
+
+  if (isTransition) {
+    await Notification.create({
+      shopId: product.shopId,
       productId: product._id,
+      message: `${product.name} is low in stock (${product.quantity} left)`,
       type: "low_stock"
-    }).sort({ createdAt: -1 });
+    });
 
-    let isSpam = false;
-    if (existingNotification) {
-      const timeDiff = new Date() - new Date(existingNotification.createdAt);
-      if (timeDiff < 24 * 60 * 60 * 1000) { // 24 hours
-        isSpam = true;
-      }
-    }
-
-    if (!isSpam) {
-      await Notification.create({
-        shopId: product.shopId,
-        productId: product._id,
+    if (io) {
+      io.emit("lowStockAlert", {
         message: `${product.name} is low in stock (${product.quantity} left)`,
-        type: "low_stock"
+        productId: product._id,
+        quantity: product.quantity
       });
-
-      if (io) {
-        io.emit("lowStockAlert", {
-          message: `${product.name} is low in stock (${product.quantity} left)`,
-          productId: product._id,
-          quantity: product.quantity
-        });
-      }
     }
 
     try {
@@ -155,10 +142,11 @@ router.post("/create", async (req, res) => {
           const product = await Product.findById(item.productId);
           if (!product) continue;
 
+          const oldQuantity = product.quantity;
           product.quantity -= item.quantity;
           await product.save();
 
-          await checkAndNotifyLowStock(product, io);
+          await checkAndNotifyLowStock(product, io, oldQuantity);
         }
       } catch (bgErr) {
         console.error("Background processing error:", bgErr);
@@ -403,10 +391,12 @@ router.post("/esewa-success", async (req, res) => {
         for (const item of order.items) {
           const product = await Product.findById(item.product);
           if (!product) continue;
+          
+          const oldQuantity = product.quantity;
           product.quantity -= item.quantity;
           await product.save();
 
-          await checkAndNotifyLowStock(product, io);
+          await checkAndNotifyLowStock(product, io, oldQuantity);
         }
       } catch (e) {
         console.error("eSewa post-payment background error:", e);
