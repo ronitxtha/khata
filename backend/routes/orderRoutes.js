@@ -44,12 +44,19 @@ async function checkAndNotifyLowStock(product, io, oldQuantity) {
           if (staff.email && !recipients.includes(staff.email)) recipients.push(staff.email);
         });
 
+        console.log(`[low-stock] Sending alerts to ${recipients.length} recipient(s): ${recipients.join(", ")}`);
+
         for (const email of recipients) {
-          await sendEmail({
-            to: email,
-            subject: `Low Stock Alert: ${product.name}`,
-            text: `Your product "${product.name}" is running low on stock.\n\nCurrent Quantity: ${product.quantity}\n\nPlease restock soon.`
-          }).catch(e => console.error("Email error:", e));
+          try {
+            await sendEmail({
+              to: email,
+              subject: `Low Stock Alert: ${product.name}`,
+              text: `Your product "${product.name}" is running low on stock.\n\nCurrent Quantity: ${product.quantity}\n\nPlease restock soon.`
+            });
+            console.log(`✅ [low-stock] Email alert sent to ${email} for product: "${product.name}" (qty: ${product.quantity})`);
+          } catch (emailErr) {
+            console.error(`❌ [low-stock] Failed to send email alert to ${email} for product: "${product.name}" | Error: ${emailErr.message}`);
+          }
         }
       }
     } catch (err) {
