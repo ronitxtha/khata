@@ -47,7 +47,10 @@ async function checkAndNotifyLowStock(product, io) {
         const recipients = [];
         if (shop.ownerId) {
           const owner = await User.findById(shop.ownerId);
-          if (owner && owner.email) recipients.push(owner.email);
+          if (owner) {
+            const ownerEmail = owner.shopEmail?.trim() || owner.email;
+            if (ownerEmail) recipients.push(ownerEmail);
+          }
         }
         const staffMembers = await User.find({ shopId: product.shopId, role: "staff" });
         staffMembers.forEach(staff => {
@@ -202,6 +205,8 @@ router.put("/:id/status", async (req, res) => {
       return res.status(404).json({ message: "Order not found" });
     }
 
+    const isCancelling = (status === "Cancelled" && order.status !== "Cancelled");
+
     // Workflow Logic
     if (role === "customer") {
       if (status === "Cancelled" && order.status === "Pending") {
@@ -219,6 +224,19 @@ router.put("/:id/status", async (req, res) => {
       }
     } else {
       return res.status(403).json({ message: "Unauthorized" });
+    }
+
+    if (isCancelling && order.status === "Cancelled") {
+      const wasStockReduced = order.paymentMethod === "Cash on Delivery" || order.paymentStatus === "Paid";
+      if (wasStockReduced) {
+        for (const item of order.items) {
+          const product = await Product.findById(item.product);
+          if (product) {
+            product.quantity += item.quantity;
+            await product.save();
+          }
+        }
+      }
     }
 
     await order.save();

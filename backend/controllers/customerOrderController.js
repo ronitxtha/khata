@@ -1,4 +1,5 @@
 import Order from "../models/Order.js";
+import { Product } from "../models/productModel.js";
 
 // ─────────────────────────────────────────────
 // GET /api/customer/orders
@@ -34,9 +35,21 @@ export const cancelOrder = async (req, res) => {
       });
     }
 
+    const wasStockReduced = order.paymentMethod === "Cash on Delivery" || order.paymentStatus === "Paid";
+
     order.status = "Cancelled";
     order.cancelReason = req.body.cancelReason?.trim() || "Cancelled by customer";
     await order.save();
+
+    if (wasStockReduced) {
+      for (const item of order.items) {
+        const product = await Product.findById(item.product);
+        if (product) {
+          product.quantity += item.quantity;
+          await product.save();
+        }
+      }
+    }
 
     res.json({ success: true, message: "Order cancelled successfully", order });
   } catch (err) {
